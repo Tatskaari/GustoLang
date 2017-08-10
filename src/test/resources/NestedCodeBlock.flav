@@ -1,0 +1,6 @@
+{
+    {
+        val someVar := 5
+    }
+    val someOtherVar := 5
+}
