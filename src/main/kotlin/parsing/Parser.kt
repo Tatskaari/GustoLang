@@ -9,7 +9,7 @@ object Parser {
   data class ParseSingleStatementResult(val statement: Statement, val rest: LinkedList<Token>)
   data class ParseExpressionResult(val expression: Expression, val rest: LinkedList<Token>)
 
-  class UnexpectedEndOfFile() : RuntimeException("Unexpected end of file")
+  class UnexpectedEndOfFile : RuntimeException("Unexpected end of file")
 
   fun parse(program: String): List<Statement> {
     val (statements, _) = parse(Lexer.lex(program), LinkedList<Statement>())
@@ -33,7 +33,7 @@ object Parser {
           statements.add(statement)
           tokens = rest
         }
-        else -> throw Lexer.InvalidInputException("Unexpected token " + token)
+        else -> throw Lexer.InvalidInputException("Unexpected token $token expecting statement")
       }
     }
     return ParseStatementsResult(statements, tokens)

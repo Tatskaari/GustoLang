@@ -15,7 +15,6 @@ object ParserTest {
 
   @Test
   fun testNestedBlocks() {
-    //TODO heper function out loading programs
     val program = TestUtil.loadProgram("NestedCodeBlock")
     val expectedAST = listOf(
       Statement.CodeBlock(

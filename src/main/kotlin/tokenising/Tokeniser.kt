@@ -2,31 +2,36 @@ package tokenising
 
 import StringUtils.rest
 
-enum class Tokenisers(val lexer: (String) -> ProgramTokenResult?) {
-  BLOCK_OPEN({ program -> tokeniseKeyWord(program, "{", Token.OpenBlock) }),
-  BLOCK_CLOSE({ program -> tokeniseKeyWord(program, "}", Token.CloseBlock) }),
-  VAL({ program -> tokeniseKeyWord(program, "val", Token.ValDeclaration) }),
-  ASSIGN({ program -> tokeniseKeyWord(program, ":=", Token.AssignmentOperator) }),
-  ADD({ program -> tokeniseKeyWord(program, "+", Token.Op(Operator.Add)) }),
-  SUB({ program -> tokeniseKeyWord(program, "-", Token.Op(Operator.Sub)) }),
+enum class Tokenisers(val lexer: (String) -> LexResult?) {
+  BLOCK_OPEN({ tokeniseKeyWord(it, Token.OpenBlock) }),
+  BLOCK_CLOSE({ tokeniseKeyWord(it, Token.CloseBlock) }),
+  VAL({ tokeniseKeyWord(it, Token.ValDeclaration) }),
+  ASSIGN({ tokeniseKeyWord(it, Token.AssignmentOperator) }),
+  ADD({ tokeniseKeyWord(it, Token.Op(Operator.Add)) }),
+  SUB({ tokeniseKeyWord(it, Token.Op(Operator.Sub)) }),
   IDENTIFIER({ regexTokeniser(it, """^[a-zA-Z]+""", Token::Identifier) }),
-  NUMBER({ regexTokeniser(it, "^[0-9]+", { Token.Num(it.toInt()) }) });
+  NUMBER({ regexTokeniser(it, "^[0-9]+", Token::Num, String::toInt )});
 
-  data class ProgramTokenResult(val program: String, val token: Token)
+  data class LexResult(val rest: String, val token: Token)
 
   companion object {
-    fun tokeniseKeyWord(program: String, keyword: String, token: Token): ProgramTokenResult? {
-      if (program.startsWith(keyword)) {
-        return ProgramTokenResult(program.rest(keyword), token)
+    fun tokeniseKeyWord(program: String, token: Token): LexResult? {
+      if (program.startsWith(token.tokenText)) {
+        return LexResult(program.rest(token.tokenText), token)
       }
       return null
     }
 
-    fun regexTokeniser(program: String, regexString: String, tokenConstructor: (String) -> Token): ProgramTokenResult? {
+    fun regexTokeniser(program : String, regexString: String, tokenConstructor: (String) -> Token) : LexResult?{
+      return regexTokeniser(program, regexString, tokenConstructor, {it})
+    }
+
+    fun <T> regexTokeniser(program: String, regexString: String, tokenConstructor: (T) -> Token, parser : ((String) -> T)) : LexResult? {
       val regex = Regex(regexString)
       val matchResult = regex.find(program)
       if (matchResult != null) {
-        return ProgramTokenResult(program.rest(matchResult.value), tokenConstructor(matchResult.value))
+        val result : T = parser(matchResult.value)
+        return LexResult(program.rest(matchResult.value), tokenConstructor(result))
       }
       return null
     }
@@ -34,7 +39,7 @@ enum class Tokenisers(val lexer: (String) -> ProgramTokenResult?) {
 
   }
 
-  fun lex(program: String): ProgramTokenResult? {
+  fun lex(program: String): LexResult? {
     return lexer(program)
   }
 }

@@ -11,7 +11,7 @@ object Lexer {
     while (rest.isNotEmpty()) {
       val tokenResult = getNextToken(rest)
       if (tokenResult != null) {
-        rest = tokenResult.program.trim()
+        rest = tokenResult.rest.trim()
         tokens.add(tokenResult.token)
       } else {
         throw InvalidInputException("Unexpected character: '" + program.substring(10) + "...'")
@@ -21,10 +21,10 @@ object Lexer {
     return tokens
   }
 
-  fun getNextToken(program: String): Tokenisers.ProgramTokenResult? {
+  fun getNextToken(program: String): Tokenisers.LexResult? {
     return Tokenisers.values()
       .map { it.lex(program) }
       .filter { it != null }.map { it!! }
-      .minBy { it.program.length }
+      .minBy { it.rest.length }
   }
 }
