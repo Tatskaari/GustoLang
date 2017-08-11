@@ -41,7 +41,7 @@ object Parser {
         val expr = parseExpression(tokens)
         return Statement.Assignment(ident, expr)
       } else {
-        throw Lexer.InvalidInputException("Unexpected input $ident $assignment expected variable :=")
+        throw Lexer.InvalidInputException("Unexpected input '$ident $assignment' expected 'variable :='")
       }
     }
     throw UnexpectedEndOfFile()

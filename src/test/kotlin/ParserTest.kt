@@ -90,4 +90,12 @@ object ParserTest {
       Parser.parse(program)
     }
   }
+
+  @Test
+  fun testMissingIdent() {
+    val program = "{val := 5}"
+    assertFailsWith<Lexer.InvalidInputException> {
+      Parser.parse(program)
+    }
+  }
 }
