@@ -5,47 +5,41 @@ import tokenising.Token
 import java.util.*
 
 object Parser {
-  data class ParseStatementsResult(val statements: LinkedList<Statement>, val rest: LinkedList<Token>)
-  data class ParseSingleStatementResult(val statement: Statement, val rest: LinkedList<Token>)
-  data class ParseExpressionResult(val expression: Expression, val rest: LinkedList<Token>)
-
   class UnexpectedEndOfFile : RuntimeException("Unexpected end of file")
 
   fun parse(program: String): List<Statement> {
-    val (statements, _) = parse(Lexer.lex(program), LinkedList<Statement>())
-    return statements
+    return parse(Lexer.lex(program), LinkedList<Statement>())
   }
 
-  fun parse(program: LinkedList<Token>, statements: LinkedList<Statement>): ParseStatementsResult {
+  fun parse(program: LinkedList<Token>, statements: LinkedList<Statement>): LinkedList<Statement> {
     var tokens = program
     while (!tokens.isEmpty()) {
       val token = tokens.removeAt(0)
       when (token) {
         is Token.OpenBlock -> {
           val parseResult = parse(tokens, LinkedList<Statement>())
-          statements.add(Statement.CodeBlock(parseResult.statements))
+          statements.add(Statement.CodeBlock(parseResult))
         }
         is Token.CloseBlock -> {
-          return ParseStatementsResult(statements, tokens)
+          return statements
         }
         is Token.ValDeclaration -> {
-          val (statement, rest) = parseAssign(tokens)
+          val statement = parseAssign(tokens)
           statements.add(statement)
-          tokens = rest
         }
         else -> throw Lexer.InvalidInputException("Unexpected token $token expecting statement")
       }
     }
-    return ParseStatementsResult(statements, tokens)
+    return statements
   }
 
-  fun parseAssign(tokens: LinkedList<Token>): ParseSingleStatementResult {
+  fun parseAssign(tokens: LinkedList<Token>): Statement.Assignment {
     if (tokens.size > 2){
       val ident = tokens.removeFirst()
       val assignment = tokens.removeFirst()
       if (ident is Token.Identifier && assignment is Token.AssignmentOperator){
-        val (expr, rest) = parseExpression(tokens)
-        return ParseSingleStatementResult(Statement.Assignment(ident, expr), rest)
+        val expr = parseExpression(tokens)
+        return Statement.Assignment(ident, expr)
       } else {
         throw Lexer.InvalidInputException("Unexpected input $ident $assignment expected variable :=")
       }
@@ -53,16 +47,16 @@ object Parser {
     throw UnexpectedEndOfFile()
   }
 
-  fun parseExpression(tokens: LinkedList<Token>): ParseExpressionResult {
+  fun parseExpression(tokens: LinkedList<Token>): Expression {
     if (!tokens.isEmpty()){
       val token = tokens.removeFirst()
       when (token) {
-        is Token.Num -> return ParseExpressionResult(Expression.Num(token.value), tokens)
+        is Token.Num -> return Expression.Num(token.value)
         is Token.Op -> {
           val operator = token.operator
-          val (lhs, lhsRest) = parseExpression(tokens)
-          val (rhs, rhsRest) = parseExpression(lhsRest)
-          return ParseExpressionResult(Expression.Op(operator, lhs, rhs), rhsRest)
+          val lhs = parseExpression(tokens)
+          val rhs = parseExpression(tokens)
+          return Expression.Op(operator, lhs, rhs)
         }
       }
       throw Lexer.InvalidInputException("Unexpected token $token, expected expression")
