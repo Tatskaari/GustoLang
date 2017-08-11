@@ -23,8 +23,7 @@ object Lexer {
 
   fun getNextToken(program: String): Tokenisers.LexResult? {
     return Tokenisers.values()
-      .map { it.lex(program) }
-      .filter { it != null }.map { it!! }
+      .map { it.lex(program) }.filterNotNull()
       .minBy { it.rest.length }
   }
 }
