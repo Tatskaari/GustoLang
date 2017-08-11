@@ -1,16 +1,20 @@
-package tokenising
+package tatskaari.tokenising
 
-import StringUtils.rest
+import tatskaari.StringUtils.rest
 
 enum class Tokenisers(val lexer: (String) -> LexResult?) {
   BLOCK_OPEN({ tokeniseKeyWord(it, Token.OpenBlock) }),
   BLOCK_CLOSE({ tokeniseKeyWord(it, Token.CloseBlock) }),
-  VAL({ tokeniseKeyWord(it, Token.ValDeclaration) }),
-  ASSIGN({ tokeniseKeyWord(it, Token.AssignmentOperator) }),
+  VAL({ tokeniseKeyWord(it, Token.Val) }),
+  ASSIGN({ tokeniseKeyWord(it, Token.AssignOp) }),
+  IF({ tokeniseKeyWord(it, Token.If) }),
+  OPEN_PAREN({ tokeniseKeyWord(it, Token.OpenParen) }),
+  CLOSE_PAREN({ tokeniseKeyWord(it, Token.CloseParen) }),
   ADD({ tokeniseKeyWord(it, Token.Op(Operator.Add)) }),
   SUB({ tokeniseKeyWord(it, Token.Op(Operator.Sub)) }),
+  EQUALITY({ tokeniseKeyWord(it, Token.Op(Operator.Equality)) } ),
   IDENTIFIER({ regexTokeniser(it, """^[a-zA-Z]+""", Token::Identifier) }),
-  NUMBER({ regexTokeniser(it, "^[0-9]+", Token::Num, String::toInt )});
+  NUMBER({ regexTokeniser(it, "^[0-9]+", Token::Num, String::toInt) });
 
   data class LexResult(val rest: String, val token: Token)
 
@@ -23,7 +27,7 @@ enum class Tokenisers(val lexer: (String) -> LexResult?) {
     }
 
     fun regexTokeniser(program : String, regexString: String, tokenConstructor: (String) -> Token) : LexResult?{
-      return regexTokeniser(program, regexString, tokenConstructor, {it})
+      return regexTokeniser(program, regexString, tokenConstructor, { it })
     }
 
     fun <T> regexTokeniser(program: String, regexString: String, tokenConstructor: (T) -> Token, parser : ((String) -> T)) : LexResult? {

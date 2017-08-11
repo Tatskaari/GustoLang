@@ -1,18 +1,16 @@
+package tatskaari
+
 import org.testng.annotations.Test
-import parsing.Expression
-import parsing.Parser
-import parsing.Statement
-import tokenising.Lexer
-import tokenising.Operator
-import tokenising.Token
+import tatskaari.parsing.Expression
+import tatskaari.parsing.Parser
+import tatskaari.parsing.Statement
+import tatskaari.tokenising.Lexer
+import tatskaari.tokenising.Operator
+import tatskaari.tokenising.Token
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 object ParserTest {
-  fun compareASTs(expected: List<Statement>, actual: List<Statement>) {
-    expected.zip(actual).map { (expectedVal, actualVal) -> assertEquals(expectedVal, actualVal) }
-  }
-
   @Test
   fun testNestedBlocks() {
     val program = TestUtil.loadProgram("NestedCodeBlock")
@@ -29,7 +27,7 @@ object ParserTest {
 
     val actualAST = Parser.parse(program)
 
-    compareASTs(expectedAST, actualAST)
+    TestUtil.compareASTs(expectedAST, actualAST)
   }
 
   @Test
@@ -48,7 +46,7 @@ object ParserTest {
 
     val actualAST = Parser.parse(program)
 
-    compareASTs(expectedAST, actualAST)
+    TestUtil.compareASTs(expectedAST, actualAST)
   }
 
   @Test

@@ -1,6 +1,6 @@
-package parsing
+package tatskaari.parsing
 
-import tokenising.Operator
+import tatskaari.tokenising.Operator
 
 sealed class Expression {
   data class Num(val value: Int) : Expression()

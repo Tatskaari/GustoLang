@@ -1,7 +1,9 @@
+package tatskaari
+
 import org.testng.annotations.Test
-import tokenising.Lexer
-import tokenising.Operator
-import tokenising.Token
+import tatskaari.tokenising.Lexer
+import tatskaari.tokenising.Operator
+import tatskaari.tokenising.Token
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -14,9 +16,9 @@ object LexerTest {
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
       Token.OpenBlock,
-      Token.ValDeclaration,
+      Token.Val,
       Token.Identifier("someVariable"),
-      Token.AssignmentOperator,
+      Token.AssignOp,
       Token.Num(12),
       Token.CloseBlock
     )
@@ -28,24 +30,49 @@ object LexerTest {
 
   @Test
   fun testInvalidToken() {
-    assertFailsWith<Lexer.InvalidInputException> {Lexer.lex("{ var a := 123 } []';")}
+    assertFailsWith<Lexer.InvalidInputException> { Lexer.lex("{ var a := 123 } []';")}
   }
 
   @Test
-  fun testExpression() {
+  fun testAssignExpression() {
     val program = "{val someVariable := + 12 12}"
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
       Token.OpenBlock,
-      Token.ValDeclaration,
+      Token.Val,
       Token.Identifier("someVariable"),
-      Token.AssignmentOperator,
+      Token.AssignOp,
       Token.Op(Operator.Add),
       Token.Num(12),
       Token.Num(12),
       Token.CloseBlock
     )
 
+    assert(tokenList.size == expectedTokens.size)
+    tokenList.zip(expectedTokens)
+      .forEach { (actual, expect) -> assertEquals(actual, expect) }
+  }
+
+  @Test
+  fun testIfStatement() {
+    val program = "{if (1 = 1) {val someVariable := 2}}"
+    val tokenList = Lexer.lex(program)
+    val expectedTokens = listOf(
+      Token.OpenBlock,
+      Token.If,
+      Token.OpenParen,
+      Token.Num(1),
+      Token.Op(Operator.Equality),
+      Token.Num(1),
+      Token.CloseParen,
+      Token.OpenBlock,
+      Token.Val,
+      Token.Identifier("someVariable"),
+      Token.AssignOp,
+      Token.Num(2),
+      Token.CloseBlock,
+      Token.CloseBlock
+    )
     assert(tokenList.size == expectedTokens.size)
     tokenList.zip(expectedTokens)
       .forEach { (actual, expect) -> assertEquals(actual, expect) }

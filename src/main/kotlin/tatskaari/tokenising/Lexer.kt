@@ -1,4 +1,4 @@
-package tokenising
+package tatskaari.tokenising
 
 import java.util.*
 
