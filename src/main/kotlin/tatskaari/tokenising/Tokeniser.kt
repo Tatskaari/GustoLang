@@ -8,6 +8,7 @@ enum class Tokenisers(val lexer: (String) -> LexResult?) {
   VAL({ tokeniseKeyWord(it, Token.Val) }),
   ASSIGN({ tokeniseKeyWord(it, Token.AssignOp) }),
   IF({ tokeniseKeyWord(it, Token.If) }),
+  ELSE({ tokeniseKeyWord(it, Token.Else) }),
   OPEN_PAREN({ tokeniseKeyWord(it, Token.OpenParen) }),
   CLOSE_PAREN({ tokeniseKeyWord(it, Token.CloseParen) }),
   INPUT({ tokeniseKeyWord(it, Token.Input) }),

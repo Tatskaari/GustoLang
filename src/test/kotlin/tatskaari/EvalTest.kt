@@ -143,4 +143,22 @@ object EvalTest {
     assertEquals("1\n", output)
 
   }
+
+  @Test
+  fun ifElseTest(){
+    val program = TestUtil.loadProgram("IfElse")
+
+    var env = HashMap<String, Eval.Value>()
+    var inputReader = BufferedReader(StringReader("10"))
+    Eval(inputReader).eval(Parser.parse(program), env)
+
+    assertEquals(Eval.Value.NumVal(1), env.getValue("someVar"))
+
+    env = HashMap<String, Eval.Value>()
+    inputReader = BufferedReader(StringReader("11"))
+    Eval(inputReader).eval(Parser.parse(program), env)
+
+    assertEquals(Eval.Value.NumVal(2), env.getValue("someVar"))
+
+  }
 }

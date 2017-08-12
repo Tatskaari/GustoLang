@@ -6,6 +6,7 @@ sealed class Token(val tokenText : String) {
   object Val : Token("val")
   object AssignOp : Token(":=")
   object If : Token("if")
+  object Else : Token("else")
   object OpenParen : Token("(")
   object CloseParen : Token(")")
   object Input : Token("input")

@@ -63,7 +63,7 @@ object Parser {
       return Statement.Assignment(ident, expr)
   }
 
-  fun parseIf(tokens : LinkedList<Token>) : Statement.If {
+  fun parseIf(tokens : LinkedList<Token>) : Statement {
     getNextToken(tokens, Token.OpenParen)
 
     val condition = parseExpression(tokens)
@@ -71,9 +71,15 @@ object Parser {
     getNextToken(tokens, Token.CloseParen)
     getNextToken(tokens, Token.OpenBlock)
 
-    val body = parseCodeBlock(tokens)
+    val ifBody = parseCodeBlock(tokens)
 
-    return Statement.If(condition, body.statementList)
+    if (checkNextToken(tokens, Token.Else)){
+      getNextToken(tokens, Token.OpenBlock)
+      val elseBody = parseCodeBlock(tokens)
+      return Statement.IfElse(condition, ifBody.statementList, elseBody.statementList)
+    } else {
+      return Statement.If(condition, ifBody.statementList)
+    }
   }
 
   fun parseExpression(tokens: LinkedList<Token>): Expression {
@@ -104,5 +110,17 @@ object Parser {
       return expectedToken::class.cast(token)
     }
     throw Lexer.InvalidInputException("unexpected input '$token', expected '$expectedToken'")
+  }
+
+  fun <T : Token> checkNextToken(tokens : LinkedList<Token>, expectedToken : T) : Boolean {
+    if (tokens.isEmpty()){
+      return false
+    }
+
+    val token = tokens.removeFirst()
+    if (token::class.isSubclassOf(expectedToken::class)) {
+      return true
+    }
+    return false
   }
 }

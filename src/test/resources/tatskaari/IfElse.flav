@@ -1,0 +1,8 @@
+{
+    input a
+    if (= 10 a) {
+        val someVar := 1
+    } else {
+        val someVar := 2
+    }
+}

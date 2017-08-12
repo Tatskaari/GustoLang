@@ -24,7 +24,7 @@ this project is run through Travis CI and passed through a suite of unit tests.
   - If statements - Done
   - Expressions - Done
   - Loops
-  - input and output
+  - input and output - Done
   - functions
   - variable types
 - byte code

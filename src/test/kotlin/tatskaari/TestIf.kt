@@ -31,6 +31,28 @@ object TestIf {
   }
 
   @Test
+  fun testIfElse(){
+    val program = TestUtil.loadProgram("IfElse")
+
+    val expected = listOf(
+        Statement.CodeBlock(
+            listOf(
+                Statement.Input(Token.Identifier("a")),
+                Statement.IfElse(
+                    Expression.Op(Operator.Equality, Expression.Num(10), Expression.Identifier("a")),
+                    listOf(Statement.Assignment(Token.Identifier("someVar"), Expression.Num(1))),
+                    listOf(Statement.Assignment(Token.Identifier("someVar"), Expression.Num(2)))
+                )
+            )
+        )
+    )
+
+    val actual = Parser.parse(program)
+
+    TestUtil.compareASTs(expected, actual)
+  }
+
+  @Test
   fun missingBody(){
     val program = "{ if ( = 1 1 ) "
     assertFailsWith<Parser.UnexpectedEndOfFile> {

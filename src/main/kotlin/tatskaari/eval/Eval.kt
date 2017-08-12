@@ -28,17 +28,8 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   fun eval(statement : Statement, env: MutableMap<String, Value>) {
     when (statement) {
       is Statement.CodeBlock -> eval(statement.statementList, env)
-      is Statement.If -> {
-        val condition = statement.condition
-        val conditionResult = eval(condition, env)
-        if (conditionResult is Value.BoolVal){
-          if (conditionResult.boolVal){
-            eval(statement.body, env)
-          }
-        } else {
-          throw TypeMismatch("If statement condition type error expected bool got $condition")
-        }
-      }
+      is Statement.If -> evalIf(statement.condition, statement.body, null, env)
+      is Statement.IfElse -> evalIf(statement.condition, statement.ifBody, statement.elseBody, env)
       is Statement.Assignment -> {
         val identifier = statement.identifier.name
         val value = eval(statement.expression, env)
@@ -109,6 +100,20 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     when(operation.resultType){
       Operator.ResultType.BOOLEAN -> return applyBoolOp()
       else -> return applyNumOp()
+    }
+
+  }
+
+  fun evalIf(condition : Expression, ifBody : List<Statement>, elseBody : List<Statement>?, env: MutableMap<String, Value>) {
+    val conditionResult = eval(condition, env)
+    if (conditionResult is Value.BoolVal){
+      if (conditionResult.boolVal){
+        eval(ifBody, env)
+      } else if (elseBody != null){
+        eval(elseBody, env)
+      }
+    } else {
+      throw TypeMismatch("If statement condition type error expected bool got $condition")
     }
 
   }
