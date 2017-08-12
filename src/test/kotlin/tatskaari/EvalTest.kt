@@ -213,4 +213,12 @@ object EvalTest {
       Eval().eval(program, HashMap())
     }
   }
+
+  @Test
+  fun fibTest() {
+    val program = Parser.parse(TestUtil.loadProgram("Fib"))
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program, env)
+    assertEquals(Eval.Value.NumVal(13), env.getValue("c"))
+  }
 }

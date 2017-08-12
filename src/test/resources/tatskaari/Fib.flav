@@ -1,0 +1,8 @@
+val a := 1
+val b := 1
+val c := + a b
+while (!= c 13){
+    val a := c
+    val b := + b c
+    val c := + a b
+}
