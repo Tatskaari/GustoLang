@@ -69,6 +69,7 @@
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>
+                            <finalName>flavc</finalName>
                         </configuration>
                     </execution>
                 </executions>

@@ -74,6 +74,7 @@ object Parser {
     val ifBody = parseCodeBlock(tokens)
 
     if (checkNextToken(tokens, Token.Else)){
+      getNextToken(tokens, Token.Else)
       getNextToken(tokens, Token.OpenBlock)
       val elseBody = parseCodeBlock(tokens)
       return Statement.IfElse(condition, ifBody.statementList, elseBody.statementList)
@@ -117,7 +118,7 @@ object Parser {
       return false
     }
 
-    val token = tokens.removeFirst()
+    val token = tokens[0]
     if (token::class.isSubclassOf(expectedToken::class)) {
       return true
     }
