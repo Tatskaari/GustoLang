@@ -4,6 +4,8 @@ import org.testng.annotations.Test
 import tatskaari.eval.Eval
 import tatskaari.parsing.Parser
 import java.io.BufferedReader
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
 import java.io.StringReader
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -128,5 +130,17 @@ object EvalTest {
     val env2 = HashMap<String, Eval.Value>()
     Eval(inputReader2).eval(Parser.parse("{input a}"), env2)
     assertEquals(Eval.Value.NullVal, env.getValue("a"))
+
+  }
+
+  @Test
+  fun outputTest(){
+    val outStream = ByteArrayOutputStream()
+    val printStream = PrintStream(outStream)
+    Eval(printStream).eval(Parser.parse("{output 1}"), HashMap())
+    val output = String(outStream.toByteArray())
+
+    assertEquals("1\n", output)
+
   }
 }

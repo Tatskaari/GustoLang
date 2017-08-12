@@ -94,9 +94,6 @@ object Parser {
     throw UnexpectedEndOfFile()
   }
 
-  // Normally type parameters are not instantiated into objects so doing as? with them can cause funny behavior
-  // inlining the function and marking the type as reified will make this work by creating a specialised
-  // inlined function every time this is called
   fun <T : Token> getNextToken(tokens : LinkedList<Token>, expectedToken : T) : T {
     if (tokens.isEmpty()){
       throw UnexpectedEndOfFile()

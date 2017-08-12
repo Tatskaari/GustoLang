@@ -4,9 +4,13 @@ import tatskaari.parsing.Expression
 import tatskaari.parsing.Statement
 import tatskaari.tokenising.Operator
 import java.io.BufferedReader
+import java.io.PrintStream
 
-class Eval(val inputReader: BufferedReader) {
-  constructor() : this(System.`in`.bufferedReader())
+class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
+  constructor() : this(System.`in`.bufferedReader(), System.out)
+  constructor(inputReader: BufferedReader) : this(inputReader, System.out)
+  constructor(outputStream: PrintStream) : this(System.`in`.bufferedReader(), outputStream)
+
 
   sealed class Value(val value : Any) {
     data class NumVal(val intVal : Int) : Value(intVal)
@@ -58,6 +62,10 @@ class Eval(val inputReader: BufferedReader) {
         } else {
           env[identifier] = Value.NumVal(input.toInt())
         }
+      }
+      is Statement.Output -> {
+        val value = eval(statement.expression, env)
+        outputStream.println(value.value)
       }
     }
   }
