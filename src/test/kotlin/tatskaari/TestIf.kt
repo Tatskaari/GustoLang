@@ -4,8 +4,10 @@ import org.testng.annotations.Test
 import tatskaari.parsing.Expression
 import tatskaari.parsing.Parser
 import tatskaari.parsing.Statement
+import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Operator
 import tatskaari.tokenising.Token
+import kotlin.test.assertFailsWith
 
 object TestIf {
   @Test
@@ -26,5 +28,45 @@ object TestIf {
     val actual = Parser.parse(program)
 
     TestUtil.compareASTs(expected, actual)
+  }
+
+  @Test
+  fun missingBody(){
+    val program = "{ if ( = 1 1 ) "
+    assertFailsWith<Parser.UnexpectedEndOfFile> {
+      Parser.parse(program)
+    }
+  }
+
+  @Test
+  fun missingCloseBlock(){
+    val program = "{ if ( = 1 1 ) {"
+    assertFailsWith<Parser.UnexpectedEndOfFile> {
+      Parser.parse(program)
+    }
+  }
+
+  @Test
+  fun missingConditionBlock(){
+    val program = "{ if"
+    assertFailsWith<Parser.UnexpectedEndOfFile> {
+      Parser.parse(program)
+    }
+  }
+
+  @Test
+  fun invalidCondition(){
+    val program = "{ if(== 1 2) { }"
+    assertFailsWith<Lexer.InvalidInputException> {
+      Parser.parse(program)
+    }
+  }
+
+  @Test
+  fun invalidBracketsForBody(){
+    val program = "{ if(== 1 2) ( )"
+    assertFailsWith<Lexer.InvalidInputException> {
+      Parser.parse(program)
+    }
   }
 }

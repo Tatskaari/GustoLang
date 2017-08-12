@@ -8,16 +8,26 @@ object Parser {
   class UnexpectedEndOfFile : RuntimeException("Unexpected end of file")
 
   fun parse(program: String): List<Statement> {
-    return parse(Lexer.lex(program), LinkedList<Statement>())
+    return parse(Lexer.lex(program))
   }
 
-  fun parse(program: LinkedList<Token>, statements: LinkedList<Statement>): LinkedList<Statement> {
+  fun parseCodeBlock(tokens : LinkedList<Token>) : Statement.CodeBlock {
+    if (tokens.isEmpty()){
+      throw UnexpectedEndOfFile()
+    }
+    val body = parse(tokens)
+
+    return Statement.CodeBlock(body)
+
+  }
+
+  fun parse(program: LinkedList<Token>): LinkedList<Statement> {
+    val statements = LinkedList<Statement>()
     while (!program.isEmpty()) {
       val token = program.removeAt(0)
       when (token) {
         is Token.OpenBlock -> {
-          val parseResult = parse(program, LinkedList<Statement>())
-          statements.add(Statement.CodeBlock(parseResult))
+          statements.add(parseCodeBlock(program))
         }
         is Token.CloseBlock -> {
           return statements
@@ -37,38 +47,23 @@ object Parser {
   }
 
   fun parseAssign(tokens: LinkedList<Token>): Statement.Assignment {
-    if (tokens.size > 2){
-      val ident = tokens.removeFirst()
-      val assignment = tokens.removeFirst()
-      if (ident is Token.Identifier && assignment is Token.AssignOp){
-        val expr = parseExpression(tokens)
-        return Statement.Assignment(ident, expr)
-      } else {
-        throw Lexer.InvalidInputException("Unexpected input '$ident $assignment' expected 'variable :='")
-      }
-    }
-    throw UnexpectedEndOfFile()
+      val ident = getNextToken(tokens, Token.Identifier("someVariable"))
+      getNextToken(tokens, Token.AssignOp)
+      val expr = parseExpression(tokens)
+      return Statement.Assignment(ident, expr)
   }
 
   fun parseIf(tokens : LinkedList<Token>) : Statement.If {
-    if (!tokens.isEmpty()) {
-      val openParen = tokens.removeFirst()
-      if (openParen is Token.OpenParen){
-        val condition = parseExpression(tokens)
-        val closeParen = tokens.removeFirst()
-        if(closeParen is Token.CloseParen){
-          val body = parse(tokens, LinkedList())
-          if (body.size == 1 && body[0] is Statement.CodeBlock){
-            return Statement.If(condition, (body[0] as Statement.CodeBlock).statementList)
-          }
-          //TODO this should check what happened
-          throw UnexpectedEndOfFile()
-        }
-        throw Lexer.InvalidInputException("Unexpected input '$closeParen' expected ')'")
-      }
-      throw Lexer.InvalidInputException("Unexpected input '$openParen' expected '('")
-    }
-    throw UnexpectedEndOfFile()
+    getNextToken(tokens, Token.OpenParen)
+
+    val condition = parseExpression(tokens)
+
+    getNextToken(tokens, Token.CloseParen)
+    getNextToken(tokens, Token.OpenBlock)
+
+    val body = parseCodeBlock(tokens)
+
+    return Statement.If(condition, body.statementList)
   }
 
   fun parseExpression(tokens: LinkedList<Token>): Expression {
@@ -86,5 +81,17 @@ object Parser {
       throw Lexer.InvalidInputException("Unexpected token $token, expected expression")
     }
     throw UnexpectedEndOfFile()
+  }
+
+  inline fun <reified T : Token> getNextToken(tokens : LinkedList<Token>, expectedToken : T) : T {
+    if (tokens.isEmpty()){
+      throw UnexpectedEndOfFile()
+    }
+
+    val token = tokens.removeFirst() as? T
+    if (token != null){
+      return token
+    }
+    throw Lexer.InvalidInputException("unexpected input '$token', expected '$expectedToken'")
   }
 }
