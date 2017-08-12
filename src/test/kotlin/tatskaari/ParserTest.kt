@@ -50,6 +50,24 @@ object ParserTest {
   }
 
   @Test
+  fun TestExpressionWithIdent(){
+    val program = "{val someVariable := 12 val someVar := + someVariable 1 }"
+    val expectedAST = listOf(
+      Statement.CodeBlock(
+        listOf(
+          Statement.Assignment(Token.Identifier("someVariable"), Expression.Num(12)),
+          Statement.Assignment(
+            Token.Identifier("someVar"),
+            Expression.Op(Operator.Add, Expression.Ident("someVariable"), Expression.Num(1))
+          )
+        )
+      )
+    )
+
+    TestUtil.compareASTs(expectedAST, Parser.parse(program))
+  }
+
+  @Test
   fun testInvalidTokenInExpression(){
     val program = "{val someVariable := + 12 val}"
     assertFailsWith<Lexer.InvalidInputException> {

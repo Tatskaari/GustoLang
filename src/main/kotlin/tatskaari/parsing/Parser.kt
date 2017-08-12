@@ -77,19 +77,23 @@ object Parser {
           val rhs = parseExpression(tokens)
           return Expression.Op(operator, lhs, rhs)
         }
+        is Token.Identifier -> return Expression.Ident(token.tokenText)
       }
       throw Lexer.InvalidInputException("Unexpected token $token, expected expression")
     }
     throw UnexpectedEndOfFile()
   }
 
+  // Normally type parameters are not instantiated into objects so doing as? with them can cause funny behavior
+  // inlining the function and marking the type as reified will make this work by creating a specialised
+  // inlined function every time this is called
   inline fun <reified T : Token> getNextToken(tokens : LinkedList<Token>, expectedToken : T) : T {
     if (tokens.isEmpty()){
       throw UnexpectedEndOfFile()
     }
 
-    val token = tokens.removeFirst() as? T
-    if (token != null){
+    val token = tokens.removeFirst()
+    if (token is T) {
       return token
     }
     throw Lexer.InvalidInputException("unexpected input '$token', expected '$expectedToken'")
