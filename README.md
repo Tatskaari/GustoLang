@@ -18,7 +18,15 @@ this project is run through Travis CI and passed through a suite of unit tests.
   - input and output - Done
   - function calls
   - variable types (decimal, character?)
-- Interpreter
+- Interpreter 
+  - Code Blocks - Done
+  - Assignments - Done
+  - If statements - Done
+  - Expressions - Done
+  - Loops
+  - inptu and output
+  - functions
+  - variable types
 - byte code
 
 # Syntax/Grammar 
