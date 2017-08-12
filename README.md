@@ -13,9 +13,9 @@ this project is run through Travis CI and passed through a suite of unit tests.
   - Code blocks - Done
   - Variables and assignment - Done
   - RPN expressions - Done
-  - if statements
+  - if statements - Done
   - loops
-  - input and output
+  - input and output - Done
   - function calls
   - variable types (decimal, character?)
 - Interpreter

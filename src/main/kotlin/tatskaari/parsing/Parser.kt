@@ -21,24 +21,32 @@ object Parser {
 
   }
 
-  fun parse(program: LinkedList<Token>): LinkedList<Statement> {
+  fun parse(tokens: LinkedList<Token>): LinkedList<Statement> {
     val statements = LinkedList<Statement>()
-    while (!program.isEmpty()) {
-      val token = program.removeAt(0)
+    while (!tokens.isEmpty()) {
+      val token = tokens.removeAt(0)
       when (token) {
         is Token.OpenBlock -> {
-          statements.add(parseCodeBlock(program))
+          statements.add(parseCodeBlock(tokens))
         }
         is Token.CloseBlock -> {
           return statements
         }
         is Token.Val -> {
-          val statement = parseAssign(program)
+          val statement = parseAssign(tokens)
           statements.add(statement)
         }
         is Token.If -> {
-          val statement = parseIf(program)
+          val statement = parseIf(tokens)
           statements.add(statement)
+        }
+        is Token.Input -> {
+          val identifier = getNextToken(tokens, Token.Identifier("someVariable"))
+          statements.add(Statement.Input(identifier))
+        }
+        is Token.Output -> {
+          val expr = parseExpression(tokens)
+          statements.add(Statement.Output(expr))
         }
         else -> throw Lexer.InvalidInputException("Unexpected token $token expecting statement")
       }
@@ -77,7 +85,7 @@ object Parser {
           val rhs = parseExpression(tokens)
           return Expression.Op(operator, lhs, rhs)
         }
-        is Token.Identifier -> return Expression.Ident(token.tokenText)
+        is Token.Identifier -> return Expression.Identifier(token.tokenText)
       }
       throw Lexer.InvalidInputException("Unexpected token $token, expected expression")
     }

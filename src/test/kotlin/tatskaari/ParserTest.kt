@@ -7,7 +7,6 @@ import tatskaari.parsing.Statement
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Operator
 import tatskaari.tokenising.Token
-import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 object ParserTest {
@@ -58,8 +57,23 @@ object ParserTest {
           Statement.Assignment(Token.Identifier("someVariable"), Expression.Num(12)),
           Statement.Assignment(
             Token.Identifier("someVar"),
-            Expression.Op(Operator.Add, Expression.Ident("someVariable"), Expression.Num(1))
+            Expression.Op(Operator.Add, Expression.Identifier("someVariable"), Expression.Num(1))
           )
+        )
+      )
+    )
+
+    TestUtil.compareASTs(expectedAST, Parser.parse(program))
+  }
+
+  @Test
+  fun testInputOutput(){
+    val program = TestUtil.loadProgram("InputOutput")
+    val expectedAST = listOf(
+      Statement.CodeBlock(
+        listOf(
+          Statement.Input(Token.Identifier("a")),
+          Statement.Output(Expression.Identifier("a"))
         )
       )
     )
@@ -108,7 +122,7 @@ object ParserTest {
   }
 
   @Test
-  fun testMissingIdent() {
+  fun testMissingIdentifier() {
     val program = "{val := 5}"
     assertFailsWith<Lexer.InvalidInputException> {
       Parser.parse(program)

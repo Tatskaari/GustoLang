@@ -77,4 +77,12 @@ object LexerTest {
     tokenList.zip(expectedTokens)
       .forEach { (actual, expect) -> assertEquals(actual, expect) }
   }
+
+  @Test
+  fun testInputOutput(){
+    val program = "input output"
+    val tokens = Lexer.lex(program)
+    val expectedTokens = listOf(Token.Input, Token.Output)
+    assertEquals(tokens, expectedTokens)
+  }
 }
