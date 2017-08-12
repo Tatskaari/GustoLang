@@ -69,17 +69,16 @@ object Eval {
       if (lhsVal is Value.NumVal && rhsVal is Value.NumVal) {
         when (operation) {
           is Operator.Add -> return Value.NumVal(lhsVal.intVal + rhsVal.intVal)
-          is Operator.Sub -> return Value.NumVal(lhsVal.intVal - rhsVal.intVal)
+          else -> return Value.NumVal(lhsVal.intVal - rhsVal.intVal)
         }
+      } else {
+        throw TypeMismatch("Number operator applied to $lhsVal and $rhsVal")
       }
-      throw TypeMismatch("Number operator applied to $lhsVal and $rhsVal")
     }
 
     fun applyBoolOp() : Value.BoolVal {
-      when(operation){
-        is Operator.Equality -> return Value.BoolVal(lhsVal.value == rhsVal.value)
-      }
-      throw TypeMismatch("Boolean operator applied to $lhsVal and $rhsVal")
+      //TODO deal with other boolean operations
+      return Value.BoolVal(lhsVal.value == rhsVal.value)
     }
 
     when(operation.resultType){
