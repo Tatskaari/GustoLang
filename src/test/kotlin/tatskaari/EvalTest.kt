@@ -3,6 +3,8 @@ package tatskaari
 import org.testng.annotations.Test
 import tatskaari.eval.Eval
 import tatskaari.parsing.Parser
+import java.io.BufferedReader
+import java.io.StringReader
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -13,7 +15,7 @@ object EvalTest {
     val env = HashMap<String, Eval.Value>()
 
     val AST = Parser.parse(program)
-    Eval.eval(AST, env)
+    Eval().eval(AST, env)
 
     assertEquals(env.getValue("b"), Eval.Value.NumVal(1))
   }
@@ -23,7 +25,7 @@ object EvalTest {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "{if (1) {}}"
       val env = HashMap<String, Eval.Value>()
-      Eval.eval(Parser.parse(program), env)
+      Eval().eval(Parser.parse(program), env)
     }
   }
 
@@ -32,7 +34,7 @@ object EvalTest {
     assertFailsWith<Eval.UndefinedIdentifier> {
       val program = "{if (= 1 a) {}}"
       val env = HashMap<String, Eval.Value>()
-      Eval.eval(Parser.parse(program), env)
+      Eval().eval(Parser.parse(program), env)
     }
   }
 
@@ -41,7 +43,7 @@ object EvalTest {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "{val a := 1 val a := = 1 1}"
       val env = HashMap<String, Eval.Value>()
-      Eval.eval(Parser.parse(program), env)
+      Eval().eval(Parser.parse(program), env)
     }
   }
 
@@ -50,7 +52,7 @@ object EvalTest {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "{val a := + 1 = 1 1}"
       val env = HashMap<String, Eval.Value>()
-      Eval.eval(Parser.parse(program), env)
+      Eval().eval(Parser.parse(program), env)
     }
   }
 
@@ -59,7 +61,7 @@ object EvalTest {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "{val a := + = 1 1 1 }"
       val env = HashMap<String, Eval.Value>()
-      Eval.eval(Parser.parse(program), env)
+      Eval().eval(Parser.parse(program), env)
     }
   }
 
@@ -67,7 +69,7 @@ object EvalTest {
   fun testAdd(){
     val program = "{val a := + 1 1}"
     val env = HashMap<String, Eval.Value>()
-    Eval.eval(Parser.parse(program), env)
+    Eval().eval(Parser.parse(program), env)
 
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
 
@@ -77,7 +79,7 @@ object EvalTest {
   fun testSub(){
     val program = "{val a := - 1 1}"
     val env = HashMap<String, Eval.Value>()
-    Eval.eval(Parser.parse(program), env)
+    Eval().eval(Parser.parse(program), env)
 
     assertEquals(Eval.Value.NumVal(0), env.getValue("a"))
   }
@@ -86,8 +88,45 @@ object EvalTest {
   fun testTrueEqTrue(){
     val program = "{val a := = = 1 1 = 1 1}"
     val env = HashMap<String, Eval.Value>()
-    Eval.eval(Parser.parse(program), env)
+    Eval().eval(Parser.parse(program), env)
 
     assertEquals(Eval.Value.BoolVal(true), env.getValue("a"))
+  }
+
+  @Test
+  fun testNumInput(){
+    val inputReader = BufferedReader(StringReader("1234"))
+    val env = HashMap<String, Eval.Value>()
+    Eval(inputReader).eval(Parser.parse("{input a}"), env)
+    assertEquals(Eval.Value.NumVal(1234), env.getValue("a"))
+  }
+
+  @Test
+  fun testTrueInput(){
+    val inputReader = BufferedReader(StringReader("true"))
+    val env = HashMap<String, Eval.Value>()
+    Eval(inputReader).eval(Parser.parse("{input a}"), env)
+    assertEquals(Eval.Value.BoolVal(true), env.getValue("a"))
+  }
+
+  @Test
+  fun testFalseInput(){
+    val inputReader = BufferedReader(StringReader("false"))
+    val env = HashMap<String, Eval.Value>()
+    Eval(inputReader).eval(Parser.parse("{input a}"), env)
+    assertEquals(Eval.Value.BoolVal(false), env.getValue("a"))
+  }
+
+  @Test
+  fun testNullInput(){
+    val inputReader = BufferedReader(StringReader("\n"))
+    val env = HashMap<String, Eval.Value>()
+    Eval(inputReader).eval(Parser.parse("{input a}"), env)
+    assertEquals(Eval.Value.NullVal, env.getValue("a"))
+
+    val inputReader2 = BufferedReader(StringReader(""))
+    val env2 = HashMap<String, Eval.Value>()
+    Eval(inputReader2).eval(Parser.parse("{input a}"), env2)
+    assertEquals(Eval.Value.NullVal, env.getValue("a"))
   }
 }

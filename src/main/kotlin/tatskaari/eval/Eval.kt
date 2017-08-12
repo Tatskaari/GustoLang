@@ -3,11 +3,15 @@ package tatskaari.eval
 import tatskaari.parsing.Expression
 import tatskaari.parsing.Statement
 import tatskaari.tokenising.Operator
+import java.io.BufferedReader
 
-object Eval {
+class Eval(val inputReader: BufferedReader) {
+  constructor() : this(System.`in`.bufferedReader())
+
   sealed class Value(val value : Any) {
     data class NumVal(val intVal : Int) : Value(intVal)
     data class BoolVal(val boolVal : Boolean) : Value(boolVal)
+    object NullVal : Value(NullVal)
   }
 
   data class TypeMismatch(override val message : String) : RuntimeException(message)
@@ -41,6 +45,19 @@ object Eval {
           }
         }
         env[identifier] = value
+      }
+      is Statement.Input -> {
+        val identifier = statement.identifier.name
+        val input = inputReader.readLine()
+        if (input == null || input.isEmpty()) {
+          env[identifier] = Value.NullVal
+        } else if ("true" == input) {
+          env[identifier] = Value.BoolVal(true)
+        } else if("false" == input) {
+          env[identifier] = Value.BoolVal(false)
+        } else {
+          env[identifier] = Value.NumVal(input.toInt())
+        }
       }
     }
   }
