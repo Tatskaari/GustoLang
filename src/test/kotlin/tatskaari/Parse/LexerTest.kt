@@ -1,6 +1,7 @@
-package tatskaari
+package tatskaari.Parse
 
 import org.testng.annotations.Test
+import tatskaari.TestUtil
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Operator
 import tatskaari.tokenising.Token
@@ -83,6 +84,14 @@ object LexerTest {
     val program = "input output"
     val tokens = Lexer.lex(program)
     val expectedTokens = listOf(Token.Input, Token.Output)
+    assertEquals(tokens, expectedTokens)
+  }
+
+  @Test
+  fun notTest() {
+    val program = "!true"
+    val tokens = Lexer.lex(program)
+    val expectedTokens = listOf(Token.Not, Token.True)
     assertEquals(tokens, expectedTokens)
   }
 }

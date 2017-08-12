@@ -9,4 +9,5 @@ sealed class Statement {
   data class IfElse(val condition: Expression, val ifBody: List<Statement>, val elseBody: List<Statement>) : Statement()
   data class Input(val identifier: Token.Identifier) : Statement()
   data class Output(val expression: Expression) : Statement()
+  data class While(val condition: Expression, val body: List<Statement>) : Statement()
 }

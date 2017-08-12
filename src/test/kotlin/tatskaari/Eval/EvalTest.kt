@@ -1,6 +1,7 @@
-package tatskaari
+package tatskaari.Eval
 
 import org.testng.annotations.Test
+import tatskaari.TestUtil
 import tatskaari.eval.Eval
 import tatskaari.parsing.Parser
 import java.io.BufferedReader
@@ -178,7 +179,15 @@ object EvalTest {
   }
 
   @Test
-  fun testIfLitteral() {
+  fun testNot() {
+    val program = Parser.parse("{val a := !false}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program, env)
+    assertEquals(Eval.Value.BoolVal(true), env.getValue("a"))
+  }
+
+  @Test
+  fun testIfLiteral() {
     val program = Parser.parse("{if (true) {val a := 1} else {val a := 2}}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program, env)
@@ -188,5 +197,21 @@ object EvalTest {
     val env2 = HashMap<String, Eval.Value>()
     Eval().eval(program2, env2)
     assertEquals(Eval.Value.NumVal(2), env2.getValue("a"))
+  }
+
+  @Test
+  fun testWhile() {
+    val program = Parser.parse(TestUtil.loadProgram("While"))
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program, env)
+    assertEquals(Eval.Value.NumVal(20), env.getValue("b"))
+  }
+
+  @Test
+  fun whileWithNonBoolResult() {
+    val program = Parser.parse("while (1) { }")
+    assertFailsWith<Eval.TypeMismatch> {
+      Eval().eval(program, HashMap())
+    }
   }
 }

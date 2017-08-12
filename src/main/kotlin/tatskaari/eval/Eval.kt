@@ -30,6 +30,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
       is Statement.CodeBlock -> eval(statement.statementList, env)
       is Statement.If -> evalIf(statement.condition, statement.body, null, env)
       is Statement.IfElse -> evalIf(statement.condition, statement.ifBody, statement.elseBody, env)
+      is Statement.While -> evalWhile(statement.condition, statement.body, env)
       is Statement.Assignment -> {
         val identifier = statement.identifier.name
         val value = eval(statement.expression, env)
@@ -61,11 +62,27 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     }
   }
 
+  private fun evalWhile(condition: Expression, body: List<Statement>, env: MutableMap<String, Value>) {
+    while(evalCondition(condition, env).boolVal){
+      eval(body, env)
+    }
+  }
+
+  fun evalCondition(condition: Expression, env: Map<String, Value>) : Value.BoolVal {
+    val value = eval(condition, env)
+    if (value is Value.BoolVal) {
+      return value
+    } else {
+      throw TypeMismatch("condition did not return boolean result '$condition'")
+    }
+  }
+
   fun eval(expression: Expression, env: Map<String, Value>): Value {
     when (expression) {
       is Expression.Num -> return Value.NumVal(expression.value)
       is Expression.Bool -> return Value.BoolVal(expression.value)
       is Expression.Op -> return applyOperator(expression, env)
+      is Expression.Not -> return Value.BoolVal(!evalCondition(expression.expr, env).boolVal)
       is Expression.Identifier -> {
         val value = env[expression.name]
         if (value != null) {

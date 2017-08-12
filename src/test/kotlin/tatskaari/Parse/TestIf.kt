@@ -1,6 +1,7 @@
-package tatskaari
+package tatskaari.Parse
 
 import org.testng.annotations.Test
+import tatskaari.TestUtil
 import tatskaari.parsing.Expression
 import tatskaari.parsing.Parser
 import tatskaari.parsing.Statement

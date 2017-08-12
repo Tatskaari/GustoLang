@@ -5,7 +5,12 @@ import kotlin.test.assertEquals
 
 object TestUtil {
   fun loadProgram(name: String): String {
-    return javaClass.getResourceAsStream(name + ".flav").bufferedReader().use { it.readText() }
+    return javaClass.getResourceAsStream( "$name.flav").bufferedReader().use { it.readText() }
+  }
+
+  fun getProgramPath(name: String): String{
+    return javaClass.getResource("$name.flav").path
+
   }
 
   fun compareASTs(expected: List<Statement>, actual: List<Statement>) {

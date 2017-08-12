@@ -10,6 +10,7 @@ enum class Tokenisers(val lexer: (String) -> LexResult?) {
   IF({ tokeniseKeyWord(it, Token.If) }),
   ELSE({ tokeniseKeyWord(it, Token.Else) }),
   TRUE({ tokeniseKeyWord(it, Token.True) }),
+  WHILE({ tokeniseKeyWord(it, Token.While) }),
   FALSE({ tokeniseKeyWord(it, Token.False) }),
   OPEN_PAREN({ tokeniseKeyWord(it, Token.OpenParen) }),
   CLOSE_PAREN({ tokeniseKeyWord(it, Token.CloseParen) }),
@@ -18,6 +19,7 @@ enum class Tokenisers(val lexer: (String) -> LexResult?) {
   ADD({ tokeniseKeyWord(it, Token.Op(Operator.Add)) }),
   SUB({ tokeniseKeyWord(it, Token.Op(Operator.Sub)) }),
   EQUALITY({ tokeniseKeyWord(it, Token.Op(Operator.Equality)) }),
+  NOT({ tokeniseKeyWord(it, Token.Not) }),
   IDENTIFIER({ regexTokeniser(it, """^[a-zA-Z]+""", Token::Identifier) }),
   NUMBER({ regexTokeniser(it, "^[0-9]+", Token::Num, String::toInt) });
 
