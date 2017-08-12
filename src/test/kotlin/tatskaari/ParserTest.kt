@@ -1,4 +1,4 @@
-package tatskaari.Parse
+package tatskaari
 
 import org.testng.annotations.Test
 import tatskaari.TestUtil

@@ -1,7 +1,6 @@
-package tatskaari.Parse
+package tatskaari
 
 import org.testng.annotations.Test
-import tatskaari.TestUtil
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Operator
 import tatskaari.tokenising.Token

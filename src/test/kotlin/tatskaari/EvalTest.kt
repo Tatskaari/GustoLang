@@ -1,7 +1,6 @@
-package tatskaari.Eval
+package tatskaari
 
 import org.testng.annotations.Test
-import tatskaari.TestUtil
 import tatskaari.eval.Eval
 import tatskaari.parsing.Parser
 import java.io.BufferedReader

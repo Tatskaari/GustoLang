@@ -1,8 +1,6 @@
-package tatskaari.Parse
+package tatskaari
 
 import org.testng.annotations.Test
-import tatskaari.Main
-import tatskaari.TestUtil
 
 object MainTest {
   @Test
