@@ -159,6 +159,34 @@ object EvalTest {
     Eval(inputReader).eval(Parser.parse(program), env)
 
     assertEquals(Eval.Value.NumVal(2), env.getValue("someVar"))
+  }
 
+  @Test
+  fun testBoolTrue() {
+    val program = Parser.parse("{val a := true}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program, env)
+    assertEquals(Eval.Value.BoolVal(true), env.getValue("a"))
+  }
+
+  @Test
+  fun testBoolFalse() {
+    val program = Parser.parse("{val a := false}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program, env)
+    assertEquals(Eval.Value.BoolVal(false), env.getValue("a"))
+  }
+
+  @Test
+  fun testIfLitteral() {
+    val program = Parser.parse("{if (true) {val a := 1} else {val a := 2}}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program, env)
+    assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
+
+    val program2 = Parser.parse("{if (false) {val a := 1} else {val a := 2}}")
+    val env2 = HashMap<String, Eval.Value>()
+    Eval().eval(program2, env2)
+    assertEquals(Eval.Value.NumVal(2), env2.getValue("a"))
   }
 }

@@ -64,6 +64,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   fun eval(expression: Expression, env: Map<String, Value>): Value {
     when (expression) {
       is Expression.Num -> return Value.NumVal(expression.value)
+      is Expression.Bool -> return Value.BoolVal(expression.value)
       is Expression.Op -> return applyOperator(expression, env)
       is Expression.Identifier -> {
         val value = env[expression.name]

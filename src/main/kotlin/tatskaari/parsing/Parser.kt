@@ -88,6 +88,8 @@ object Parser {
       val token = tokens.removeFirst()
       when (token) {
         is Token.Num -> return Expression.Num(token.value)
+        is Token.True -> return Expression.Bool(true)
+        is Token.False -> return Expression.Bool(false)
         is Token.Op -> {
           val operator = token.operator
           val lhs = parseExpression(tokens)
