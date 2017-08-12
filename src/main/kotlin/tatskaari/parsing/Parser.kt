@@ -3,6 +3,7 @@ package tatskaari.parsing
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
 import java.util.*
+import kotlin.reflect.full.cast
 
 object Parser {
   class UnexpectedEndOfFile : RuntimeException("Unexpected end of file")
@@ -95,14 +96,14 @@ object Parser {
   // Normally type parameters are not instantiated into objects so doing as? with them can cause funny behavior
   // inlining the function and marking the type as reified will make this work by creating a specialised
   // inlined function every time this is called
-  inline fun <reified T : Token> getNextToken(tokens : LinkedList<Token>, expectedToken : T) : T {
+  fun <T : Token> getNextToken(tokens : LinkedList<Token>, expectedToken : T) : T {
     if (tokens.isEmpty()){
       throw UnexpectedEndOfFile()
     }
 
     val token = tokens.removeFirst()
-    if (token is T) {
-      return token
+    if (token::class == expectedToken::class) {
+      return expectedToken::class.cast(token)
     }
     throw Lexer.InvalidInputException("unexpected input '$token', expected '$expectedToken'")
   }
