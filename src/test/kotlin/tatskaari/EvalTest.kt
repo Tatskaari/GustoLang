@@ -12,7 +12,7 @@ import kotlin.test.assertFailsWith
 
 object EvalTest {
   @Test
-  fun testBasicEval(){
+  fun testBasicEval() {
     val program = TestUtil.loadProgram("TestMain")
     val env = HashMap<String, Eval.Value>()
 
@@ -23,7 +23,7 @@ object EvalTest {
   }
 
   @Test
-  fun numValInCondition(){
+  fun numValInCondition() {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "{if (1) {}}"
       val env = HashMap<String, Eval.Value>()
@@ -32,7 +32,7 @@ object EvalTest {
   }
 
   @Test
-  fun missingIdentifier(){
+  fun missingIdentifier() {
     assertFailsWith<Eval.UndefinedIdentifier> {
       val program = "{if (= 1 a) {}}"
       val env = HashMap<String, Eval.Value>()
@@ -41,7 +41,7 @@ object EvalTest {
   }
 
   @Test
-  fun numIdentifierAssignBoolean(){
+  fun numIdentifierAssignBoolean() {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "{val a := 1 val a := = 1 1}"
       val env = HashMap<String, Eval.Value>()
@@ -50,7 +50,7 @@ object EvalTest {
   }
 
   @Test
-  fun testAddBoolRHS(){
+  fun testAddBoolRHS() {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "{val a := + 1 = 1 1}"
       val env = HashMap<String, Eval.Value>()
@@ -59,7 +59,7 @@ object EvalTest {
   }
 
   @Test
-  fun testAddBoolLHS(){
+  fun testAddBoolLHS() {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "{val a := + = 1 1 1 }"
       val env = HashMap<String, Eval.Value>()
@@ -68,7 +68,7 @@ object EvalTest {
   }
 
   @Test
-  fun testAdd(){
+  fun testAdd() {
     val program = "{val a := + 1 1}"
     val env = HashMap<String, Eval.Value>()
     Eval().eval(Parser.parse(program), env)
@@ -78,7 +78,7 @@ object EvalTest {
   }
 
   @Test
-  fun testSub(){
+  fun testSub() {
     val program = "{val a := - 1 1}"
     val env = HashMap<String, Eval.Value>()
     Eval().eval(Parser.parse(program), env)
@@ -87,7 +87,7 @@ object EvalTest {
   }
 
   @Test
-  fun testTrueEqTrue(){
+  fun testTrueEqTrue() {
     val program = "{val a := = = 1 1 = 1 1}"
     val env = HashMap<String, Eval.Value>()
     Eval().eval(Parser.parse(program), env)
@@ -96,7 +96,7 @@ object EvalTest {
   }
 
   @Test
-  fun testNumInput(){
+  fun testNumInput() {
     val inputReader = BufferedReader(StringReader("1234"))
     val env = HashMap<String, Eval.Value>()
     Eval(inputReader).eval(Parser.parse("{input a}"), env)
@@ -104,7 +104,7 @@ object EvalTest {
   }
 
   @Test
-  fun testTrueInput(){
+  fun testTrueInput() {
     val inputReader = BufferedReader(StringReader("true"))
     val env = HashMap<String, Eval.Value>()
     Eval(inputReader).eval(Parser.parse("{input a}"), env)
@@ -112,7 +112,7 @@ object EvalTest {
   }
 
   @Test
-  fun testFalseInput(){
+  fun testFalseInput() {
     val inputReader = BufferedReader(StringReader("false"))
     val env = HashMap<String, Eval.Value>()
     Eval(inputReader).eval(Parser.parse("{input a}"), env)
@@ -120,7 +120,7 @@ object EvalTest {
   }
 
   @Test
-  fun testNullInput(){
+  fun testNullInput() {
     val inputReader = BufferedReader(StringReader("\n"))
     val env = HashMap<String, Eval.Value>()
     Eval(inputReader).eval(Parser.parse("{input a}"), env)
@@ -134,7 +134,7 @@ object EvalTest {
   }
 
   @Test
-  fun outputTest(){
+  fun outputTest() {
     val outStream = ByteArrayOutputStream()
     val printStream = PrintStream(outStream)
     Eval(printStream).eval(Parser.parse("{output 1}"), HashMap())
@@ -145,7 +145,7 @@ object EvalTest {
   }
 
   @Test
-  fun ifElseTest(){
+  fun ifElseTest() {
     val program = TestUtil.loadProgram("IfElse")
 
     var env = HashMap<String, Eval.Value>()

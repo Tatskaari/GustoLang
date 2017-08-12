@@ -11,7 +11,7 @@ import kotlin.test.assertFailsWith
 
 object TestIf {
   @Test
-  fun testBasicIf(){
+  fun testBasicIf() {
     val program = TestUtil.loadProgram("If")
 
     val expected = listOf(
@@ -31,20 +31,20 @@ object TestIf {
   }
 
   @Test
-  fun testIfElse(){
+  fun testIfElse() {
     val program = TestUtil.loadProgram("IfElse")
 
     val expected = listOf(
-        Statement.CodeBlock(
-            listOf(
-                Statement.Input(Token.Identifier("a")),
-                Statement.IfElse(
-                    Expression.Op(Operator.Equality, Expression.Num(10), Expression.Identifier("a")),
-                    listOf(Statement.Assignment(Token.Identifier("someVar"), Expression.Num(1))),
-                    listOf(Statement.Assignment(Token.Identifier("someVar"), Expression.Num(2)))
-                )
-            )
+      Statement.CodeBlock(
+        listOf(
+          Statement.Input(Token.Identifier("a")),
+          Statement.IfElse(
+            Expression.Op(Operator.Equality, Expression.Num(10), Expression.Identifier("a")),
+            listOf(Statement.Assignment(Token.Identifier("someVar"), Expression.Num(1))),
+            listOf(Statement.Assignment(Token.Identifier("someVar"), Expression.Num(2)))
+          )
         )
+      )
     )
 
     val actual = Parser.parse(program)
@@ -53,7 +53,7 @@ object TestIf {
   }
 
   @Test
-  fun missingBody(){
+  fun missingBody() {
     val program = "{ if ( = 1 1 ) "
     assertFailsWith<Parser.UnexpectedEndOfFile> {
       Parser.parse(program)
@@ -61,7 +61,7 @@ object TestIf {
   }
 
   @Test
-  fun missingCloseBlock(){
+  fun missingCloseBlock() {
     val program = "{ if ( = 1 1 ) {"
     assertFailsWith<Parser.UnexpectedEndOfFile> {
       Parser.parse(program)
@@ -69,7 +69,7 @@ object TestIf {
   }
 
   @Test
-  fun missingConditionBlock(){
+  fun missingConditionBlock() {
     val program = "{ if"
     assertFailsWith<Parser.UnexpectedEndOfFile> {
       Parser.parse(program)
@@ -77,7 +77,7 @@ object TestIf {
   }
 
   @Test
-  fun invalidCondition(){
+  fun invalidCondition() {
     val program = "{ if(== 1 2) { }"
     assertFailsWith<Lexer.InvalidInputException> {
       Parser.parse(program)
@@ -85,7 +85,7 @@ object TestIf {
   }
 
   @Test
-  fun invalidBracketsForBody(){
+  fun invalidBracketsForBody() {
     val program = "{ if(== 1 2) ( )"
     assertFailsWith<Lexer.InvalidInputException> {
       Parser.parse(program)

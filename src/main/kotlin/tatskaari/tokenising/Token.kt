@@ -1,6 +1,6 @@
 package tatskaari.tokenising
 
-sealed class Token(val tokenText : String) {
+sealed class Token(val tokenText: String) {
   object OpenBlock : Token("{")
   object CloseBlock : Token("}")
   object Val : Token("val")
@@ -13,7 +13,7 @@ sealed class Token(val tokenText : String) {
   object Output : Token("output")
   data class Identifier(val name: String) : Token(name)
   data class Num(val value: Int) : Token(value.toString())
-  data class Op(val operator : Operator) : Token(operator.toString())
+  data class Op(val operator: Operator) : Token(operator.toString())
 
   override fun toString(): String {
     return tokenText

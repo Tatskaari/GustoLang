@@ -7,7 +7,7 @@ import java.io.File
 
 object Main {
   @JvmStatic
-  fun main(args : Array<String>) {
+  fun main(args: Array<String>) {
     val programFile = BufferedReader(File(args[0]).reader())
     val program = programFile.use { it.readText() }
     Eval().eval(Parser.parse(program), HashMap())

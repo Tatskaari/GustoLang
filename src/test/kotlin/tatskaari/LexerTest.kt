@@ -30,7 +30,7 @@ object LexerTest {
 
   @Test
   fun testInvalidToken() {
-    assertFailsWith<Lexer.InvalidInputException> { Lexer.lex("{ var a := 123 } []';")}
+    assertFailsWith<Lexer.InvalidInputException> { Lexer.lex("{ var a := 123 } []';") }
   }
 
   @Test
@@ -79,7 +79,7 @@ object LexerTest {
   }
 
   @Test
-  fun testInputOutput(){
+  fun testInputOutput() {
     val program = "input output"
     val tokens = Lexer.lex(program)
     val expectedTokens = listOf(Token.Input, Token.Output)

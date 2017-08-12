@@ -13,8 +13,8 @@ object Parser {
     return parse(Lexer.lex(program))
   }
 
-  fun parseCodeBlock(tokens : LinkedList<Token>) : Statement.CodeBlock {
-    if (tokens.isEmpty()){
+  fun parseCodeBlock(tokens: LinkedList<Token>): Statement.CodeBlock {
+    if (tokens.isEmpty()) {
       throw UnexpectedEndOfFile()
     }
     val body = parse(tokens)
@@ -57,13 +57,13 @@ object Parser {
   }
 
   fun parseAssign(tokens: LinkedList<Token>): Statement.Assignment {
-      val ident = getNextToken(tokens, Token.Identifier("someVariable"))
-      getNextToken(tokens, Token.AssignOp)
-      val expr = parseExpression(tokens)
-      return Statement.Assignment(ident, expr)
+    val ident = getNextToken(tokens, Token.Identifier("someVariable"))
+    getNextToken(tokens, Token.AssignOp)
+    val expr = parseExpression(tokens)
+    return Statement.Assignment(ident, expr)
   }
 
-  fun parseIf(tokens : LinkedList<Token>) : Statement {
+  fun parseIf(tokens: LinkedList<Token>): Statement {
     getNextToken(tokens, Token.OpenParen)
 
     val condition = parseExpression(tokens)
@@ -73,7 +73,7 @@ object Parser {
 
     val ifBody = parseCodeBlock(tokens)
 
-    if (checkNextToken(tokens, Token.Else)){
+    if (checkNextToken(tokens, Token.Else)) {
       getNextToken(tokens, Token.Else)
       getNextToken(tokens, Token.OpenBlock)
       val elseBody = parseCodeBlock(tokens)
@@ -84,7 +84,7 @@ object Parser {
   }
 
   fun parseExpression(tokens: LinkedList<Token>): Expression {
-    if (!tokens.isEmpty()){
+    if (!tokens.isEmpty()) {
       val token = tokens.removeFirst()
       when (token) {
         is Token.Num -> return Expression.Num(token.value)
@@ -101,8 +101,8 @@ object Parser {
     throw UnexpectedEndOfFile()
   }
 
-  fun <T : Token> getNextToken(tokens : LinkedList<Token>, expectedToken : T) : T {
-    if (tokens.isEmpty()){
+  fun <T : Token> getNextToken(tokens: LinkedList<Token>, expectedToken: T): T {
+    if (tokens.isEmpty()) {
       throw UnexpectedEndOfFile()
     }
 
@@ -113,8 +113,8 @@ object Parser {
     throw Lexer.InvalidInputException("unexpected input '$token', expected '$expectedToken'")
   }
 
-  fun <T : Token> checkNextToken(tokens : LinkedList<Token>, expectedToken : T) : Boolean {
-    if (tokens.isEmpty()){
+  fun <T : Token> checkNextToken(tokens: LinkedList<Token>, expectedToken: T): Boolean {
+    if (tokens.isEmpty()) {
       return false
     }
 
