@@ -4,6 +4,7 @@ import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
 import java.util.*
 import kotlin.reflect.full.cast
+import kotlin.reflect.full.isSubclassOf
 
 object Parser {
   class UnexpectedEndOfFile : RuntimeException("Unexpected end of file")
@@ -102,7 +103,7 @@ object Parser {
     }
 
     val token = tokens.removeFirst()
-    if (token::class == expectedToken::class) {
+    if (token::class.isSubclassOf(expectedToken::class)) {
       return expectedToken::class.cast(token)
     }
     throw Lexer.InvalidInputException("unexpected input '$token', expected '$expectedToken'")
