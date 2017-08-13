@@ -1,8 +1,9 @@
 {
     input a
+    val someVar := 0
     if (= 10 a) {
-        val someVar := 1
+        someVar := 1
     } else {
-        val someVar := 2
+        someVar := 2
     }
 }

@@ -18,9 +18,11 @@ object ParserTest {
       Statement.CodeBlock(
         listOf(
           Statement.CodeBlock(
-            listOf(Statement.Assignment(Token.Identifier("someVar"), Expression.Num(5)))
+            listOf(
+              Statement.ValDeclaration(Token.Identifier("someVar"), Expression.Num(5))
+            )
           ),
-          Statement.Assignment(Token.Identifier("someOtherVar"), Expression.Num(5))
+          Statement.ValDeclaration(Token.Identifier("someOtherVar"), Expression.Num(5))
         )
       )
     )
@@ -36,7 +38,7 @@ object ParserTest {
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(
-          Statement.Assignment(
+          Statement.ValDeclaration(
             Token.Identifier("someVariable"),
             Expression.Op(Operator.Add, Expression.Num(12), Expression.Num(12))
           )
@@ -55,8 +57,8 @@ object ParserTest {
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(
-          Statement.Assignment(Token.Identifier("someVariable"), Expression.Num(12)),
-          Statement.Assignment(
+          Statement.ValDeclaration(Token.Identifier("someVariable"),  Expression.Num(12)),
+          Statement.ValDeclaration(
             Token.Identifier("someVar"),
             Expression.Op(Operator.Add, Expression.Identifier("someVariable"), Expression.Num(1))
           )
@@ -128,25 +130,6 @@ object ParserTest {
     assertFailsWith<Lexer.InvalidInputException> {
       Parser.parse(program)
     }
-  }
-
-  @Test
-  fun testIfElse() {
-    val program = Parser.parse(TestUtil.loadProgram("IfElse"))
-    val expectedAST = listOf(
-      Statement.CodeBlock(
-        listOf(
-          Statement.Input(Token.Identifier("a")),
-          Statement.IfElse(
-            Expression.Op(Operator.Equality, Expression.Num(10), Expression.Identifier("a")),
-            listOf(Statement.Assignment(Token.Identifier("someVar"), Expression.Num(1))),
-            listOf(Statement.Assignment(Token.Identifier("someVar"), Expression.Num(2)))
-          )
-        )
-      )
-    )
-
-    TestUtil.compareASTs(expectedAST, program)
   }
 
   @Test

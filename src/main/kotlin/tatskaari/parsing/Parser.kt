@@ -34,9 +34,15 @@ object Parser {
         is Token.CloseBlock -> {
           return statements
         }
-        is Token.Val -> {
-          val statement = parseAssign(tokens)
+        is Token.Identifier -> {
+          val statement = parseAssign(tokens, token)
           statements.add(statement)
+        }
+        is Token.Val -> {
+          val identifier = getNextToken(tokens, Token.Identifier("someVariable"))
+          getNextToken(tokens, Token.AssignOp)
+          val expression = parseExpression(tokens)
+          statements.add(Statement.ValDeclaration(identifier, expression))
         }
         is Token.If -> {
           val statement = parseIf(tokens)
@@ -57,11 +63,10 @@ object Parser {
     return statements
   }
 
-  fun parseAssign(tokens: LinkedList<Token>): Statement.Assignment {
-    val ident = getNextToken(tokens, Token.Identifier("someVariable"))
+  fun parseAssign(tokens: LinkedList<Token>, indent: Token.Identifier): Statement.Assignment {
     getNextToken(tokens, Token.AssignOp)
     val expr = parseExpression(tokens)
-    return Statement.Assignment(ident, expr)
+    return Statement.Assignment(indent, expr)
   }
 
   fun parseIf(tokens: LinkedList<Token>): Statement {

@@ -2,7 +2,7 @@
     val a := 10
     val b := 0
     while (!= a 0) {
-        val b := + b 2
-        val a := - a 1
+        b := + b 2
+        a := - a 1
     }
 }

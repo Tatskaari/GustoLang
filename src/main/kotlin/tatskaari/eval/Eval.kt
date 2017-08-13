@@ -15,11 +15,13 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   sealed class Value(val value: Any) {
     data class NumVal(val intVal: Int) : Value(intVal)
     data class BoolVal(val boolVal: Boolean) : Value(boolVal)
-    object NullVal : Value(NullVal)
   }
 
   data class TypeMismatch(override val message: String) : RuntimeException(message)
   data class UndefinedIdentifier(override val message: String) : RuntimeException("Undeclared identifier '$message'")
+  data class VariableAlreadyDefined(val identifier: String) : RuntimeException("Identifier aready declared '$identifier'")
+  object InvalidUserInput : RuntimeException("Please enter a number of the value 'true' or 'false'")
+
 
   fun eval(statements: List<Statement>, env: MutableMap<String, Value>) {
     statements.forEach { eval(it, env) }
@@ -31,22 +33,33 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
       is Statement.If -> evalIf(statement.condition, statement.body, null, env)
       is Statement.IfElse -> evalIf(statement.condition, statement.ifBody, statement.elseBody, env)
       is Statement.While -> evalWhile(statement.condition, statement.body, env)
+      is Statement.ValDeclaration -> {
+        val identifierName = statement.identifier.name
+
+        if (env.containsKey(identifierName)){
+          throw VariableAlreadyDefined(identifierName)
+        } else {
+          env[identifierName] = eval(statement.expression, env)
+        }
+      }
       is Statement.Assignment -> {
         val identifier = statement.identifier.name
         val value = eval(statement.expression, env)
         if (env.containsKey(identifier)) {
-          val existingValue = env.getValue(identifier)::class
-          if (env.getValue(identifier)::class != value::class) {
+          val existingValue = env.getValue(identifier)
+          if (existingValue::class != value::class) {
             throw TypeMismatch("$identifier was already set to $existingValue, new value was $value")
           }
+          env[identifier] = value
+        } else {
+          throw UndefinedIdentifier(identifier)
         }
-        env[identifier] = value
       }
       is Statement.Input -> {
         val identifier = statement.identifier.name
         val input = inputReader.readLine()
         if (input == null || input.isEmpty()) {
-          env[identifier] = Value.NullVal
+          throw InvalidUserInput
         } else if ("true" == input) {
           env[identifier] = Value.BoolVal(true)
         } else if ("false" == input) {

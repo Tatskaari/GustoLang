@@ -4,6 +4,7 @@ import tatskaari.tokenising.Token
 
 sealed class Statement {
   data class CodeBlock(val statementList: List<Statement>) : Statement()
+  data class ValDeclaration(val identifier: Token.Identifier, val expression: Expression) : Statement()
   data class Assignment(val identifier: Token.Identifier, val expression: Expression) : Statement()
   data class If(val condition: Expression, val body: List<Statement>) : Statement()
   data class IfElse(val condition: Expression, val ifBody: List<Statement>, val elseBody: List<Statement>) : Statement()

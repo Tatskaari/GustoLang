@@ -43,7 +43,7 @@ object EvalTest {
   @Test
   fun numIdentifierAssignBoolean() {
     assertFailsWith<Eval.TypeMismatch> {
-      val program = "{val a := 1 val a := = 1 1}"
+      val program = "{val a := 1 a := = 1 1}"
       val env = HashMap<String, Eval.Value>()
       Eval().eval(Parser.parse(program), env)
     }
@@ -121,16 +121,17 @@ object EvalTest {
 
   @Test
   fun testNullInput() {
-    val inputReader = BufferedReader(StringReader("\n"))
-    val env = HashMap<String, Eval.Value>()
-    Eval(inputReader).eval(Parser.parse("{input a}"), env)
-    assertEquals(Eval.Value.NullVal, env.getValue("a"))
+    assertFailsWith<Eval.InvalidUserInput> {
+      val inputReader = BufferedReader(StringReader("\n"))
+      val env = HashMap<String, Eval.Value>()
+      Eval(inputReader).eval(Parser.parse("{input a}"), env)
+    }
 
-    val inputReader2 = BufferedReader(StringReader(""))
-    val env2 = HashMap<String, Eval.Value>()
-    Eval(inputReader2).eval(Parser.parse("{input a}"), env2)
-    assertEquals(Eval.Value.NullVal, env.getValue("a"))
-
+    assertFailsWith<Eval.InvalidUserInput> {
+      val inputReader2 = BufferedReader(StringReader(""))
+      val env2 = HashMap<String, Eval.Value>()
+      Eval(inputReader2).eval(Parser.parse("{input a}"), env2)
+    }
   }
 
   @Test
@@ -220,5 +221,13 @@ object EvalTest {
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program, env)
     assertEquals(Eval.Value.NumVal(13), env.getValue("c"))
+  }
+
+  @Test
+  fun redeclareVal() {
+    val program = Parser.parse("val a := 1 val a := 2")
+    assertFailsWith<Eval.VariableAlreadyDefined> {
+      Eval().eval(program, HashMap())
+    }
   }
 }
