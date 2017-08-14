@@ -224,10 +224,10 @@ object EvalTest {
 
   @Test
   fun testAnd() {
-    val program = Parser.parse("val a := 0 if(and true false) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(and true true) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
-    assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
+    assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
   }
 
   @Test
@@ -236,6 +236,22 @@ object EvalTest {
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
+  }
+
+  @Test
+  fun testNotAnd() {
+    val program = Parser.parse("val a := 0 if(and true false) {a := 1} else {a := 2}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
+  }
+
+  @Test
+  fun testNotOr() {
+    val program = Parser.parse("val a := 0 if(or false false) {a := 1} else {a := 2}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
   }
 
   @Test

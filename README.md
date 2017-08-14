@@ -14,7 +14,7 @@ this project is run through Travis CI and passed through a suite of unit tests.
   - Variables and assignment - Done
   - RPN expressions - Done
   - if statements - Done
-  - loops
+  - loops - Done
   - input and output - Done
   - function calls
   - variable types (decimal, character?)
@@ -23,7 +23,7 @@ this project is run through Travis CI and passed through a suite of unit tests.
   - Assignments - Done
   - If statements - Done
   - Expressions - Done
-  - Loops
+  - Loops - Done
   - input and output - Done
   - functions
   - variable types
@@ -34,7 +34,12 @@ Right now simple blocks only:
 
 ~~~~
 {
-    var a := + 12 12
+    input a
+    val b := 0
+    while (> a 0) {
+        b = + a b
+    }
+    output b
 }
 ~~~~
 
