@@ -16,7 +16,7 @@ this project is run through Travis CI and passed through a suite of unit tests.
   - if statements - Done
   - loops - Done
   - input and output - Done
-  - function calls
+  - function calls - Done
   - variable types (decimal, character?)
 - Interpreter 
   - Code Blocks - Done
@@ -25,7 +25,7 @@ this project is run through Travis CI and passed through a suite of unit tests.
   - Expressions - Done
   - Loops - Done
   - input and output - Done
-  - functions
+  - functions - Done
   - variable types
 - byte code
 

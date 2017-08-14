@@ -25,6 +25,9 @@ sealed class Token(val text: String) : IToken {
 
 enum class KeyWords(val text : String) : IToken {
   And("and"),
+  Function("function"),
+  Return("return"),
+  Comma(","),
   Or("or"),
   OpenBlock("{"),
   CloseBlock("}"),

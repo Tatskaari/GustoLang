@@ -32,6 +32,7 @@ object ParserTest {
     TestUtil.compareASTs(expectedAST, actualAST)
   }
 
+
   @Test
   fun testSimpleExpressions() {
     val program = "{val someVariable := + 12 12}"
@@ -67,6 +68,14 @@ object ParserTest {
     )
 
     TestUtil.compareASTs(expectedAST, Parser.parse(program))
+  }
+
+  @Test
+  fun testIncompleteBlock(){
+    val program = "{ val a := 1 { val b := 2 } output a"
+    assertFailsWith<Parser.UnexpectedEndOfFile> {
+      Parser.parse(program)
+    }
   }
 
   @Test
@@ -143,6 +152,39 @@ object ParserTest {
             listOf()
           ),
           Statement.Output(Expression.Num(1))
+        )
+      )
+    )
+
+    TestUtil.compareASTs(expectedAST, program)
+  }
+
+  @Test
+  fun testFunction() {
+    val program = Parser.parse("function add(a, b) { output + a b }")
+    val expectedAST = listOf(
+      Statement.Function(
+        Token.Identifier("add"),
+        listOf(Token.Identifier("a"), Token.Identifier("b")),
+        listOf(Statement.Output(Expression.Op(Operator.Add, Expression.Identifier("a"), Expression.Identifier("b"))))
+      )
+    )
+
+    TestUtil.compareASTs(expectedAST, program)
+  }
+
+  @Test
+  fun testFunctionCall() {
+    val program = Parser.parse("val a := add(pA := 1, pB := 2)")
+    val expectedAST = listOf(
+      Statement.ValDeclaration(
+        Token.Identifier("a"),
+        Expression.FunctionCall(
+          Token.Identifier("add"),
+          listOf(
+            Statement.ValDeclaration(Token.Identifier("pA"), Expression.Num(1)),
+            Statement.ValDeclaration(Token.Identifier("pB"), Expression.Num(2))
+          )
         )
       )
     )

@@ -334,4 +334,28 @@ object EvalTest {
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(3), env.getValue("a"))
   }
+
+  @Test
+  fun testFunctionCall() {
+    val program = Parser.parse(TestUtil.loadProgram("Function"))
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program, env)
+    assertEquals(env.getValue("c"), Eval.Value.NumVal(3))
+  }
+
+  @Test
+  fun missingFuncDef(){
+    val program = Parser.parse("val a := add(b := 1, c := 2)")
+    assertFailsWith<Eval.UndefinedIdentifier> {
+      Eval().eval(program, HashMap())
+    }
+  }
+
+  @Test
+  fun missingReturnFromFunc(){
+    val program = Parser.parse("function add(a, b) { } val c := add(a:= 1, b := 2)")
+    assertFailsWith<Eval.FunctionExitedWithoutReturn> {
+      Eval().eval(program, HashMap())
+    }
+  }
 }

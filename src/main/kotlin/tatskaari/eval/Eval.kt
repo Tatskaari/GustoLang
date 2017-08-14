@@ -15,12 +15,15 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   sealed class Value(val value: Any) {
     data class NumVal(val intVal: Int) : Value(intVal)
     data class BoolVal(val boolVal: Boolean) : Value(boolVal)
+    data class FunctionVal(val function: Statement.Function) : Value(function)
   }
 
   data class TypeMismatch(override val message: String) : RuntimeException(message)
   data class UndefinedIdentifier(override val message: String) : RuntimeException("Undeclared identifier '$message'")
   data class VariableAlreadyDefined(val identifier: String) : RuntimeException("Identifier aready declared '$identifier'")
   object InvalidUserInput : RuntimeException("Please enter a number of the value 'true' or 'false'")
+  //TODO better error message
+  object FunctionExitedWithoutReturn : RuntimeException("Function existed without return")
 
 
   fun eval(statements: List<Statement>, env: MutableMap<String, Value>) {
@@ -40,6 +43,14 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
           throw VariableAlreadyDefined(identifierName)
         } else {
           env[identifierName] = eval(statement.expression, env)
+        }
+      }
+      is Statement.Function -> {
+        val identifierName = statement.identifier.name
+        if (env.containsKey(identifierName)){
+          throw VariableAlreadyDefined(identifierName)
+        } else {
+          env[identifierName] = Value.FunctionVal(statement)
         }
       }
       is Statement.Assignment -> {
@@ -98,6 +109,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
       is Expression.Not -> return Value.BoolVal(!evalCondition(expression.expr, env).boolVal)
       is Expression.And -> return Value.BoolVal(evalCondition(expression.lhs, env).boolVal && evalCondition(expression.rhs, env).boolVal)
       is Expression.Or -> return Value.BoolVal(evalCondition(expression.lhs, env).boolVal || evalCondition(expression.rhs, env).boolVal)
+      is Expression.FunctionCall -> return callFunction(expression, env)
       is Expression.Identifier -> {
         val value = env[expression.name]
         if (value != null) {
@@ -107,6 +119,56 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
         }
       }
     }
+  }
+
+  fun callFunction(functionCall: Expression.FunctionCall, env: Map<String, Value>) : Eval.Value{
+    val function = getFunction(functionCall, env)
+    val funEnv = getFunctionCallEnv(function, functionCall, env)
+
+    return evalFunction(function.body, funEnv)
+  }
+
+  fun getFunction(functionCall: Expression.FunctionCall, env: Map<String, Value>): Statement.Function {
+    if (!env.containsKey(functionCall.functionIdentifier.name)){
+      throw UndefinedIdentifier(functionCall.functionIdentifier.name)
+    }
+
+    val function = env[functionCall.functionIdentifier.name]
+
+    if (function !is Value.FunctionVal){
+      throw TypeMismatch("$function is not callable")
+    }
+
+    return function.function
+  }
+
+  fun getFunctionCallEnv(function : Statement.Function, functionCall: Expression.FunctionCall, env: Map<String, Value>) : HashMap<String, Value> {
+    if (functionCall.params.size != function.params.size){
+      throw TypeMismatch("Wrong number of arguments to call $function ")
+    }
+
+    val funEnv = HashMap<String, Value>()
+    functionCall.params.forEach({
+      val identifier = it.identifier
+      if(function.params.contains(identifier)){
+        eval(it, funEnv)
+      } else {
+        throw TypeMismatch("$function doesn't contain the parameter $identifier")
+      }
+    })
+
+    return funEnv
+  }
+
+  fun evalFunction(body: List<Statement>, env: MutableMap<String, Value>) : Eval.Value {
+    for (statement in body){
+      if (statement is Statement.Return){
+        return eval(statement.expression, env)
+      } else {
+        eval(statement, env)
+      }
+    }
+    throw FunctionExitedWithoutReturn
   }
 
   fun applyOperator(operatorExpression: Expression.Op, env: Map<String, Value>): Value {

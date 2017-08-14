@@ -11,4 +11,6 @@ sealed class Statement {
   data class Input(val identifier: Token.Identifier) : Statement()
   data class Output(val expression: Expression) : Statement()
   data class While(val condition: Expression, val body: List<Statement>) : Statement()
+  data class Function(val identifier: Token.Identifier, val params: List<Token.Identifier>, val body: List<Statement>) : Statement()
+  data class Return(val expression: Expression) : Statement()
 }
