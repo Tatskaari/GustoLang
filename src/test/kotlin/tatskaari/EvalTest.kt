@@ -358,4 +358,45 @@ object EvalTest {
       Eval().eval(program, HashMap())
     }
   }
+
+  @Test
+  fun callingInt(){
+    val program = Parser.parse("val a := 2 val b := a()")
+    assertFailsWith<Eval.TypeMismatch> {
+      Eval().eval(program, HashMap())
+    }
+  }
+
+  @Test
+  fun wrongNumParams(){
+    val program = Parser.parse("function add(a, b) { return + a b } val b := add(a := 1)")
+    assertFailsWith<Eval.TypeMismatch> {
+      Eval().eval(program, HashMap())
+    }
+  }
+
+  @Test
+  fun paramDoesntExist(){
+    val program = Parser.parse("function add(a, b) { return + a b } val b := add(a := 1, c := 2)")
+    assertFailsWith<Eval.TypeMismatch> {
+      Eval().eval(program, HashMap())
+    }
+  }
+
+  @Test
+  fun evalFuncFib(){
+    val program = Parser.parse(TestUtil.loadProgram("FuncFib"))
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program, env)
+    assertEquals(Eval.Value.NumVal(13), env.getValue("out"))
+  }
+
+  @Test
+  fun whileReturn(){
+    val program = Parser.parse(TestUtil.loadProgram("WhileReturn"))
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program, env)
+    assertEquals(Eval.Value.NumVal(100), env.getValue("out"))
+  }
+
 }

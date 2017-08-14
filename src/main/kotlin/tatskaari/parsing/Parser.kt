@@ -39,7 +39,9 @@ object Parser {
         is Token.Identifier -> statements.add(parseAssign(tokens, token))
         KeyWords.Return -> statements.add(Statement.Return(parseExpression(tokens)))
         KeyWords.Val -> statements.add(parseValDeclaration(tokens))
-        KeyWords.If -> statements.add(parseIf(tokens))
+        KeyWords.If -> {
+          statements.add(parseIf(tokens))
+        }
         KeyWords.Input -> {
           val identifier = getNextToken(tokens, Token.Identifier("someVariable"))
           statements.add(Statement.Input(identifier))

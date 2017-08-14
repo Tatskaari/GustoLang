@@ -1,0 +1,12 @@
+function whileTest() {
+    val a := 10
+    val b := 0
+    while(<= a 10){
+        b := + b a
+        if(>= b 20) {
+            return 100
+        }
+    }
+}
+
+val out := whileTest()

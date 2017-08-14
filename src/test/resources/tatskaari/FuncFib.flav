@@ -1,0 +1,16 @@
+function fib(pN, pLast, pLastLast) {
+    if (= pN 0){
+      return + pLast pLastLast
+    }
+    val new := + pLast pLastLast
+    val last := pLastLast
+    val lastLast := new
+    val n := - pN 1
+    return fib(pN := n, pLast := last, pLastLast := lastLast)
+}
+
+function getNthFib(pN) {
+  return fib(pN := - pN 3, pLast := 1, pLastLast := 1)
+}
+
+val out := getNthFib(pN := 7)

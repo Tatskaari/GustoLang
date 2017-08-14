@@ -15,7 +15,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   sealed class Value(val value: Any) {
     data class NumVal(val intVal: Int) : Value(intVal)
     data class BoolVal(val boolVal: Boolean) : Value(boolVal)
-    data class FunctionVal(val function: Statement.Function) : Value(function)
+    data class FunctionVal(val function: Statement.Function, val env : MutableMap<String, Value>) : Value(function)
   }
 
   data class TypeMismatch(override val message: String) : RuntimeException(message)
@@ -26,16 +26,22 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   object FunctionExitedWithoutReturn : RuntimeException("Function existed without return")
 
 
-  fun eval(statements: List<Statement>, env: MutableMap<String, Value>) {
-    statements.forEach { eval(it, env) }
+  fun eval(statements: List<Statement>, env: MutableMap<String, Value>) : Value?  {
+    for (statement in statements) {
+      val value = eval(statement, env)
+      if (value != null) {
+        return value
+      }
+    }
+    return null
   }
 
-  fun eval(statement: Statement, env: MutableMap<String, Value>) {
+  fun eval(statement: Statement, env: MutableMap<String, Value>) : Value? {
     when (statement) {
-      is Statement.CodeBlock -> eval(statement.statementList, env)
-      is Statement.If -> evalIf(statement.condition, statement.body, null, env)
-      is Statement.IfElse -> evalIf(statement.condition, statement.ifBody, statement.elseBody, env)
-      is Statement.While -> evalWhile(statement.condition, statement.body, env)
+      is Statement.CodeBlock -> return eval(statement.statementList, env)
+      is Statement.If -> return evalIf(statement.condition, statement.body, null, env)
+      is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody, statement.elseBody, env)
+      is Statement.While -> return evalWhile(statement.condition, statement.body, env)
       is Statement.ValDeclaration -> {
         val identifierName = statement.identifier.name
 
@@ -50,7 +56,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
         if (env.containsKey(identifierName)){
           throw VariableAlreadyDefined(identifierName)
         } else {
-          env[identifierName] = Value.FunctionVal(statement)
+          env[identifierName] = Value.FunctionVal(statement, env)
         }
       }
       is Statement.Assignment -> {
@@ -83,13 +89,22 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
         val value = eval(statement.expression, env)
         outputStream.println(value.value)
       }
+      is Statement.Return -> {
+        return eval(statement.expression, env)
+      }
     }
+
+    return null
   }
 
-  private fun evalWhile(condition: Expression, body: List<Statement>, env: MutableMap<String, Value>) {
+  private fun evalWhile(condition: Expression, body: List<Statement>, env: MutableMap<String, Value>) : Value? {
     while(evalCondition(condition, env).boolVal){
-      eval(body, env)
+      val value : Value? = eval(body, env)
+      if (value != null) {
+        return value
+      }
     }
+    return null
   }
 
   fun evalCondition(condition: Expression, env: Map<String, Value>) : Value.BoolVal {
@@ -122,13 +137,13 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   }
 
   fun callFunction(functionCall: Expression.FunctionCall, env: Map<String, Value>) : Eval.Value{
-    val function = getFunction(functionCall, env)
-    val funEnv = getFunctionCallEnv(function, functionCall, env)
+    val functionVal = getFunction(functionCall, env)
+    val funEnv = getFunctionCallEnv(functionVal.function, functionCall, functionVal.env, env)
 
-    return evalFunction(function.body, funEnv)
+    return evalFunction(functionVal.function.body, funEnv)
   }
 
-  fun getFunction(functionCall: Expression.FunctionCall, env: Map<String, Value>): Statement.Function {
+  fun getFunction(functionCall: Expression.FunctionCall, env: Map<String, Value>): Value.FunctionVal {
     if (!env.containsKey(functionCall.functionIdentifier.name)){
       throw UndefinedIdentifier(functionCall.functionIdentifier.name)
     }
@@ -139,33 +154,35 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
       throw TypeMismatch("$function is not callable")
     }
 
-    return function.function
+    return function
   }
 
-  fun getFunctionCallEnv(function : Statement.Function, functionCall: Expression.FunctionCall, env: Map<String, Value>) : HashMap<String, Value> {
+  fun getFunctionCallEnv(function : Statement.Function, functionCall: Expression.FunctionCall, functionDefEnv: Map<String, Value>, functionCallEnv: Map<String, Value>) : HashMap<String, Value> {
     if (functionCall.params.size != function.params.size){
       throw TypeMismatch("Wrong number of arguments to call $function ")
     }
 
-    val funEnv = HashMap<String, Value>()
+    val functionRunEnv = HashMap<String, Value>()
+    functionRunEnv.putAll(functionDefEnv)
+
     functionCall.params.forEach({
       val identifier = it.identifier
       if(function.params.contains(identifier)){
-        eval(it, funEnv)
+        val paramVal : Value = eval(it.expression, functionCallEnv)
+        functionRunEnv.put(identifier.name, paramVal)
       } else {
         throw TypeMismatch("$function doesn't contain the parameter $identifier")
       }
     })
 
-    return funEnv
+    return functionRunEnv
   }
 
   fun evalFunction(body: List<Statement>, env: MutableMap<String, Value>) : Eval.Value {
     for (statement in body){
-      if (statement is Statement.Return){
-        return eval(statement.expression, env)
-      } else {
-        eval(statement, env)
+      val value = eval(statement, env)
+      if (value != null){
+        return value
       }
     }
     throw FunctionExitedWithoutReturn
@@ -193,17 +210,21 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     }
   }
 
-  fun evalIf(condition: Expression, ifBody: List<Statement>, elseBody: List<Statement>?, env: MutableMap<String, Value>) {
+  fun evalIf(condition: Expression, ifBody: List<Statement>, elseBody: List<Statement>?, env: MutableMap<String, Value>) : Value? {
     val conditionResult = eval(condition, env)
     if (conditionResult is Value.BoolVal) {
+      var value : Value? = null
       if (conditionResult.boolVal) {
-        eval(ifBody, env)
+        value = eval(ifBody, env)
       } else if (elseBody != null) {
-        eval(elseBody, env)
+        value = eval(elseBody, env)
+      }
+      if (value != null){
+        return value
       }
     } else {
       throw TypeMismatch("If statement condition type error expected bool got $condition")
     }
-
+    return null
   }
 }
