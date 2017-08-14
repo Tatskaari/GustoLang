@@ -248,10 +248,10 @@ object EvalTest {
 
   @Test
   fun testGT() {
-    val program = Parser.parse("val a := 0 if(> 1 2) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(> 2 1) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
-    assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
+    assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
   }
 
   @Test
@@ -268,6 +268,39 @@ object EvalTest {
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
+  }
+
+
+  @Test
+  fun testNotLT() {
+    val program = Parser.parse("val a := 0 if(< 2 1) {a := 1} else {a := 2}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
+  }
+
+  @Test
+  fun testNotGT() {
+    val program = Parser.parse("val a := 0 if(> 1 2) {a := 1} else {a := 2}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
+  }
+
+  @Test
+  fun testNotGTE() {
+    val program = Parser.parse("val a := 0 if(>= 1 2) {a := 1} else {a := 2}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
+  }
+
+  @Test
+  fun testNotLTE() {
+    val program = Parser.parse("val a := 0 if(<= 2 1) {a := 1} else {a := 2}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
   }
 
   @Test
