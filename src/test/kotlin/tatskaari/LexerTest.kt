@@ -1,9 +1,7 @@
 package tatskaari
 
 import org.testng.annotations.Test
-import tatskaari.tokenising.Lexer
-import tatskaari.tokenising.Operator
-import tatskaari.tokenising.Token
+import tatskaari.tokenising.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -15,12 +13,12 @@ object LexerTest {
     val program = TestUtil.loadProgram("BasicBlocks")
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
-      Token.OpenBlock,
-      Token.Val,
+      KeyWords.OpenBlock,
+      KeyWords.Val,
       Token.Identifier("someVariable"),
-      Token.AssignOp,
+      KeyWords.AssignOp,
       Token.Num(12),
-      Token.CloseBlock
+      KeyWords.CloseBlock
     )
 
     assert(tokenList.size == expectedTokens.size)
@@ -38,14 +36,14 @@ object LexerTest {
     val program = "{val someVariable := + 12 12}"
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
-      Token.OpenBlock,
-      Token.Val,
+      KeyWords.OpenBlock,
+      KeyWords.Val,
       Token.Identifier("someVariable"),
-      Token.AssignOp,
+      KeyWords.AssignOp,
       Token.Op(Operator.Add),
       Token.Num(12),
       Token.Num(12),
-      Token.CloseBlock
+      KeyWords.CloseBlock
     )
 
     assert(tokenList.size == expectedTokens.size)
@@ -58,20 +56,20 @@ object LexerTest {
     val program = "{if (1 = 1) {val someVariable := 2}}"
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
-      Token.OpenBlock,
-      Token.If,
-      Token.OpenParen,
+      KeyWords.OpenBlock,
+      KeyWords.If,
+      KeyWords.OpenParen,
       Token.Num(1),
       Token.Op(Operator.Equality),
       Token.Num(1),
-      Token.CloseParen,
-      Token.OpenBlock,
-      Token.Val,
+      KeyWords.CloseParen,
+      KeyWords.OpenBlock,
+      KeyWords.Val,
       Token.Identifier("someVariable"),
-      Token.AssignOp,
+      KeyWords.AssignOp,
       Token.Num(2),
-      Token.CloseBlock,
-      Token.CloseBlock
+      KeyWords.CloseBlock,
+      KeyWords.CloseBlock
     )
     assert(tokenList.size == expectedTokens.size)
     tokenList.zip(expectedTokens)
@@ -82,7 +80,7 @@ object LexerTest {
   fun testInputOutput() {
     val program = "input output"
     val tokens = Lexer.lex(program)
-    val expectedTokens = listOf(Token.Input, Token.Output)
+    val expectedTokens = listOf<IToken>(KeyWords.Input, KeyWords.Output)
     assertEquals(tokens, expectedTokens)
   }
 
@@ -90,7 +88,7 @@ object LexerTest {
   fun notTest() {
     val program = "!true"
     val tokens = Lexer.lex(program)
-    val expectedTokens = listOf(Token.Not, Token.True)
+    val expectedTokens = listOf<IToken>(KeyWords.Not, KeyWords.True)
     assertEquals(tokens, expectedTokens)
   }
 }

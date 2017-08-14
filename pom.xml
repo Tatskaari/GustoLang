@@ -148,9 +148,6 @@
                     <jvmTarget>1.8</jvmTarget>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
-
-
 </project>

@@ -87,15 +87,6 @@ object EvalTest {
   }
 
   @Test
-  fun testTrueEqTrue() {
-    val program = "{val a := = = 1 1 = 1 1}"
-    val env = HashMap<String, Eval.Value>()
-    Eval().eval(Parser.parse(program), env)
-
-    assertEquals(Eval.Value.BoolVal(true), env.getValue("a"))
-  }
-
-  @Test
   fun testNumInput() {
     val inputReader = BufferedReader(StringReader("1234"))
     val env = HashMap<String, Eval.Value>()
@@ -229,5 +220,69 @@ object EvalTest {
     assertFailsWith<Eval.VariableAlreadyDefined> {
       Eval().eval(program, HashMap())
     }
+  }
+
+  @Test
+  fun testAnd() {
+    val program = Parser.parse("val a := 0 if(and true false) {a := 1} else {a := 2}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
+  }
+
+  @Test
+  fun testOr() {
+    val program = Parser.parse("val a := 0 if(or true false) {a := 1} else {a := 2}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
+  }
+
+  @Test
+  fun testLT() {
+    val program = Parser.parse("val a := 0 if(< 1 2) {a := 1} else {a := 2}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
+  }
+
+  @Test
+  fun testGT() {
+    val program = Parser.parse("val a := 0 if(> 1 2) {a := 1} else {a := 2}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
+  }
+
+  @Test
+  fun testGTE() {
+    val program = Parser.parse("val a := 0 if(>= 1 1) {a := 1} else {a := 2}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
+  }
+
+  @Test
+  fun testLTE() {
+    val program = Parser.parse("val a := 0 if(<= 1 1) {a := 1} else {a := 2}")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
+  }
+
+  @Test
+  fun testMul() {
+    val program = Parser.parse("val a := * 2 3")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(6), env.getValue("a"))
+  }
+
+  @Test
+  fun testDiv() {
+    val program = Parser.parse("val a := / 9 3")
+    val env = HashMap<String, Eval.Value>()
+    Eval().eval(program,env)
+    assertEquals(Eval.Value.NumVal(3), env.getValue("a"))
   }
 }

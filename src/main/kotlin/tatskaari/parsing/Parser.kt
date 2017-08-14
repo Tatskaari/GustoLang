@@ -1,5 +1,7 @@
 package tatskaari.parsing
 
+import tatskaari.tokenising.IToken
+import tatskaari.tokenising.KeyWords
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
 import java.util.*
@@ -13,7 +15,7 @@ object Parser {
     return parse(Lexer.lex(program))
   }
 
-  fun parseCodeBlock(tokens: LinkedList<Token>): Statement.CodeBlock {
+  fun parseCodeBlock(tokens: LinkedList<IToken>): Statement.CodeBlock {
     if (tokens.isEmpty()) {
       throw UnexpectedEndOfFile()
     }
@@ -23,65 +25,65 @@ object Parser {
 
   }
 
-  fun parse(tokens: LinkedList<Token>): LinkedList<Statement> {
+  fun parse(tokens: LinkedList<IToken>): LinkedList<Statement> {
     val statements = LinkedList<Statement>()
     while (!tokens.isEmpty()) {
       val token = tokens.removeAt(0)
       when (token) {
-        is Token.OpenBlock -> {
+        KeyWords.OpenBlock -> {
           statements.add(parseCodeBlock(tokens))
         }
-        is Token.CloseBlock -> {
+        KeyWords.CloseBlock -> {
           return statements
         }
         is Token.Identifier -> {
           val statement = parseAssign(tokens, token)
           statements.add(statement)
         }
-        is Token.Val -> {
+        KeyWords.Val -> {
           val identifier = getNextToken(tokens, Token.Identifier("someVariable"))
-          getNextToken(tokens, Token.AssignOp)
+          getNextToken(tokens, KeyWords.AssignOp)
           val expression = parseExpression(tokens)
           statements.add(Statement.ValDeclaration(identifier, expression))
         }
-        is Token.If -> {
+        KeyWords.If -> {
           val statement = parseIf(tokens)
           statements.add(statement)
         }
-        is Token.Input -> {
+        KeyWords.Input -> {
           val identifier = getNextToken(tokens, Token.Identifier("someVariable"))
           statements.add(Statement.Input(identifier))
         }
-        is Token.Output -> {
+        KeyWords.Output -> {
           val expr = parseExpression(tokens)
           statements.add(Statement.Output(expr))
         }
-        is Token.While -> statements.add(parseWhile(tokens))
+        KeyWords.While -> statements.add(parseWhile(tokens))
         else -> throw Lexer.InvalidInputException("Unexpected token $token expecting statement")
       }
     }
     return statements
   }
 
-  fun parseAssign(tokens: LinkedList<Token>, indent: Token.Identifier): Statement.Assignment {
-    getNextToken(tokens, Token.AssignOp)
+  fun parseAssign(tokens: LinkedList<IToken>, indent: Token.Identifier): Statement.Assignment {
+    getNextToken(tokens, KeyWords.AssignOp)
     val expr = parseExpression(tokens)
     return Statement.Assignment(indent, expr)
   }
 
-  fun parseIf(tokens: LinkedList<Token>): Statement {
-    getNextToken(tokens, Token.OpenParen)
+  fun parseIf(tokens: LinkedList<IToken>): Statement {
+    getNextToken(tokens, KeyWords.OpenParen)
 
     val condition = parseExpression(tokens)
 
-    getNextToken(tokens, Token.CloseParen)
-    getNextToken(tokens, Token.OpenBlock)
+    getNextToken(tokens, KeyWords.CloseParen)
+    getNextToken(tokens, KeyWords.OpenBlock)
 
     val ifBody = parseCodeBlock(tokens)
 
-    if (checkNextToken(tokens, Token.Else)) {
-      getNextToken(tokens, Token.Else)
-      getNextToken(tokens, Token.OpenBlock)
+    if (checkNextToken(tokens, KeyWords.Else)) {
+      getNextToken(tokens, KeyWords.Else)
+      getNextToken(tokens, KeyWords.OpenBlock)
       val elseBody = parseCodeBlock(tokens)
       return Statement.IfElse(condition, ifBody.statementList, elseBody.statementList)
     } else {
@@ -89,55 +91,57 @@ object Parser {
     }
   }
 
-  fun parseWhile(tokens: LinkedList<Token>) : Statement.While {
-    getNextToken(tokens, Token.OpenParen)
+  fun parseWhile(tokens: LinkedList<IToken>) : Statement.While {
+    getNextToken(tokens, KeyWords.OpenParen)
     val condition = parseExpression(tokens)
-    getNextToken(tokens, Token.CloseParen)
-    getNextToken(tokens, Token.OpenBlock)
+    getNextToken(tokens, KeyWords.CloseParen)
+    getNextToken(tokens, KeyWords.OpenBlock)
     val body = parseCodeBlock(tokens).statementList
     return Statement.While(condition, body)
   }
 
-  fun parseExpression(tokens: LinkedList<Token>): Expression {
+  fun parseExpression(tokens: LinkedList<IToken>): Expression {
     if (!tokens.isEmpty()) {
       val token = tokens.removeFirst()
       when (token) {
         is Token.Num -> return Expression.Num(token.value)
-        is Token.True -> return Expression.Bool(true)
-        is Token.False -> return Expression.Bool(false)
+        KeyWords.True -> return Expression.Bool(true)
+        KeyWords.False -> return Expression.Bool(false)
         is Token.Op -> {
           val operator = token.operator
           val lhs = parseExpression(tokens)
           val rhs = parseExpression(tokens)
           return Expression.Op(operator, lhs, rhs)
         }
-        is Token.Not -> return Expression.Not(parseExpression(tokens))
-        is Token.Identifier -> return Expression.Identifier(token.tokenText)
+        KeyWords.Not -> return Expression.Not(parseExpression(tokens))
+        KeyWords.And -> return Expression.And(parseExpression(tokens), parseExpression(tokens))
+        KeyWords.Or -> return Expression.Or(parseExpression(tokens), parseExpression(tokens))
+        is Token.Identifier -> return Expression.Identifier(token.text)
       }
       throw Lexer.InvalidInputException("Unexpected token $token, expected expression")
     }
     throw UnexpectedEndOfFile()
   }
 
-  fun <T : Token> getNextToken(tokens: LinkedList<Token>, expectedToken: T): T {
+  fun <T : IToken> getNextToken(tokens: LinkedList<IToken>, expectedToken: T): T {
     if (tokens.isEmpty()) {
       throw UnexpectedEndOfFile()
     }
 
     val token = tokens.removeFirst()
-    if (token::class.isSubclassOf(expectedToken::class)) {
+    if (token.isSameToken(expectedToken)) {
       return expectedToken::class.cast(token)
     }
     throw Lexer.InvalidInputException("unexpected input '$token', expected '$expectedToken'")
   }
 
-  fun <T : Token> checkNextToken(tokens: LinkedList<Token>, expectedToken: T): Boolean {
+  fun <T : IToken> checkNextToken(tokens: LinkedList<IToken>, expectedToken: T): Boolean {
     if (tokens.isEmpty()) {
       return false
     }
 
     val token = tokens[0]
-    if (token::class.isSubclassOf(expectedToken::class)) {
+    if (token.isSameToken(expectedToken)) {
       return true
     }
     return false

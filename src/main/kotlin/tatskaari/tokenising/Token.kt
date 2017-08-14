@@ -1,25 +1,60 @@
 package tatskaari.tokenising
+interface IToken {
+  fun getTokenText() : String
 
-sealed class Token(val tokenText: String) {
-  object OpenBlock : Token("{")
-  object CloseBlock : Token("}")
-  object Val : Token("val")
-  object AssignOp : Token(":=")
-  object Not : Token("!")
-  object If : Token("if")
-  object Else : Token("else")
-  object True : Token("true")
-  object False : Token("false")
-  object While : Token("while")
-  object OpenParen : Token("(")
-  object CloseParen : Token(")")
-  object Input : Token("input")
-  object Output : Token("output")
+  fun isSameToken(token : IToken) : Boolean
+}
+sealed class Token(val text: String) : IToken {
   data class Identifier(val name: String) : Token(name)
   data class Num(val value: Int) : Token(value.toString())
   data class Op(val operator: Operator) : Token(operator.toString())
 
   override fun toString(): String {
-    return tokenText
+    return text
+  }
+
+  override fun getTokenText(): String {
+    return text
+  }
+
+  override fun isSameToken(token: IToken): Boolean {
+    return token::class == this::class
+  }
+
+}
+
+enum class KeyWords(val text : String) : IToken {
+  And("and"),
+  Or("or"),
+  OpenBlock("{"),
+  CloseBlock("}"),
+  Val("val"),
+  AssignOp(":="),
+  Not("!"),
+  Equality("=="),
+  If("if"),
+  Else("else"),
+  True("true"),
+  False("false"),
+  While("while"),
+  OpenParen("("),
+  CloseParen(")"),
+  Input("input"),
+  Output("output");
+
+  override fun toString(): String {
+    return text
+  }
+
+  override fun getTokenText(): String {
+    return text
+  }
+
+  override fun isSameToken(token: IToken): Boolean {
+    if(token is KeyWords) {
+      return token == this
+    } else {
+      return false
+    }
   }
 }

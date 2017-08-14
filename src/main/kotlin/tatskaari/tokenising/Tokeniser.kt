@@ -3,34 +3,33 @@ package tatskaari.tokenising
 import tatskaari.StringUtils.rest
 
 enum class Tokenisers(val lexer: (String) -> LexResult?) {
-  BLOCK_OPEN({ tokeniseKeyWord(it, Token.OpenBlock) }),
-  BLOCK_CLOSE({ tokeniseKeyWord(it, Token.CloseBlock) }),
-  VAL({ tokeniseKeyWord(it, Token.Val) }),
-  ASSIGN({ tokeniseKeyWord(it, Token.AssignOp) }),
-  IF({ tokeniseKeyWord(it, Token.If) }),
-  ELSE({ tokeniseKeyWord(it, Token.Else) }),
-  TRUE({ tokeniseKeyWord(it, Token.True) }),
-  WHILE({ tokeniseKeyWord(it, Token.While) }),
-  FALSE({ tokeniseKeyWord(it, Token.False) }),
-  OPEN_PAREN({ tokeniseKeyWord(it, Token.OpenParen) }),
-  CLOSE_PAREN({ tokeniseKeyWord(it, Token.CloseParen) }),
-  INPUT({ tokeniseKeyWord(it, Token.Input) }),
-  OUTPUT({ tokeniseKeyWord(it, Token.Output) }),
-  ADD({ tokeniseKeyWord(it, Token.Op(Operator.Add)) }),
-  SUB({ tokeniseKeyWord(it, Token.Op(Operator.Sub)) }),
-  EQUALITY({ tokeniseKeyWord(it, Token.Op(Operator.Equality)) }),
-  NOT({ tokeniseKeyWord(it, Token.Not) }),
+  KEYWORD({ tokeniseKeyWord(it) }),
+  OPERATOR({ tokeniseOperator(it) }),
   IDENTIFIER({ regexTokeniser(it, """^[a-zA-Z]+""", Token::Identifier) }),
   NUMBER({ regexTokeniser(it, "^[0-9]+", Token::Num, String::toInt) });
 
-  data class LexResult(val rest: String, val token: Token)
+  data class LexResult(val restOfProgram: String, val token: IToken)
 
   companion object {
-    fun tokeniseKeyWord(program: String, token: Token): LexResult? {
-      if (program.startsWith(token.tokenText)) {
-        return LexResult(program.rest(token.tokenText), token)
+    fun stringTokeniser(program: String, token: IToken): LexResult? {
+      if (program.startsWith(token.getTokenText())) {
+        return LexResult(program.rest(token.getTokenText()), token)
       }
       return null
+    }
+
+    fun tokeniseKeyWord(program: String): LexResult? {
+      return KeyWords.values()
+        .map { stringTokeniser(program, it) }
+        .filterNotNull()
+        .maxBy { it.restOfProgram }
+    }
+
+    fun tokeniseOperator(program: String) : LexResult? {
+      return Operator.values()
+        .map { stringTokeniser(program, Token.Op(it)) }
+        .filterNotNull()
+        .minBy { it.restOfProgram }
     }
 
     fun regexTokeniser(program: String, regexString: String, tokenConstructor: (String) -> Token): LexResult? {

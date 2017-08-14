@@ -1,13 +1,15 @@
 package tatskaari.tokenising
 
-sealed class Operator(val text: String, val resultType: ResultType) {
-  enum class ResultType {
-    BOOLEAN, NUMERIC;
-  }
-
-  object Add : Operator("+", ResultType.NUMERIC)
-  object Sub : Operator("-", ResultType.NUMERIC)
-  object Equality : Operator("=", ResultType.BOOLEAN)
+enum class Operator(val text: String) {
+  Add("+"),
+  Sub("-"),
+  Mul("*"),
+  Div("/"),
+  Equality("="),
+  LessThan("<"),
+  GreaterThan(">"),
+  LessThanEq("<="),
+  GreaterThanEq(">=");
 
   override fun toString(): String {
     return text
