@@ -23,7 +23,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   data class VariableAlreadyDefined(val identifier: String) : RuntimeException("Identifier aready declared '$identifier'")
   object InvalidUserInput : RuntimeException("Please enter a number of the value 'true' or 'false'")
   //TODO better error message
-  object FunctionExitedWithoutReturn : RuntimeException("Function existed without return")
+  object FunctionExitedWithoutReturn : RuntimeException("Function exited without return")
 
 
   fun eval(statements: List<Statement>, env: MutableMap<String, Value>) : Value?  {

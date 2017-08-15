@@ -132,7 +132,7 @@ object EvalTest {
     Eval(printStream).eval(Parser.parse("{output 1}"), HashMap())
     val output = String(outStream.toByteArray())
 
-    assertEquals("1\n", output)
+    assertEquals('1', output[0])
 
   }
 
