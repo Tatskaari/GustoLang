@@ -40,7 +40,7 @@ object LexerTest {
       KeyWords.Val,
       Token.Identifier("someVariable"),
       KeyWords.AssignOp,
-      Token.Op(Operator.Add),
+      KeyWords.Add,
       Token.Num(12),
       Token.Num(12),
       KeyWords.CloseBlock
@@ -60,7 +60,7 @@ object LexerTest {
       KeyWords.If,
       KeyWords.OpenParen,
       Token.Num(1),
-      Token.Op(Operator.Equality),
+      KeyWords.Equality,
       Token.Num(1),
       KeyWords.CloseParen,
       KeyWords.OpenBlock,

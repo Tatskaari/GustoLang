@@ -1,8 +1,8 @@
 val a := 1
 val b := 1
-val c := + a b
-while (!= c 13){
+val c := a + b
+while (c != 13){
     a := c
-    b := + b c
-    c := + a b
+    b := b + c
+    c := a + b
 }

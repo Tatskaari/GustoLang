@@ -5,7 +5,6 @@ import tatskaari.tokenising.KeyWords
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
 import java.util.*
-import kotlin.reflect.full.cast
 
 object Parser {
   class UnexpectedEndOfFile : RuntimeException("Unexpected end of file")
@@ -16,9 +15,9 @@ object Parser {
 
 
   fun parseBody(tokens: LinkedList<IToken>) : List<Statement> {
-    getNextToken(tokens, KeyWords.OpenBlock)
+    tokens.getNextToken(KeyWords.OpenBlock)
     val body = parse(tokens)
-    getNextToken(tokens, KeyWords.CloseBlock)
+    tokens.getNextToken(KeyWords.CloseBlock)
     return body
   }
 
@@ -30,7 +29,7 @@ object Parser {
         KeyWords.NewLine -> {}
         KeyWords.OpenBlock -> {
           statements.add(Statement.CodeBlock(parse(tokens)))
-          getNextToken(tokens, KeyWords.CloseBlock)
+          tokens.getNextToken(KeyWords.CloseBlock)
         }
         KeyWords.CloseBlock -> {
           tokens.addFirst(token)
@@ -38,17 +37,17 @@ object Parser {
         }
         KeyWords.Function -> statements.add(parseFunction(tokens))
         is Token.Identifier -> statements.add(parseAssign(tokens, token))
-        KeyWords.Return -> statements.add(Statement.Return(parseExpression(tokens)))
+        KeyWords.Return -> statements.add(Statement.Return(ParseExpression.expression(tokens)))
         KeyWords.Val -> statements.add(parseValDeclaration(tokens))
         KeyWords.If -> {
           statements.add(parseIf(tokens))
         }
         KeyWords.Input -> {
-          val identifier = getNextToken(tokens, Token.Identifier("someVariable"))
+          val identifier = tokens.getNextToken(Token.Identifier("someVariable"))
           statements.add(Statement.Input(identifier))
         }
         KeyWords.Output -> {
-          val expr = parseExpression(tokens)
+          val expr = ParseExpression.expression(tokens)
           statements.add(Statement.Output(expr))
         }
         KeyWords.While -> statements.add(parseWhile(tokens))
@@ -59,29 +58,29 @@ object Parser {
   }
 
   fun parseValDeclaration(tokens: LinkedList<IToken>): Statement.ValDeclaration {
-    val identifier = getNextToken(tokens, Token.Identifier("someVariable"))
-    getNextToken(tokens, KeyWords.AssignOp)
-    val expression = parseExpression(tokens)
+    val identifier = tokens.getNextToken(Token.Identifier("someVariable"))
+    tokens.getNextToken(KeyWords.AssignOp)
+    val expression = ParseExpression.expression(tokens)
     return Statement.ValDeclaration(identifier, expression)
   }
 
   fun parseAssign(tokens: LinkedList<IToken>, indent: Token.Identifier): Statement.Assignment {
-    getNextToken(tokens, KeyWords.AssignOp)
-    val expr = parseExpression(tokens)
+    tokens.getNextToken(KeyWords.AssignOp)
+    val expr = ParseExpression.expression(tokens)
     return Statement.Assignment(indent, expr)
   }
 
   fun parseIf(tokens: LinkedList<IToken>): Statement {
-    getNextToken(tokens, KeyWords.OpenParen)
+    tokens.getNextToken(KeyWords.OpenParen)
 
-    val condition = parseExpression(tokens)
+    val condition = ParseExpression.expression(tokens)
 
-    getNextToken(tokens, KeyWords.CloseParen)
+    tokens.getNextToken(KeyWords.CloseParen)
 
     val ifBody = parseBody(tokens)
 
-    if (checkNextToken(tokens, KeyWords.Else)) {
-      getNextToken(tokens, KeyWords.Else)
+    if (tokens.match(KeyWords.Else)) {
+      tokens.getNextToken(KeyWords.Else)
       val elseBody = parseBody(tokens)
       return Statement.IfElse(condition, ifBody, elseBody)
     } else {
@@ -90,65 +89,15 @@ object Parser {
   }
 
   fun parseWhile(tokens: LinkedList<IToken>) : Statement.While {
-    getNextToken(tokens, KeyWords.OpenParen)
-    val condition = parseExpression(tokens)
-    getNextToken(tokens, KeyWords.CloseParen)
+    tokens.getNextToken(KeyWords.OpenParen)
+    val condition = ParseExpression.expression(tokens)
+    tokens.getNextToken(KeyWords.CloseParen)
     val body = parseBody(tokens)
     return Statement.While(condition, body)
   }
 
-  fun parseExpression(tokens: LinkedList<IToken>): Expression {
-    if (!tokens.isEmpty()) {
-      val token = tokens.removeFirst()
-      when (token) {
-        KeyWords.True -> return Expression.Bool(true)
-        KeyWords.False -> return Expression.Bool(false)
-        KeyWords.Not -> return Expression.Not(parseExpression(tokens))
-        KeyWords.And -> return Expression.And(parseExpression(tokens), parseExpression(tokens))
-        KeyWords.Or -> return Expression.Or(parseExpression(tokens), parseExpression(tokens))
-        is Token.Num -> return Expression.Num(token.value)
-        is Token.Op -> {
-          val operator = token.operator
-          val lhs = parseExpression(tokens)
-          val rhs = parseExpression(tokens)
-          return Expression.Op(operator, lhs, rhs)
-        }
-        is Token.Identifier -> {
-          if (checkNextToken(tokens, KeyWords.OpenParen)){
-            return Expression.FunctionCall(token, getParameters(tokens, LinkedList()))
-          } else {
-            return Expression.Identifier(token.text)
-          }
-        }
-      }
-      throw Lexer.InvalidInputException("Unexpected token $token, expected expression")
-    }
-    throw UnexpectedEndOfFile()
-  }
-
-  fun getParameters(tokens: LinkedList<IToken>, params : LinkedList<Statement.ValDeclaration>) : List<Statement.ValDeclaration> {
-    if (tokens.isEmpty()){
-      throw UnexpectedEndOfFile()
-    }
-    if (checkNextToken(tokens, KeyWords.OpenParen)){
-      tokens.removeFirst()
-      return getParameters(tokens, params)
-    }
-    val token = tokens.removeFirst()
-    when(token){
-      KeyWords.CloseParen -> return params
-      is Token.Identifier -> {
-        tokens.addFirst(token)
-        params.add(parseValDeclaration(tokens))
-        return getParameters(tokens, params)
-      }
-      KeyWords.Comma -> return getParameters(tokens, params)
-    }
-    throw Lexer.InvalidInputException("unexpected input '$token', expected one of ',', 'Identifier(name=someIdentifier)' or ')'")
-  }
-
   fun parseFunction(tokens: LinkedList<IToken>): Statement.Function {
-    val identifier = getNextToken(tokens, Token.Identifier("functionName"))
+    val identifier = tokens.getNextToken(Token.Identifier("functionName"))
     val params = getParameterDecs(tokens, LinkedList())
     val body = parseBody(tokens)
     return Statement.Function(identifier, params, body)
@@ -158,7 +107,7 @@ object Parser {
     if (tokens.isEmpty()){
       throw UnexpectedEndOfFile()
     }
-    if (checkNextToken(tokens, KeyWords.OpenParen)){
+    if (tokens.match(KeyWords.OpenParen)){
       tokens.removeFirst()
       return getParameterDecs(tokens, params)
     }
@@ -174,41 +123,5 @@ object Parser {
     throw Lexer.InvalidInputException("unexpected input '$token', expected one of ',', 'Identifier(name=someIdentifier)' or ')'")
   }
 
-  fun <T : IToken> getNextToken(tokens: LinkedList<IToken>, expectedToken: T): T {
-    if (tokens.isEmpty()) {
-      throw UnexpectedEndOfFile()
-    }
 
-    val token = tokens.removeFirst()
-    if (token.isSameToken(expectedToken)) {
-      return expectedToken::class.cast(token)
-    }
-    throw Lexer.InvalidInputException("unexpected input '$token', expected '$expectedToken'")
-  }
-
-  fun <T : IToken> checkNextToken(tokens: LinkedList<IToken>, expectedToken: T): Boolean {
-    if (tokens.isEmpty()) {
-      return false
-    }
-
-    val token = tokens[0]
-    if (token.isSameToken(expectedToken)) {
-      return true
-    }
-    return false
-  }
-
-  fun getExpressionTokens(tokens: LinkedList<IToken>) : LinkedList<IToken> {
-    val expression = LinkedList<IToken>()
-    while(tokens.isNotEmpty()){
-      when(tokens[0]){
-        KeyWords.NewLine -> {
-          tokens.removeFirst()
-          return expression
-        }  
-        else -> expression.add(tokens.removeFirst())
-      }
-    }
-    return expression
-  }
 }

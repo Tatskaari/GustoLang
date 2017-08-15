@@ -2,7 +2,8 @@ package tatskaari.eval
 
 import tatskaari.parsing.Expression
 import tatskaari.parsing.Statement
-import tatskaari.tokenising.Operator
+import tatskaari.tokenising.IToken
+import tatskaari.tokenising.KeyWords
 import java.io.BufferedReader
 import java.io.PrintStream
 
@@ -120,8 +121,8 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     when (expression) {
       is Expression.Num -> return Value.NumVal(expression.value)
       is Expression.Bool -> return Value.BoolVal(expression.value)
-      is Expression.Op -> return applyOperator(expression, env)
-      is Expression.Not -> return Value.BoolVal(!evalCondition(expression.expr, env).boolVal)
+      is Expression.BinaryOperator -> return applyBinaryOperator(expression, env)
+      is Expression.UnaryOperator -> return Value.BoolVal(!evalCondition(expression.expression, env).boolVal) //TODO other unary operators
       is Expression.And -> return Value.BoolVal(evalCondition(expression.lhs, env).boolVal && evalCondition(expression.rhs, env).boolVal)
       is Expression.Or -> return Value.BoolVal(evalCondition(expression.lhs, env).boolVal || evalCondition(expression.rhs, env).boolVal)
       is Expression.FunctionCall -> return callFunction(expression, env)
@@ -165,14 +166,9 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     val functionRunEnv = HashMap<String, Value>()
     functionRunEnv.putAll(functionDefEnv)
 
-    functionCall.params.forEach({
-      val identifier = it.identifier
-      if(function.params.contains(identifier)){
-        val paramVal : Value = eval(it.expression, functionCallEnv)
-        functionRunEnv.put(identifier.name, paramVal)
-      } else {
-        throw TypeMismatch("$function doesn't contain the parameter $identifier")
-      }
+    functionCall.params.forEachIndexed({index, expression ->
+      val paramVal : Value = eval(expression, functionCallEnv)
+      functionRunEnv.put(function.params.get(index).name, paramVal)
     })
 
     return functionRunEnv
@@ -188,26 +184,29 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     throw FunctionExitedWithoutReturn
   }
 
-  fun applyOperator(operatorExpression: Expression.Op, env: Map<String, Value>): Value {
+  fun applyBinaryOperator(operatorExpression: Expression.BinaryOperator, env: Map<String, Value>): Value {
     val operation = operatorExpression.operator
     val lhsVal = eval(operatorExpression.lhs, env)
     val rhsVal = eval(operatorExpression.rhs, env)
 
     if (lhsVal is Value.NumVal && rhsVal is Value.NumVal) {
       when (operation) {
-        Operator.Add -> return Value.NumVal(lhsVal.intVal + rhsVal.intVal)
-        Operator.Sub -> return Value.NumVal(lhsVal.intVal - rhsVal.intVal)
-        Operator.Div -> return Value.NumVal(lhsVal.intVal / rhsVal.intVal)
-        Operator.Mul -> return Value.NumVal(lhsVal.intVal * rhsVal.intVal)
-        Operator.Equality -> return Value.BoolVal(lhsVal.intVal == rhsVal.intVal)
-        Operator.LessThan -> return Value.BoolVal(lhsVal.intVal < rhsVal.intVal)
-        Operator.GreaterThan -> return Value.BoolVal(lhsVal.intVal > rhsVal.intVal)
-        Operator.LessThanEq -> return Value.BoolVal(lhsVal.intVal <= rhsVal.intVal)
-        Operator.GreaterThanEq -> return Value.BoolVal(lhsVal.intVal >= rhsVal.intVal)
+        KeyWords.Add -> return Value.NumVal(lhsVal.intVal + rhsVal.intVal)
+        KeyWords.Sub -> return Value.NumVal(lhsVal.intVal - rhsVal.intVal)
+        KeyWords.Div -> return Value.NumVal(lhsVal.intVal / rhsVal.intVal)
+        KeyWords.Mul -> return Value.NumVal(lhsVal.intVal * rhsVal.intVal)
+        KeyWords.Equality -> return Value.BoolVal(lhsVal.intVal == rhsVal.intVal)
+        KeyWords.NotEquality -> return Value.BoolVal(lhsVal.intVal != rhsVal.intVal)
+        KeyWords.LessThan -> return Value.BoolVal(lhsVal.intVal < rhsVal.intVal)
+        KeyWords.GreaterThan -> return Value.BoolVal(lhsVal.intVal > rhsVal.intVal)
+        KeyWords.LessThanEq -> return Value.BoolVal(lhsVal.intVal <= rhsVal.intVal)
+        KeyWords.GreaterThanEq -> return Value.BoolVal(lhsVal.intVal >= rhsVal.intVal)
       }
     } else {
       throw TypeMismatch("Number operator applied to $lhsVal and $rhsVal")
     }
+    //TODO make an enum for the operators
+    throw RuntimeException("Unsuported opeator " + operatorExpression.operator)
   }
 
   fun evalIf(condition: Expression, ifBody: List<Statement>, elseBody: List<Statement>?, env: MutableMap<String, Value>) : Value? {

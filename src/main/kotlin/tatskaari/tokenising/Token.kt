@@ -7,7 +7,6 @@ interface IToken {
 sealed class Token(val text: String) : IToken {
   data class Identifier(val name: String) : Token(name)
   data class Num(val value: Int) : Token(value.toString())
-  data class Op(val operator: Operator) : Token(operator.toString())
 
   override fun toString(): String {
     return text
@@ -24,6 +23,14 @@ sealed class Token(val text: String) : IToken {
 }
 
 enum class KeyWords(val text : String) : IToken {
+  Add("+"),
+  Sub("-"),
+  Mul("*"),
+  Div("/"),
+  LessThan("<"),
+  GreaterThan(">"),
+  LessThanEq("<="),
+  GreaterThanEq(">="),
   And("and"),
   Function("function"),
   Return("return"),
@@ -34,7 +41,8 @@ enum class KeyWords(val text : String) : IToken {
   Val("val"),
   AssignOp(":="),
   Not("!"),
-  Equality("=="),
+  Equality("="),
+  NotEquality("="),
   If("if"),
   Else("else"),
   True("true"),

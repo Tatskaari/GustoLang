@@ -4,7 +4,6 @@ import tatskaari.StringUtils.rest
 
 enum class Tokenisers(val lexer: (String) -> LexResult?) {
   KEYWORD({ tokeniseKeyWord(it) }),
-  OPERATOR({ tokeniseOperator(it) }),
   IDENTIFIER({ regexTokeniser(it, """^[a-zA-Z]+""", Token::Identifier) }),
   NUMBER({ regexTokeniser(it, "^[0-9]+", Token::Num, String::toInt) });
 
@@ -23,13 +22,6 @@ enum class Tokenisers(val lexer: (String) -> LexResult?) {
         .map { stringTokeniser(program, it) }
         .filterNotNull()
         .maxBy { it.restOfProgram }
-    }
-
-    fun tokeniseOperator(program: String) : LexResult? {
-      return Operator.values()
-        .map { stringTokeniser(program, Token.Op(it)) }
-        .filterNotNull()
-        .minBy { it.restOfProgram }
     }
 
     fun regexTokeniser(program: String, regexString: String, tokenConstructor: (String) -> Token): LexResult? {

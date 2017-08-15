@@ -224,7 +224,7 @@ object EvalTest {
 
   @Test
   fun testAnd() {
-    val program = Parser.parse("val a := 0 if(and true true) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(true and true) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
@@ -232,7 +232,7 @@ object EvalTest {
 
   @Test
   fun testOr() {
-    val program = Parser.parse("val a := 0 if(or true false) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(true or false) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
@@ -240,7 +240,7 @@ object EvalTest {
 
   @Test
   fun testNotAnd() {
-    val program = Parser.parse("val a := 0 if(and true false) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(true and false) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
@@ -248,7 +248,7 @@ object EvalTest {
 
   @Test
   fun testNotOr() {
-    val program = Parser.parse("val a := 0 if(or false false) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(false or false) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
@@ -256,7 +256,7 @@ object EvalTest {
 
   @Test
   fun testLT() {
-    val program = Parser.parse("val a := 0 if(< 1 2) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(1 < 2) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
@@ -264,7 +264,7 @@ object EvalTest {
 
   @Test
   fun testGT() {
-    val program = Parser.parse("val a := 0 if(> 2 1) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(2 > 1) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
@@ -272,7 +272,7 @@ object EvalTest {
 
   @Test
   fun testGTE() {
-    val program = Parser.parse("val a := 0 if(>= 1 1) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(1 >= 1) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
@@ -280,7 +280,7 @@ object EvalTest {
 
   @Test
   fun testLTE() {
-    val program = Parser.parse("val a := 0 if(<= 1 1) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(1 <= 1) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
@@ -289,7 +289,7 @@ object EvalTest {
 
   @Test
   fun testNotLT() {
-    val program = Parser.parse("val a := 0 if(< 2 1) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(2 < 1) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
@@ -297,7 +297,7 @@ object EvalTest {
 
   @Test
   fun testNotGT() {
-    val program = Parser.parse("val a := 0 if(> 1 2) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(1 > 2) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
@@ -305,7 +305,7 @@ object EvalTest {
 
   @Test
   fun testNotGTE() {
-    val program = Parser.parse("val a := 0 if(>= 1 2) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(1 >= 2) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
@@ -313,7 +313,7 @@ object EvalTest {
 
   @Test
   fun testNotLTE() {
-    val program = Parser.parse("val a := 0 if(<= 2 1) {a := 1} else {a := 2}")
+    val program = Parser.parse("val a := 0 if(2 <= 1) {a := 1} else {a := 2}")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
@@ -321,7 +321,7 @@ object EvalTest {
 
   @Test
   fun testMul() {
-    val program = Parser.parse("val a := * 2 3")
+    val program = Parser.parse("val a := 2 * 3")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(6), env.getValue("a"))
@@ -329,7 +329,7 @@ object EvalTest {
 
   @Test
   fun testDiv() {
-    val program = Parser.parse("val a := / 9 3")
+    val program = Parser.parse("val a := 9 / 3")
     val env = HashMap<String, Eval.Value>()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(3), env.getValue("a"))
@@ -345,7 +345,7 @@ object EvalTest {
 
   @Test
   fun missingFuncDef(){
-    val program = Parser.parse("val a := add(b := 1, c := 2)")
+    val program = Parser.parse("val a := add(1, 2)")
     assertFailsWith<Eval.UndefinedIdentifier> {
       Eval().eval(program, HashMap())
     }
@@ -353,7 +353,7 @@ object EvalTest {
 
   @Test
   fun missingReturnFromFunc(){
-    val program = Parser.parse("function add(a, b) { } val c := add(a:= 1, b := 2)")
+    val program = Parser.parse("function add(a, b) { } val c := add(1, 2)")
     assertFailsWith<Eval.FunctionExitedWithoutReturn> {
       Eval().eval(program, HashMap())
     }
@@ -369,7 +369,7 @@ object EvalTest {
 
   @Test
   fun wrongNumParams(){
-    val program = Parser.parse("function add(a, b) { return + a b } val b := add(a := 1)")
+    val program = Parser.parse("function add(a, b) { return a + b } val b := add(1)")
     assertFailsWith<Eval.TypeMismatch> {
       Eval().eval(program, HashMap())
     }
@@ -377,7 +377,7 @@ object EvalTest {
 
   @Test
   fun paramDoesntExist(){
-    val program = Parser.parse("function add(a, b) { return + a b } val b := add(a := 1, c := 2)")
+    val program = Parser.parse("function add(a, b) { return a + b } val b := add(1, 2)")
     assertFailsWith<Eval.TypeMismatch> {
       Eval().eval(program, HashMap())
     }

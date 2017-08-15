@@ -1,12 +1,11 @@
 package tatskaari
 
 import org.testng.annotations.Test
-import tatskaari.TestUtil
 import tatskaari.parsing.Expression
 import tatskaari.parsing.Parser
 import tatskaari.parsing.Statement
+import tatskaari.tokenising.KeyWords
 import tatskaari.tokenising.Lexer
-import tatskaari.tokenising.Operator
 import tatskaari.tokenising.Token
 import kotlin.test.assertFailsWith
 
@@ -35,13 +34,13 @@ object ParserTest {
 
   @Test
   fun testSimpleExpressions() {
-    val program = "{val someVariable := + 12 12}"
+    val program = "{val someVariable := 12 + 12}"
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(
           Statement.ValDeclaration(
             Token.Identifier("someVariable"),
-            Expression.Op(Operator.Add, Expression.Num(12), Expression.Num(12))
+            Expression.BinaryOperator(KeyWords.Add, Expression.Num(12), Expression.Num(12))
           )
         )
       )
@@ -54,14 +53,14 @@ object ParserTest {
 
   @Test
   fun TestExpressionWithIdentifier() {
-    val program = "{val someVariable := 12 val someVar := + someVariable 1 }"
+    val program = "{val someVariable := 12 val someVar := someVariable + 1 }"
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(
           Statement.ValDeclaration(Token.Identifier("someVariable"),  Expression.Num(12)),
           Statement.ValDeclaration(
             Token.Identifier("someVar"),
-            Expression.Op(Operator.Add, Expression.Identifier("someVariable"), Expression.Num(1))
+            Expression.BinaryOperator(KeyWords.Add, Expression.Identifier("someVariable"), Expression.Num(1))
           )
         )
       )
@@ -95,7 +94,7 @@ object ParserTest {
 
   @Test
   fun testInvalidTokenInExpression() {
-    val program = "{val someVariable := + 12 val}"
+    val program = "{val someVariable := 12 + val}"
     assertFailsWith<Lexer.InvalidInputException> {
       Parser.parse(program)
     }
@@ -103,7 +102,7 @@ object ParserTest {
 
   @Test
   fun testEOFInExpression() {
-    val program = "{val someVariable := + 12"
+    val program = "{val someVariable := 12 +"
     assertFailsWith<Parser.UnexpectedEndOfFile> {
       Parser.parse(program)
     }
@@ -143,12 +142,12 @@ object ParserTest {
 
   @Test
   fun testIfMidBlock() {
-    val program = Parser.parse("{if (= 1 1) { } output 1}")
+    val program = Parser.parse("{if (1 = 1) { } output 1}")
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(
           Statement.If(
-            Expression.Op(Operator.Equality, Expression.Num(1), Expression.Num(1)),
+            Expression.BinaryOperator(KeyWords.Equality, Expression.Num(1), Expression.Num(1)),
             listOf()
           ),
           Statement.Output(Expression.Num(1))
@@ -161,12 +160,12 @@ object ParserTest {
 
   @Test
   fun testFunction() {
-    val program = Parser.parse("function add(a, b) { output + a b }")
+    val program = Parser.parse("function add(a, b) { output a + b }")
     val expectedAST = listOf(
       Statement.Function(
         Token.Identifier("add"),
         listOf(Token.Identifier("a"), Token.Identifier("b")),
-        listOf(Statement.Output(Expression.Op(Operator.Add, Expression.Identifier("a"), Expression.Identifier("b"))))
+        listOf(Statement.Output(Expression.BinaryOperator(KeyWords.Add, Expression.Identifier("a"), Expression.Identifier("b"))))
       )
     )
 
@@ -175,15 +174,15 @@ object ParserTest {
 
   @Test
   fun testFunctionCall() {
-    val program = Parser.parse("val a := add(pA := 1, pB := 2)")
+    val program = Parser.parse("val a := add(1 2)")
     val expectedAST = listOf(
       Statement.ValDeclaration(
         Token.Identifier("a"),
         Expression.FunctionCall(
           Token.Identifier("add"),
           listOf(
-            Statement.ValDeclaration(Token.Identifier("pA"), Expression.Num(1)),
-            Statement.ValDeclaration(Token.Identifier("pB"), Expression.Num(2))
+            Expression.Num(1),
+            Expression.Num(2)
           )
         )
       )
