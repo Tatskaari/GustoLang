@@ -197,4 +197,18 @@ object Parser {
     }
     return false
   }
+
+  fun getExpressionTokens(tokens: LinkedList<IToken>) : LinkedList<IToken> {
+    val expression = LinkedList<IToken>()
+    while(tokens.isNotEmpty()){
+      when(tokens[0]){
+        KeyWords.NewLine -> {
+          tokens.removeFirst()
+          return expression
+        }  
+        else -> expression.add(tokens.removeFirst())
+      }
+    }
+    return expression
+  }
 }
