@@ -27,6 +27,7 @@ object Parser {
     while (!tokens.isEmpty()) {
       val token = tokens.removeFirst()
       when (token) {
+        KeyWords.NewLine -> {}
         KeyWords.OpenBlock -> {
           statements.add(Statement.CodeBlock(parse(tokens)))
           getNextToken(tokens, KeyWords.CloseBlock)

@@ -23,7 +23,7 @@ object LexerTest {
 
     assert(tokenList.size == expectedTokens.size)
     tokenList.zip(expectedTokens)
-      .forEach { (actual, expect) -> assertEquals(actual, expect) }
+      .forEach { (actual, expect) -> assertEquals(expect, actual) }
   }
 
   @Test

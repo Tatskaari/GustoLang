@@ -43,6 +43,7 @@ enum class KeyWords(val text : String) : IToken {
   OpenParen("("),
   CloseParen(")"),
   Input("input"),
+  NewLine("\n"),
   Output("output");
 
   override fun toString(): String {

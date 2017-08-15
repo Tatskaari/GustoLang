@@ -1,3 +1,1 @@
-{
-    val someVariable := 12
-}
+{val someVariable := 12}
