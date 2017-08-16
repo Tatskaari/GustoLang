@@ -1,5 +1,5 @@
 function add(a, b) {
-  return + a b
+  return a + b
 }
 
-val c := add(a := 1, b := 2)
+val c := add(1, 2)

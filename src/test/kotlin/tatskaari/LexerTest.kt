@@ -91,4 +91,12 @@ object LexerTest {
     val expectedTokens = listOf<IToken>(KeyWords.Not, KeyWords.True)
     assertEquals(tokens, expectedTokens)
   }
+
+  @Test
+  fun notEqTest() {
+    val program = Lexer.lex("1 != 2")
+    val expectedTokens = listOf<IToken>(Token.Num(1), KeyWords.NotEquality, Token.Num(2))
+    assertEquals(expectedTokens, program)
+
+  }
 }

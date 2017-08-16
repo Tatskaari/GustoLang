@@ -21,7 +21,7 @@ enum class Tokenisers(val lexer: (String) -> LexResult?) {
       return KeyWords.values()
         .map { stringTokeniser(program, it) }
         .filterNotNull()
-        .maxBy { it.restOfProgram }
+        .minBy { it.restOfProgram }
     }
 
     fun regexTokeniser(program: String, regexString: String, tokenConstructor: (String) -> Token): LexResult? {

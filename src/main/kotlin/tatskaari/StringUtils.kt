@@ -5,3 +5,4 @@ object StringUtils {
     return substring(head.length, length)
   }
 }
+

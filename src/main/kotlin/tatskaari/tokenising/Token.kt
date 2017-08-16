@@ -42,7 +42,7 @@ enum class KeyWords(val text : String) : IToken {
   AssignOp(":="),
   Not("!"),
   Equality("="),
-  NotEquality("="),
+  NotEquality("!="),
   If("if"),
   Else("else"),
   True("true"),

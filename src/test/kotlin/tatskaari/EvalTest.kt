@@ -34,7 +34,7 @@ object EvalTest {
   @Test
   fun missingIdentifier() {
     assertFailsWith<Eval.UndefinedIdentifier> {
-      val program = "{if (= 1 a) {}}"
+      val program = "{if (1 = a) {}}"
       val env = HashMap<String, Eval.Value>()
       Eval().eval(Parser.parse(program), env)
     }
@@ -43,7 +43,7 @@ object EvalTest {
   @Test
   fun numIdentifierAssignBoolean() {
     assertFailsWith<Eval.TypeMismatch> {
-      val program = "{val a := 1 a := = 1 1}"
+      val program = "{val a := 1 a := 1 = 1}"
       val env = HashMap<String, Eval.Value>()
       Eval().eval(Parser.parse(program), env)
     }
@@ -52,7 +52,7 @@ object EvalTest {
   @Test
   fun testAddBoolRHS() {
     assertFailsWith<Eval.TypeMismatch> {
-      val program = "{val a := + 1 = 1 1}"
+      val program = "{val a := (1 = 1) + 1}"
       val env = HashMap<String, Eval.Value>()
       Eval().eval(Parser.parse(program), env)
     }
@@ -61,7 +61,7 @@ object EvalTest {
   @Test
   fun testAddBoolLHS() {
     assertFailsWith<Eval.TypeMismatch> {
-      val program = "{val a := + = 1 1 1 }"
+      val program = "{val a := 1 + (1 = 1) }"
       val env = HashMap<String, Eval.Value>()
       Eval().eval(Parser.parse(program), env)
     }
@@ -69,7 +69,7 @@ object EvalTest {
 
   @Test
   fun testAdd() {
-    val program = "{val a := + 1 1}"
+    val program = "{val a := 1 + 1}"
     val env = HashMap<String, Eval.Value>()
     Eval().eval(Parser.parse(program), env)
 
@@ -79,7 +79,7 @@ object EvalTest {
 
   @Test
   fun testSub() {
-    val program = "{val a := - 1 1}"
+    val program = "{val a := 1 - 1}"
     val env = HashMap<String, Eval.Value>()
     Eval().eval(Parser.parse(program), env)
 
@@ -377,7 +377,7 @@ object EvalTest {
 
   @Test
   fun paramDoesntExist(){
-    val program = Parser.parse("function add(a, b) { return a + b } val b := add(1, 2)")
+    val program = Parser.parse("function add(a, b) { return a + b } val b := add(1, 2, 3)")
     assertFailsWith<Eval.TypeMismatch> {
       Eval().eval(program, HashMap())
     }

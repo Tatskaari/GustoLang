@@ -7,21 +7,32 @@ import tatskaari.tokenising.Token
 import java.util.*
 
 /*
-expression     → equality ;
+expression     → logical ;
+logical        → equality ( ( "and" | "or" ) equality )* ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → addition ( ( ">" | ">=" | "<" | "<=" ) addition )* ;
 addition       → multiplication ( ( "-" | "+" ) multiplication )* ;
 multiplication → unary ( ( "/" | "*" ) unary )* ;
 unary          → ( "!" | "-" ) unary | primary ;
 primary        → NUMBER | functionCall | "false" | "true" | "nil" | "(" expression ")";
-functionCall   → STRING ("(" (expression ",")* ")")*  ;
+functionCall   → STRING ("(" (expression (",")*)* ")")*  ;
 
  */
 
 
 object ParseExpression {
   fun expression(tokens: LinkedList<IToken>) : Expression{
-    return equality(tokens)
+    return logical(tokens)
+  }
+
+  fun logical(tokens: LinkedList<IToken>) : Expression{
+    var expr = equality(tokens)
+    while(tokens.matchAny( listOf<IToken>(KeyWords.Or, KeyWords.And))){
+      val operator = tokens.removeFirst()
+      val rhs = equality(tokens)
+      expr = Expression.BinaryOperator(operator, expr, rhs)
+    }
+    return expr
   }
 
   fun equality(tokens: LinkedList<IToken>) : Expression{
@@ -43,6 +54,7 @@ object ParseExpression {
     }
     return expr
   }
+
 
   fun addition(tokens: LinkedList<IToken>) : Expression{
     var expr = multiplication(tokens)
@@ -106,8 +118,11 @@ object ParseExpression {
     val token = tokens.getNextToken(Token.Identifier("someVariable"))
     if (tokens.match(KeyWords.OpenParen)){
       tokens.consumeToken()
-      val params = LinkedList<Expression>();
+      val params = LinkedList<Expression>()
       while (!tokens.match(KeyWords.CloseParen)){
+        if (tokens.match(KeyWords.Comma)){
+          tokens.consumeToken()
+        }
         params.add(expression(tokens))
       }
       tokens.getNextToken(KeyWords.CloseParen)

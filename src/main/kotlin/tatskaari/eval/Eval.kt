@@ -28,8 +28,8 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
 
 
   fun eval(statements: List<Statement>, env: MutableMap<String, Value>) : Value?  {
-    for (statement in statements) {
-      val value = eval(statement, env)
+    statements.forEach {
+      val value = eval(it, env)
       if (value != null) {
         return value
       }
@@ -123,8 +123,6 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
       is Expression.Bool -> return Value.BoolVal(expression.value)
       is Expression.BinaryOperator -> return applyBinaryOperator(expression, env)
       is Expression.UnaryOperator -> return Value.BoolVal(!evalCondition(expression.expression, env).boolVal) //TODO other unary operators
-      is Expression.And -> return Value.BoolVal(evalCondition(expression.lhs, env).boolVal && evalCondition(expression.rhs, env).boolVal)
-      is Expression.Or -> return Value.BoolVal(evalCondition(expression.lhs, env).boolVal || evalCondition(expression.rhs, env).boolVal)
       is Expression.FunctionCall -> return callFunction(expression, env)
       is Expression.Identifier -> {
         val value = env[expression.name]
@@ -168,15 +166,15 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
 
     functionCall.params.forEachIndexed({index, expression ->
       val paramVal : Value = eval(expression, functionCallEnv)
-      functionRunEnv.put(function.params.get(index).name, paramVal)
+      functionRunEnv.put(function.params[index].name, paramVal)
     })
 
     return functionRunEnv
   }
 
   fun evalFunction(body: List<Statement>, env: MutableMap<String, Value>) : Eval.Value {
-    for (statement in body){
-      val value = eval(statement, env)
+    body.forEach{
+      val value = eval(it, env)
       if (value != null){
         return value
       }
@@ -202,7 +200,13 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
         KeyWords.LessThanEq -> return Value.BoolVal(lhsVal.intVal <= rhsVal.intVal)
         KeyWords.GreaterThanEq -> return Value.BoolVal(lhsVal.intVal >= rhsVal.intVal)
       }
-    } else {
+    } else if ((lhsVal is Value.BoolVal && rhsVal is Value.BoolVal)) {
+      when (operation) {
+        KeyWords.And -> return Value.BoolVal(lhsVal.boolVal && rhsVal.boolVal)
+        KeyWords.Or -> return Value.BoolVal(lhsVal.boolVal || rhsVal.boolVal)
+      }
+    }
+    else {
       throw TypeMismatch("Number operator applied to $lhsVal and $rhsVal")
     }
     //TODO make an enum for the operators
