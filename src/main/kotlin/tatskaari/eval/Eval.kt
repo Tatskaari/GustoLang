@@ -7,6 +7,9 @@ import tatskaari.parsing.UnaryOperators
 import java.io.BufferedReader
 import java.io.PrintStream
 
+typealias Env = Map<String, Eval.Value>
+typealias MutEnv = HashMap<String, Eval.Value>
+
 class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   constructor() : this(System.`in`.bufferedReader(), System.out)
   constructor(inputReader: BufferedReader) : this(inputReader, System.out)
@@ -44,7 +47,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   object FunctionExitedWithoutReturn : RuntimeException("Function exited without return")
 
 
-  fun eval(statements: List<Statement>, env: MutableMap<String, Value>) : Value?  {
+  fun eval(statements: List<Statement>, env: MutEnv) : Value?  {
     statements.forEach {
       val value = eval(it, env)
       if (value != null) {
@@ -54,7 +57,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     return null
   }
 
-  fun eval(statement: Statement, env: MutableMap<String, Value>) : Value? {
+  fun eval(statement: Statement, env: MutEnv) : Value? {
     when (statement) {
       is Statement.CodeBlock -> return eval(statement.statementList, env)
       is Statement.If -> return evalIf(statement.condition, statement.body.statementList, null, env)
@@ -115,7 +118,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     return null
   }
 
-  private fun evalWhile(condition: Expression, body: List<Statement>, env: MutableMap<String, Value>) : Value? {
+  private fun evalWhile(condition: Expression, body: List<Statement>, env: MutEnv) : Value? {
     while(evalCondition(condition, env).boolVal){
       val value : Value? = eval(body, env)
       if (value != null) {
@@ -125,7 +128,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     return null
   }
 
-  fun evalCondition(condition: Expression, env: Map<String, Value>) : Value.BoolVal {
+  fun evalCondition(condition: Expression, env: Env) : Value.BoolVal {
     val value = eval(condition, env)
     if (value is Value.BoolVal) {
       return value
@@ -134,7 +137,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     }
   }
 
-  fun eval(expression: Expression, env: Map<String, Value>): Value {
+  fun eval(expression: Expression, env: Env): Value {
     when (expression) {
       is Expression.Num -> return Value.NumVal(expression.value)
       is Expression.Bool -> return Value.BoolVal(expression.value)
@@ -152,14 +155,14 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     }
   }
 
-  fun callFunction(functionCall: Expression.FunctionCall, env: Map<String, Value>) : Eval.Value{
+  fun callFunction(functionCall: Expression.FunctionCall, env: Env) : Eval.Value{
     val functionVal = getFunction(functionCall, env)
     val funEnv = getFunctionCallEnv(functionVal.function, functionCall, functionVal.env, env)
 
     return evalFunction(functionVal.function.body.statementList, funEnv)
   }
 
-  fun getFunction(functionCall: Expression.FunctionCall, env: Map<String, Value>): Value.FunctionVal {
+  fun getFunction(functionCall: Expression.FunctionCall, env: Env): Value.FunctionVal {
     if (!env.containsKey(functionCall.functionIdentifier.name)){
       throw UndefinedIdentifier(functionCall.functionIdentifier.name)
     }
@@ -173,7 +176,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     return function
   }
 
-  fun getFunctionCallEnv(function : Statement.Function, functionCall: Expression.FunctionCall, functionDefEnv: Map<String, Value>, functionCallEnv: Map<String, Value>) : HashMap<String, Value> {
+  fun getFunctionCallEnv(function : Statement.Function, functionCall: Expression.FunctionCall, functionDefEnv: Env, functionCallEnv: Env) : MutEnv {
     if (functionCall.params.size != function.params.size){
       throw TypeMismatch("Wrong number of arguments to call $function ")
     }
@@ -189,7 +192,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     return functionRunEnv
   }
 
-  fun evalFunction(body: List<Statement>, env: MutableMap<String, Value>) : Eval.Value {
+  fun evalFunction(body: List<Statement>, env: MutEnv) : Eval.Value {
     body.forEach{
       val value = eval(it, env)
       if (value != null){
@@ -199,7 +202,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     throw FunctionExitedWithoutReturn
   }
 
-  fun applyBinaryOperator(operatorExpression: Expression.BinaryOperator, env: Map<String, Value>): Value {
+  fun applyBinaryOperator(operatorExpression: Expression.BinaryOperator, env: Env): Value {
     val operation = operatorExpression.operator
     val lhsVal = eval(operatorExpression.lhs, env)
     val rhsVal = eval(operatorExpression.rhs, env)
@@ -223,7 +226,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     }
   }
 
-  fun applyUnaryOperator(operatorExpr: Expression.UnaryOperator, env: Map<String, Value>): Value{
+  fun applyUnaryOperator(operatorExpr: Expression.UnaryOperator, env: Env): Value{
     val result = eval(operatorExpr.expression, env)
     val operator = operatorExpr.operator
     try {
@@ -236,7 +239,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     }
   }
 
-  fun evalIf(condition: Expression, ifBody: List<Statement>, elseBody: List<Statement>?, env: MutableMap<String, Value>) : Value? {
+  fun evalIf(condition: Expression, ifBody: List<Statement>, elseBody: List<Statement>?, env: MutEnv) : Value? {
     val conditionResult = eval(condition, env)
     if (conditionResult is Value.BoolVal) {
       var value : Value? = null
