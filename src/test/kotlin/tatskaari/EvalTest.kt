@@ -399,4 +399,14 @@ object EvalTest {
     assertEquals(Eval.Value.NumVal(100), env.getValue("out"))
   }
 
+  @Test
+  fun testUnaryOperatorTypeMissmatch(){
+    assertFailsWith<Eval.TypeMismatch> {
+      Eval().eval(Parser.parse("val a := !1"), HashMap())
+    }
+    assertFailsWith<Eval.TypeMismatch> {
+      Eval().eval(Parser.parse("val a := -true"), HashMap())
+    }
+  }
+
 }

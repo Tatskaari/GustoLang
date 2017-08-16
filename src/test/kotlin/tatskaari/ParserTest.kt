@@ -2,10 +2,9 @@ package tatskaari
 
 import org.testng.annotations.Test
 import tatskaari.parsing.Expression
-import tatskaari.parsing.Operator
+import tatskaari.parsing.BinaryOperators
 import tatskaari.parsing.Parser
 import tatskaari.parsing.Statement
-import tatskaari.tokenising.KeyWords
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
 import kotlin.test.assertFailsWith
@@ -41,7 +40,7 @@ object ParserTest {
         listOf(
           Statement.ValDeclaration(
             Token.Identifier("someVariable"),
-            Expression.BinaryOperator(Operator.Add, Expression.Num(12), Expression.Num(12))
+            Expression.BinaryOperator(BinaryOperators.Add, Expression.Num(12), Expression.Num(12))
           )
         )
       )
@@ -61,7 +60,7 @@ object ParserTest {
           Statement.ValDeclaration(Token.Identifier("someVariable"),  Expression.Num(12)),
           Statement.ValDeclaration(
             Token.Identifier("someVar"),
-            Expression.BinaryOperator(Operator.Add, Expression.Identifier("someVariable"), Expression.Num(1))
+            Expression.BinaryOperator(BinaryOperators.Add, Expression.Identifier("someVariable"), Expression.Num(1))
           )
         )
       )
@@ -148,7 +147,7 @@ object ParserTest {
       Statement.CodeBlock(
         listOf(
           Statement.If(
-            Expression.BinaryOperator(Operator.Equality, Expression.Num(1), Expression.Num(1)),
+            Expression.BinaryOperator(BinaryOperators.Equality, Expression.Num(1), Expression.Num(1)),
             listOf()
           ),
           Statement.Output(Expression.Num(1))
@@ -166,7 +165,7 @@ object ParserTest {
       Statement.Function(
         Token.Identifier("add"),
         listOf(Token.Identifier("a"), Token.Identifier("b")),
-        listOf(Statement.Output(Expression.BinaryOperator(Operator.Add, Expression.Identifier("a"), Expression.Identifier("b"))))
+        listOf(Statement.Output(Expression.BinaryOperator(BinaryOperators.Add, Expression.Identifier("a"), Expression.Identifier("b"))))
       )
     )
 

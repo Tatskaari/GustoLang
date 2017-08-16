@@ -3,7 +3,7 @@ package tatskaari.parsing
 import tatskaari.tokenising.IToken
 import tatskaari.tokenising.KeyWords
 
-enum class Operator {
+enum class BinaryOperators {
   Add,
   Sub,
   Mul,
@@ -18,9 +18,7 @@ enum class Operator {
   NotEquality;
 
   companion object {
-    data class InvalidOperatorToken(val token : IToken) : RuntimeException("Invalid operator $token")
-
-    fun getOperator(token : IToken) : Operator{
+    fun getOperator(token : IToken) : BinaryOperators {
       when(token) {
         KeyWords.Add -> return Add
         KeyWords.Sub -> return Sub
@@ -34,8 +32,8 @@ enum class Operator {
         KeyWords.Or -> return Or
         KeyWords.Equality -> return Equality
         KeyWords.NotEquality -> return NotEquality
+        else -> throw InvalidOperatorToken(token)
       }
-      throw InvalidOperatorToken(token)
     }
   }
 }

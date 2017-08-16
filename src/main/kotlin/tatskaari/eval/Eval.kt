@@ -1,8 +1,9 @@
 package tatskaari.eval
 
 import tatskaari.parsing.Expression
-import tatskaari.parsing.Operator
+import tatskaari.parsing.BinaryOperators
 import tatskaari.parsing.Statement
+import tatskaari.parsing.UnaryOperators
 import java.io.BufferedReader
 import java.io.PrintStream
 
@@ -138,7 +139,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
       is Expression.Num -> return Value.NumVal(expression.value)
       is Expression.Bool -> return Value.BoolVal(expression.value)
       is Expression.BinaryOperator -> return applyBinaryOperator(expression, env)
-      is Expression.UnaryOperator -> return Value.BoolVal(!evalCondition(expression.expression, env).boolVal) //TODO other unary operators
+      is Expression.UnaryOperator -> return applyUnaryOperator(expression, env)
       is Expression.FunctionCall -> return callFunction(expression, env)
       is Expression.Identifier -> {
         val value = env[expression.name]
@@ -204,21 +205,34 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     val rhsVal = eval(operatorExpression.rhs, env)
     try {
       when (operation) {
-        Operator.Add -> return Value.NumVal(lhsVal.intVal() + rhsVal.intVal())
-        Operator.Sub -> return Value.NumVal(lhsVal.intVal() - rhsVal.intVal())
-        Operator.Div -> return Value.NumVal(lhsVal.intVal() / rhsVal.intVal())
-        Operator.Mul -> return Value.NumVal(lhsVal.intVal() * rhsVal.intVal())
-        Operator.Equality -> return Value.BoolVal(lhsVal.intVal() == rhsVal.intVal())
-        Operator.NotEquality -> return Value.BoolVal(lhsVal.intVal() != rhsVal.intVal())
-        Operator.LessThan -> return Value.BoolVal(lhsVal.intVal() < rhsVal.intVal())
-        Operator.GreaterThan -> return Value.BoolVal(lhsVal.intVal() > rhsVal.intVal())
-        Operator.LessThanEq -> return Value.BoolVal(lhsVal.intVal() <= rhsVal.intVal())
-        Operator.GreaterThanEq -> return Value.BoolVal(lhsVal.intVal() >= rhsVal.intVal())
-        Operator.And -> return Value.BoolVal(lhsVal.boolVal() && rhsVal.boolVal())
-        Operator.Or -> return Value.BoolVal(lhsVal.boolVal() || rhsVal.boolVal())
+        BinaryOperators.Add -> return Value.NumVal(lhsVal.intVal() + rhsVal.intVal())
+        BinaryOperators.Sub -> return Value.NumVal(lhsVal.intVal() - rhsVal.intVal())
+        BinaryOperators.Div -> return Value.NumVal(lhsVal.intVal() / rhsVal.intVal())
+        BinaryOperators.Mul -> return Value.NumVal(lhsVal.intVal() * rhsVal.intVal())
+        BinaryOperators.Equality -> return Value.BoolVal(lhsVal.intVal() == rhsVal.intVal())
+        BinaryOperators.NotEquality -> return Value.BoolVal(lhsVal.intVal() != rhsVal.intVal())
+        BinaryOperators.LessThan -> return Value.BoolVal(lhsVal.intVal() < rhsVal.intVal())
+        BinaryOperators.GreaterThan -> return Value.BoolVal(lhsVal.intVal() > rhsVal.intVal())
+        BinaryOperators.LessThanEq -> return Value.BoolVal(lhsVal.intVal() <= rhsVal.intVal())
+        BinaryOperators.GreaterThanEq -> return Value.BoolVal(lhsVal.intVal() >= rhsVal.intVal())
+        BinaryOperators.And -> return Value.BoolVal(lhsVal.boolVal() && rhsVal.boolVal())
+        BinaryOperators.Or -> return Value.BoolVal(lhsVal.boolVal() || rhsVal.boolVal())
       }
     } catch (e: CastException) {
       throw TypeMismatch("$operation cannot be applid to $lhsVal and $rhsVal")
+    }
+  }
+
+  fun applyUnaryOperator(operatorExpr: Expression.UnaryOperator, env: Map<String, Value>): Value{
+    val result = eval(operatorExpr.expression, env)
+    val operator = operatorExpr.operator
+    try {
+      when(operator){
+        UnaryOperators.Not -> return Value.BoolVal(!result.boolVal())
+        UnaryOperators.Negative -> return Value.NumVal(-result.intVal())
+      }
+    } catch (e: CastException) {
+      throw TypeMismatch("$operator cannot be applid to $result")
     }
   }
 
