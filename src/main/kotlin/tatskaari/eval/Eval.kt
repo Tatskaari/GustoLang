@@ -1,9 +1,8 @@
 package tatskaari.eval
 
 import tatskaari.parsing.Expression
+import tatskaari.parsing.Operator
 import tatskaari.parsing.Statement
-import tatskaari.tokenising.IToken
-import tatskaari.tokenising.KeyWords
 import java.io.BufferedReader
 import java.io.PrintStream
 
@@ -17,9 +16,26 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     data class NumVal(val intVal: Int) : Value(intVal)
     data class BoolVal(val boolVal: Boolean) : Value(boolVal)
     data class FunctionVal(val function: Statement.Function, val env : MutableMap<String, Value>) : Value(function)
+
+    fun intVal():Int{
+      if (this is NumVal){
+        return this.intVal
+      } else {
+        throw CastException
+      }
+    }
+
+    fun boolVal():Boolean{
+      if (this is BoolVal){
+        return this.boolVal
+      } else {
+        throw CastException
+      }
+    }
   }
 
   data class TypeMismatch(override val message: String) : RuntimeException(message)
+  object CastException: Exception()
   data class UndefinedIdentifier(override val message: String) : RuntimeException("Undeclared identifier '$message'")
   data class VariableAlreadyDefined(val identifier: String) : RuntimeException("Identifier aready declared '$identifier'")
   object InvalidUserInput : RuntimeException("Please enter a number of the value 'true' or 'false'")
@@ -186,31 +202,24 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     val operation = operatorExpression.operator
     val lhsVal = eval(operatorExpression.lhs, env)
     val rhsVal = eval(operatorExpression.rhs, env)
-
-    if (lhsVal is Value.NumVal && rhsVal is Value.NumVal) {
+    try {
       when (operation) {
-        KeyWords.Add -> return Value.NumVal(lhsVal.intVal + rhsVal.intVal)
-        KeyWords.Sub -> return Value.NumVal(lhsVal.intVal - rhsVal.intVal)
-        KeyWords.Div -> return Value.NumVal(lhsVal.intVal / rhsVal.intVal)
-        KeyWords.Mul -> return Value.NumVal(lhsVal.intVal * rhsVal.intVal)
-        KeyWords.Equality -> return Value.BoolVal(lhsVal.intVal == rhsVal.intVal)
-        KeyWords.NotEquality -> return Value.BoolVal(lhsVal.intVal != rhsVal.intVal)
-        KeyWords.LessThan -> return Value.BoolVal(lhsVal.intVal < rhsVal.intVal)
-        KeyWords.GreaterThan -> return Value.BoolVal(lhsVal.intVal > rhsVal.intVal)
-        KeyWords.LessThanEq -> return Value.BoolVal(lhsVal.intVal <= rhsVal.intVal)
-        KeyWords.GreaterThanEq -> return Value.BoolVal(lhsVal.intVal >= rhsVal.intVal)
+        Operator.Add -> return Value.NumVal(lhsVal.intVal() + rhsVal.intVal())
+        Operator.Sub -> return Value.NumVal(lhsVal.intVal() - rhsVal.intVal())
+        Operator.Div -> return Value.NumVal(lhsVal.intVal() / rhsVal.intVal())
+        Operator.Mul -> return Value.NumVal(lhsVal.intVal() * rhsVal.intVal())
+        Operator.Equality -> return Value.BoolVal(lhsVal.intVal() == rhsVal.intVal())
+        Operator.NotEquality -> return Value.BoolVal(lhsVal.intVal() != rhsVal.intVal())
+        Operator.LessThan -> return Value.BoolVal(lhsVal.intVal() < rhsVal.intVal())
+        Operator.GreaterThan -> return Value.BoolVal(lhsVal.intVal() > rhsVal.intVal())
+        Operator.LessThanEq -> return Value.BoolVal(lhsVal.intVal() <= rhsVal.intVal())
+        Operator.GreaterThanEq -> return Value.BoolVal(lhsVal.intVal() >= rhsVal.intVal())
+        Operator.And -> return Value.BoolVal(lhsVal.boolVal() && rhsVal.boolVal())
+        Operator.Or -> return Value.BoolVal(lhsVal.boolVal() || rhsVal.boolVal())
       }
-    } else if ((lhsVal is Value.BoolVal && rhsVal is Value.BoolVal)) {
-      when (operation) {
-        KeyWords.And -> return Value.BoolVal(lhsVal.boolVal && rhsVal.boolVal)
-        KeyWords.Or -> return Value.BoolVal(lhsVal.boolVal || rhsVal.boolVal)
-      }
+    } catch (e: CastException) {
+      throw TypeMismatch("$operation cannot be applid to $lhsVal and $rhsVal")
     }
-    else {
-      throw TypeMismatch("Number operator applied to $lhsVal and $rhsVal")
-    }
-    //TODO make an enum for the operators
-    throw RuntimeException("Unsuported opeator " + operatorExpression.operator)
   }
 
   fun evalIf(condition: Expression, ifBody: List<Statement>, elseBody: List<Statement>?, env: MutableMap<String, Value>) : Value? {

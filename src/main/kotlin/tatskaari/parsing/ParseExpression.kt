@@ -28,7 +28,7 @@ object ParseExpression {
   fun logical(tokens: LinkedList<IToken>) : Expression{
     var expr = equality(tokens)
     while(tokens.matchAny( listOf<IToken>(KeyWords.Or, KeyWords.And))){
-      val operator = tokens.removeFirst()
+      val operator = Operator.getOperator(tokens.removeFirst())
       val rhs = equality(tokens)
       expr = Expression.BinaryOperator(operator, expr, rhs)
     }
@@ -38,7 +38,7 @@ object ParseExpression {
   fun equality(tokens: LinkedList<IToken>) : Expression{
     var expr = comparison(tokens)
     while(tokens.matchAny(listOf<IToken>(KeyWords.Equality, KeyWords.NotEquality))){
-      val operator = tokens.removeFirst()
+      val operator = Operator.getOperator(tokens.removeFirst())
       val rhs = comparison(tokens)
       expr = Expression.BinaryOperator(operator, expr, rhs)
     }
@@ -48,7 +48,7 @@ object ParseExpression {
   fun comparison(tokens: LinkedList<IToken>) : Expression{
     var expr = addition(tokens)
     while(tokens.matchAny(listOf<IToken>(KeyWords.GreaterThan, KeyWords.GreaterThanEq, KeyWords.LessThan, KeyWords.LessThanEq))){
-      val operator = tokens.removeFirst()
+      val operator = Operator.getOperator(tokens.removeFirst())
       val rhs = addition(tokens)
       expr = Expression.BinaryOperator(operator, expr, rhs)
     }
@@ -59,7 +59,7 @@ object ParseExpression {
   fun addition(tokens: LinkedList<IToken>) : Expression{
     var expr = multiplication(tokens)
     while(tokens.matchAny( listOf<IToken>(KeyWords.Add, KeyWords.Sub))){
-      val operator = tokens.removeFirst()
+      val operator = Operator.getOperator(tokens.removeFirst())
       val rhs = multiplication(tokens)
       expr = Expression.BinaryOperator(operator, expr, rhs)
     }
@@ -69,7 +69,7 @@ object ParseExpression {
   fun multiplication(tokens: LinkedList<IToken>) : Expression{
     var expr = unary(tokens)
     while(tokens.matchAny(listOf<IToken>(KeyWords.Mul, KeyWords.Div))){
-      val operator = tokens.removeFirst()
+      val operator = Operator.getOperator(tokens.removeFirst())
       val rhs = unary(tokens)
       expr = Expression.BinaryOperator(operator, expr, rhs)
     }
