@@ -73,7 +73,7 @@ object Parser {
     return Statement.CodeBlock(body)
   }
 
-  // function => STRING "(" (STRING)* (",")? ")" codeBlock
+  // function => STRING "(" (STRING(",")?)*  ")" codeBlock
   fun function(tokens: LinkedList<IToken>): Statement.Function {
     tokens.getNextToken(KeyWords.Function)
     val name = tokens.getNextToken(Token.Identifier("someIdentifier"))
@@ -229,7 +229,7 @@ object Parser {
     }
 
   }
-  // functionCall => STRING ("(" (expression (",")*)* ")")*
+  // functionCall => STRING ("(" (expression (",")*)* ")")?
   fun functionCall(tokens: LinkedList<IToken>): Expression {
     val token = tokens.getNextToken(Token.Identifier("someVariable"))
     if (tokens.match(KeyWords.OpenParen)){

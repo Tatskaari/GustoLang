@@ -1,11 +1,11 @@
-program => (statement)* ;
+program => (statement)*
 
-statement => if | while | codeBlock | function | return | valueDeclaration | input | output | assignment;
+statement => if | while | codeBlock | function | return | valueDeclaration | input | output | assignment
 
 if => "if" expression codeBlock ("else" codeBlock)?
 while => "while" "(" expression ")" codeBlock
 codeBlock => "{" program "}"
-function => "function" STRING "(" (STRING)* (",")? ")" codeBlock
+function => STRING "(" (STRING (",")*)* ")" codeBlock
 return => "return" expression
 valueDeclaration => "val" STRING ":=" expression
 assignment => STRING ":=" expression
@@ -20,4 +20,4 @@ addition => multiplication ( ( "-" | "+" ) multiplication )*
 multiplication => unary ( ( "/" | "*" ) unary )*
 unary => ( "!" | "-" ) unary | primary
 primary => NUMBER | functionCall | "false" | "true" | "nil" | "(" expression ")"
-functionCall => STRING ("(" (expression (",")*)* ")")*
+functionCall => STRING ("(" (expression (",")*)* ")")?

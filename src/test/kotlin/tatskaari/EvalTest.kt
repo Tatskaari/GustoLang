@@ -3,6 +3,7 @@ package tatskaari
 import org.testng.annotations.Test
 import tatskaari.eval.Eval
 import tatskaari.parsing.Parser
+import tatskaari.tokenising.Lexer
 import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -409,4 +410,12 @@ object EvalTest {
     }
   }
 
+  @Test
+  fun testExpressionParsing() {
+    assertEquals(Eval.Value.NumVal(14), Eval().eval(Parser.expression(Lexer.lex("1 + 3*2*2 + 1")), HashMap()))
+    assertEquals(Eval.Value.BoolVal(true), Eval().eval(Parser.expression(Lexer.lex("1 + 3*2*2 + 1 < 15")), HashMap()))
+    assertEquals(Eval.Value.NumVal(17), Eval().eval(Parser.expression(Lexer.lex("(1 + 3)*2*2 + 1")), HashMap()))
+    assertEquals(Eval.Value.NumVal(-15), Eval().eval(Parser.expression(Lexer.lex("-(1 + 3)*2*2 + 1")), HashMap()))
+    assertEquals(Eval.Value.NumVal(-17), Eval().eval(Parser.expression(Lexer.lex("-((1 + 3)*2*2 + 1)")), HashMap()))
+  }
 }
