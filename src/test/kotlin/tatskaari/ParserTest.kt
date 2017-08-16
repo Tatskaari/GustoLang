@@ -148,7 +148,7 @@ object ParserTest {
         listOf(
           Statement.If(
             Expression.BinaryOperator(BinaryOperators.Equality, Expression.Num(1), Expression.Num(1)),
-            listOf()
+            Statement.CodeBlock(listOf())
           ),
           Statement.Output(Expression.Num(1))
         )
@@ -165,7 +165,11 @@ object ParserTest {
       Statement.Function(
         Token.Identifier("add"),
         listOf(Token.Identifier("a"), Token.Identifier("b")),
-        listOf(Statement.Output(Expression.BinaryOperator(BinaryOperators.Add, Expression.Identifier("a"), Expression.Identifier("b"))))
+        Statement.CodeBlock(
+          listOf(
+            Statement.Output(Expression.BinaryOperator(BinaryOperators.Add, Expression.Identifier("a"), Expression.Identifier("b")))
+          )
+        )
       )
     )
 

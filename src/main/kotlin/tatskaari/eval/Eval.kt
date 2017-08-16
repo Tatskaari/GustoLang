@@ -57,9 +57,9 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   fun eval(statement: Statement, env: MutableMap<String, Value>) : Value? {
     when (statement) {
       is Statement.CodeBlock -> return eval(statement.statementList, env)
-      is Statement.If -> return evalIf(statement.condition, statement.body, null, env)
-      is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody, statement.elseBody, env)
-      is Statement.While -> return evalWhile(statement.condition, statement.body, env)
+      is Statement.If -> return evalIf(statement.condition, statement.body.statementList, null, env)
+      is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody.statementList, statement.elseBody.statementList, env)
+      is Statement.While -> return evalWhile(statement.condition, statement.body.statementList, env)
       is Statement.ValDeclaration -> {
         val identifierName = statement.identifier.name
 
@@ -156,7 +156,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     val functionVal = getFunction(functionCall, env)
     val funEnv = getFunctionCallEnv(functionVal.function, functionCall, functionVal.env, env)
 
-    return evalFunction(functionVal.function.body, funEnv)
+    return evalFunction(functionVal.function.body.statementList, funEnv)
   }
 
   fun getFunction(functionCall: Expression.FunctionCall, env: Map<String, Value>): Value.FunctionVal {
