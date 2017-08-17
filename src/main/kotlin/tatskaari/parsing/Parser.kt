@@ -257,7 +257,7 @@ class Parser {
         }
       }
     } else {
-      throw UnexpectedToken(tokens.getOrNull(0), expectedTokens)
+      throw UnexpectedToken(tokens.consumeToken(), expectedTokens)
     }
 
   }

@@ -5,11 +5,9 @@ import tatskaari.parsing.Expression
 import tatskaari.parsing.BinaryOperators
 import tatskaari.parsing.Parser
 import tatskaari.parsing.Statement
-import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
 import tatskaari.tokenising.TokenType
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
 object ParserTest {
   @Test

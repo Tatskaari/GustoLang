@@ -101,6 +101,5 @@ object LexerTest {
     val expectedTokens = listOf(TokenType.Num, TokenType.NotEquality, TokenType.Num)
     program.zip(expectedTokens)
       .forEach { (actual, expect) -> assertEquals(actual.tokenType, expect) }
-
   }
 }
