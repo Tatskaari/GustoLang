@@ -9,13 +9,13 @@ object Lexer {
   }
 
   fun lex(program: String): LinkedList<Token> {
-    var lineNumber = 0
-    var columnNumber = 0
+    var lineNumber = 1
+    var columnNumber = 1
     val trimPred = fun (it:Char): Boolean {
       if (it.isWhitespace()){
         if (it == '\n'){
           lineNumber++
-          columnNumber = 0
+          columnNumber = 1
         } else {
           columnNumber++
         }
@@ -25,7 +25,7 @@ object Lexer {
       }
     }
 
-    var rest = program.trim(trimPred)
+    var rest = program.trimStart(trimPred)
 
     val tokens = LinkedList<Token>()
     while (rest.isNotEmpty()) {
@@ -45,7 +45,7 @@ object Lexer {
         val token = tokenResult.first.tokenConstructor(tokenType, tokenText, lineNumber, columnNumber)
         tokens.add(token)
         columnNumber+=tokenText.length
-        rest = rest.rest(tokenText).trim(trimPred)
+        rest = rest.rest(tokenText).trimStart(trimPred)
       } else {
         throw InvalidInputException("Unexpected character: '" + program.substring(10) + "...'")
       }

@@ -10,7 +10,7 @@ sealed class Token (val tokenType: TokenType, val tokenText: String, val lineNum
 
 
   override fun toString(): String {
-    return tokenText
+    return "'$tokenText' at $lineNumber:$columnNumber"
   }
 
   override fun equals(other: Any?): Boolean {

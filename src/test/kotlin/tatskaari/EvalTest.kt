@@ -18,7 +18,7 @@ object EvalTest {
     val program = TestUtil.loadProgram("TestMain")
     val env = MutEnv()
 
-    val AST = Parser.parse(program)
+    val AST = Parser().parse(program)!!
     Eval().eval(AST, env)
 
     assertEquals(env.getValue("b"), Eval.Value.NumVal(1))
@@ -29,7 +29,7 @@ object EvalTest {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "{if (1) {}}"
       val env = MutEnv()
-      Eval().eval(Parser.parse(program), env)
+      Eval().eval(Parser().parse(program)!!, env)
     }
   }
 
@@ -38,7 +38,7 @@ object EvalTest {
     assertFailsWith<Eval.UndefinedIdentifier> {
       val program = "{if (1 = a) {}}"
       val env = MutEnv()
-      Eval().eval(Parser.parse(program), env)
+      Eval().eval(Parser().parse(program)!!, env)
     }
   }
 
@@ -47,7 +47,7 @@ object EvalTest {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "{val a := 1 a := 1 = 1}"
       val env = MutEnv()
-      Eval().eval(Parser.parse(program), env)
+      Eval().eval(Parser().parse(program)!!, env)
     }
   }
 
@@ -56,7 +56,7 @@ object EvalTest {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "{val a := (1 = 1) + 1}"
       val env = MutEnv()
-      Eval().eval(Parser.parse(program), env)
+      Eval().eval(Parser().parse(program)!!, env)
     }
   }
 
@@ -65,7 +65,7 @@ object EvalTest {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "{val a := 1 + (1 = 1) }"
       val env = MutEnv()
-      Eval().eval(Parser.parse(program), env)
+      Eval().eval(Parser().parse(program)!!, env)
     }
   }
 
@@ -73,7 +73,7 @@ object EvalTest {
   fun testAdd() {
     val program = "{val a := 1 + 1}"
     val env = MutEnv()
-    Eval().eval(Parser.parse(program), env)
+    Eval().eval(Parser().parse(program)!!, env)
 
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
 
@@ -83,7 +83,7 @@ object EvalTest {
   fun testSub() {
     val program = "{val a := 1 - 1}"
     val env = MutEnv()
-    Eval().eval(Parser.parse(program), env)
+    Eval().eval(Parser().parse(program)!!, env)
 
     assertEquals(Eval.Value.NumVal(0), env.getValue("a"))
   }
@@ -92,7 +92,7 @@ object EvalTest {
   fun testNumInput() {
     val inputReader = BufferedReader(StringReader("1234"))
     val env = MutEnv()
-    Eval(inputReader).eval(Parser.parse("{input a}"), env)
+    Eval(inputReader).eval(Parser().parse("{input a}")!!, env)
     assertEquals(Eval.Value.NumVal(1234), env.getValue("a"))
   }
 
@@ -100,7 +100,7 @@ object EvalTest {
   fun testTrueInput() {
     val inputReader = BufferedReader(StringReader("true"))
     val env = MutEnv()
-    Eval(inputReader).eval(Parser.parse("{input a}"), env)
+    Eval(inputReader).eval(Parser().parse("{input a}")!!, env)
     assertEquals(Eval.Value.BoolVal(true), env.getValue("a"))
   }
 
@@ -108,7 +108,7 @@ object EvalTest {
   fun testFalseInput() {
     val inputReader = BufferedReader(StringReader("false"))
     val env = MutEnv()
-    Eval(inputReader).eval(Parser.parse("{input a}"), env)
+    Eval(inputReader).eval(Parser().parse("{input a}")!!, env)
     assertEquals(Eval.Value.BoolVal(false), env.getValue("a"))
   }
 
@@ -117,13 +117,13 @@ object EvalTest {
     assertFailsWith<Eval.InvalidUserInput> {
       val inputReader = BufferedReader(StringReader("\n"))
       val env = MutEnv()
-      Eval(inputReader).eval(Parser.parse("{input a}"), env)
+      Eval(inputReader).eval(Parser().parse("{input a}")!!, env)
     }
 
     assertFailsWith<Eval.InvalidUserInput> {
       val inputReader2 = BufferedReader(StringReader(""))
       val env2 = MutEnv()
-      Eval(inputReader2).eval(Parser.parse("{input a}"), env2)
+      Eval(inputReader2).eval(Parser().parse("{input a}")!!, env2)
     }
   }
 
@@ -131,7 +131,7 @@ object EvalTest {
   fun outputTest() {
     val outStream = ByteArrayOutputStream()
     val printStream = PrintStream(outStream)
-    Eval(printStream).eval(Parser.parse("{output 1}"), MutEnv())
+    Eval(printStream).eval(Parser().parse("{output 1}")!!, MutEnv())
     val output = String(outStream.toByteArray())
 
     assertEquals('1', output[0])
@@ -144,20 +144,20 @@ object EvalTest {
 
     var env = MutEnv()
     var inputReader = BufferedReader(StringReader("10"))
-    Eval(inputReader).eval(Parser.parse(program), env)
+    Eval(inputReader).eval(Parser().parse(program)!!, env)
 
     assertEquals(Eval.Value.NumVal(1), env.getValue("someVar"))
 
     env = MutEnv()
     inputReader = BufferedReader(StringReader("11"))
-    Eval(inputReader).eval(Parser.parse(program), env)
+    Eval(inputReader).eval(Parser().parse(program)!!, env)
 
     assertEquals(Eval.Value.NumVal(2), env.getValue("someVar"))
   }
 
   @Test
   fun testBoolTrue() {
-    val program = Parser.parse("{val a := true}")
+    val program = Parser().parse("{val a := true}")!!
     val env = MutEnv()
     Eval().eval(program, env)
     assertEquals(Eval.Value.BoolVal(true), env.getValue("a"))
@@ -165,7 +165,7 @@ object EvalTest {
 
   @Test
   fun testBoolFalse() {
-    val program = Parser.parse("{val a := false}")
+    val program = Parser().parse("{val a := false}")!!
     val env = MutEnv()
     Eval().eval(program, env)
     assertEquals(Eval.Value.BoolVal(false), env.getValue("a"))
@@ -173,7 +173,7 @@ object EvalTest {
 
   @Test
   fun testNot() {
-    val program = Parser.parse("{val a := !false}")
+    val program = Parser().parse("{val a := !false}")!!
     val env = MutEnv()
     Eval().eval(program, env)
     assertEquals(Eval.Value.BoolVal(true), env.getValue("a"))
@@ -181,12 +181,12 @@ object EvalTest {
 
   @Test
   fun testIfLiteral() {
-    val program = Parser.parse("{if (true) {val a := 1} else {val a := 2}}")
+    val program = Parser().parse("{if (true) {val a := 1} else {val a := 2}}")!!
     val env = MutEnv()
     Eval().eval(program, env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
 
-    val program2 = Parser.parse("{if (false) {val a := 1} else {val a := 2}}")
+    val program2 = Parser().parse("{if (false) {val a := 1} else {val a := 2}}")!!
     val env2 = MutEnv()
     Eval().eval(program2, env2)
     assertEquals(Eval.Value.NumVal(2), env2.getValue("a"))
@@ -194,7 +194,7 @@ object EvalTest {
 
   @Test
   fun testWhile() {
-    val program = Parser.parse(TestUtil.loadProgram("While"))
+    val program = Parser().parse(TestUtil.loadProgram("While"))!!
     val env = MutEnv()
     Eval().eval(program, env)
     assertEquals(Eval.Value.NumVal(20), env.getValue("b"))
@@ -202,7 +202,7 @@ object EvalTest {
 
   @Test
   fun whileWithNonBoolResult() {
-    val program = Parser.parse("while (1) { }")
+    val program = Parser().parse("while (1) { }")!!
     assertFailsWith<Eval.TypeMismatch> {
       Eval().eval(program, MutEnv())
     }
@@ -210,7 +210,7 @@ object EvalTest {
 
   @Test
   fun fibTest() {
-    val program = Parser.parse(TestUtil.loadProgram("Fib"))
+    val program = Parser().parse(TestUtil.loadProgram("Fib"))!!
     val env = MutEnv()
     Eval().eval(program, env)
     assertEquals(Eval.Value.NumVal(13), env.getValue("c"))
@@ -218,7 +218,7 @@ object EvalTest {
 
   @Test
   fun redeclareVal() {
-    val program = Parser.parse("val a := 1 val a := 2")
+    val program = Parser().parse("val a := 1 val a := 2")!!
     assertFailsWith<Eval.VariableAlreadyDefined> {
       Eval().eval(program, MutEnv())
     }
@@ -226,7 +226,7 @@ object EvalTest {
 
   @Test
   fun testAnd() {
-    val program = Parser.parse("val a := 0 if(true and true) {a := 1} else {a := 2}")
+    val program = Parser().parse("val a := 0 if(true and true) {a := 1} else {a := 2}")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
@@ -234,7 +234,7 @@ object EvalTest {
 
   @Test
   fun testOr() {
-    val program = Parser.parse("val a := 0 if(true or false) {a := 1} else {a := 2}")
+    val program = Parser().parse("val a := 0 if(true or false) {a := 1} else {a := 2}")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
@@ -242,7 +242,7 @@ object EvalTest {
 
   @Test
   fun testNotAnd() {
-    val program = Parser.parse("val a := 0 if(true and false) {a := 1} else {a := 2}")
+    val program = Parser().parse("val a := 0 if(true and false) {a := 1} else {a := 2}")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
@@ -250,7 +250,7 @@ object EvalTest {
 
   @Test
   fun testNotOr() {
-    val program = Parser.parse("val a := 0 if(false or false) {a := 1} else {a := 2}")
+    val program = Parser().parse("val a := 0 if(false or false) {a := 1} else {a := 2}")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
@@ -258,7 +258,7 @@ object EvalTest {
 
   @Test
   fun testLT() {
-    val program = Parser.parse("val a := 0 if(1 < 2) {a := 1} else {a := 2}")
+    val program = Parser().parse("val a := 0 if(1 < 2) {a := 1} else {a := 2}")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
@@ -266,7 +266,7 @@ object EvalTest {
 
   @Test
   fun testGT() {
-    val program = Parser.parse("val a := 0 if(2 > 1) {a := 1} else {a := 2}")
+    val program = Parser().parse("val a := 0 if(2 > 1) {a := 1} else {a := 2}")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
@@ -274,7 +274,7 @@ object EvalTest {
 
   @Test
   fun testGTE() {
-    val program = Parser.parse("val a := 0 if(1 >= 1) {a := 1} else {a := 2}")
+    val program = Parser().parse("val a := 0 if(1 >= 1) {a := 1} else {a := 2}")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
@@ -282,7 +282,7 @@ object EvalTest {
 
   @Test
   fun testLTE() {
-    val program = Parser.parse("val a := 0 if(1 <= 1) {a := 1} else {a := 2}")
+    val program = Parser().parse("val a := 0 if(1 <= 1) {a := 1} else {a := 2}")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(1), env.getValue("a"))
@@ -291,7 +291,7 @@ object EvalTest {
 
   @Test
   fun testNotLT() {
-    val program = Parser.parse("val a := 0 if(2 < 1) {a := 1} else {a := 2}")
+    val program = Parser().parse("val a := 0 if(2 < 1) {a := 1} else {a := 2}")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
@@ -299,7 +299,7 @@ object EvalTest {
 
   @Test
   fun testNotGT() {
-    val program = Parser.parse("val a := 0 if(1 > 2) {a := 1} else {a := 2}")
+    val program = Parser().parse("val a := 0 if(1 > 2) {a := 1} else {a := 2}")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
@@ -307,7 +307,7 @@ object EvalTest {
 
   @Test
   fun testNotGTE() {
-    val program = Parser.parse("val a := 0 if(1 >= 2) {a := 1} else {a := 2}")
+    val program = Parser().parse("val a := 0 if(1 >= 2) {a := 1} else {a := 2}")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
@@ -315,7 +315,7 @@ object EvalTest {
 
   @Test
   fun testNotLTE() {
-    val program = Parser.parse("val a := 0 if(2 <= 1) {a := 1} else {a := 2}")
+    val program = Parser().parse("val a := 0 if(2 <= 1) {a := 1} else {a := 2}")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(2), env.getValue("a"))
@@ -323,7 +323,7 @@ object EvalTest {
 
   @Test
   fun testMul() {
-    val program = Parser.parse("val a := 2 * 3")
+    val program = Parser().parse("val a := 2 * 3")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(6), env.getValue("a"))
@@ -331,7 +331,7 @@ object EvalTest {
 
   @Test
   fun testDiv() {
-    val program = Parser.parse("val a := 9 / 3")
+    val program = Parser().parse("val a := 9 / 3")!!
     val env = MutEnv()
     Eval().eval(program,env)
     assertEquals(Eval.Value.NumVal(3), env.getValue("a"))
@@ -339,7 +339,7 @@ object EvalTest {
 
   @Test
   fun testFunctionCall() {
-    val program = Parser.parse(TestUtil.loadProgram("Function"))
+    val program = Parser().parse(TestUtil.loadProgram("Function"))!!
     val env = MutEnv()
     Eval().eval(program, env)
     assertEquals(env.getValue("c"), Eval.Value.NumVal(3))
@@ -347,7 +347,7 @@ object EvalTest {
 
   @Test
   fun missingFuncDef(){
-    val program = Parser.parse("val a := add(1, 2)")
+    val program = Parser().parse("val a := add(1, 2)")!!
     assertFailsWith<Eval.UndefinedIdentifier> {
       Eval().eval(program, MutEnv())
     }
@@ -355,7 +355,7 @@ object EvalTest {
 
   @Test
   fun missingReturnFromFunc(){
-    val program = Parser.parse("function add(a, b) { } val c := add(1, 2)")
+    val program = Parser().parse("function add(a, b) { } val c := add(1, 2)")!!
     assertFailsWith<Eval.FunctionExitedWithoutReturn> {
       Eval().eval(program, MutEnv())
     }
@@ -363,7 +363,7 @@ object EvalTest {
 
   @Test
   fun callingInt(){
-    val program = Parser.parse("val a := 2 val b := a()")
+    val program = Parser().parse("val a := 2 val b := a()")!!
     assertFailsWith<Eval.TypeMismatch> {
       Eval().eval(program, MutEnv())
     }
@@ -371,7 +371,7 @@ object EvalTest {
 
   @Test
   fun wrongNumParams(){
-    val program = Parser.parse("function add(a, b) { return a + b } val b := add(1)")
+    val program = Parser().parse("function add(a, b) { return a + b } val b := add(1)")!!
     assertFailsWith<Eval.TypeMismatch> {
       Eval().eval(program, MutEnv())
     }
@@ -379,7 +379,7 @@ object EvalTest {
 
   @Test
   fun paramDoesntExist(){
-    val program = Parser.parse("function add(a, b) { return a + b } val b := add(1, 2, 3)")
+    val program = Parser().parse("function add(a, b) { return a + b } val b := add(1, 2, 3)")!!
     assertFailsWith<Eval.TypeMismatch> {
       Eval().eval(program, MutEnv())
     }
@@ -387,7 +387,7 @@ object EvalTest {
 
   @Test
   fun evalFuncFib(){
-    val program = Parser.parse(TestUtil.loadProgram("FuncFib"))
+    val program = Parser().parse(TestUtil.loadProgram("FuncFib"))!!
     val env = MutEnv()
     Eval().eval(program, env)
     assertEquals(Eval.Value.NumVal(13), env.getValue("out"))
@@ -395,7 +395,7 @@ object EvalTest {
 
   @Test
   fun whileReturn(){
-    val program = Parser.parse(TestUtil.loadProgram("WhileReturn"))
+    val program = Parser().parse(TestUtil.loadProgram("WhileReturn"))!!
     val env = MutEnv()
     Eval().eval(program, env)
     assertEquals(Eval.Value.NumVal(100), env.getValue("out"))
@@ -404,19 +404,19 @@ object EvalTest {
   @Test
   fun testUnaryOperatorTypeMissmatch(){
     assertFailsWith<Eval.TypeMismatch> {
-      Eval().eval(Parser.parse("val a := !1"), MutEnv())
+      Eval().eval(Parser().parse("val a := !1")!!, MutEnv())
     }
     assertFailsWith<Eval.TypeMismatch> {
-      Eval().eval(Parser.parse("val a := -true"), MutEnv())
+      Eval().eval(Parser().parse("val a := -true")!!, MutEnv())
     }
   }
 
   @Test
   fun testExpressionParsing() {
-    assertEquals(Eval.Value.NumVal(14), Eval().eval(Parser.expression(Lexer.lex("1 + 3*2*2 + 1")), MutEnv()))
-    assertEquals(Eval.Value.BoolVal(true), Eval().eval(Parser.expression(Lexer.lex("1 + 3*2*2 + 1 < 15")), MutEnv()))
-    assertEquals(Eval.Value.NumVal(17), Eval().eval(Parser.expression(Lexer.lex("(1 + 3)*2*2 + 1")), MutEnv()))
-    assertEquals(Eval.Value.NumVal(-15), Eval().eval(Parser.expression(Lexer.lex("-(1 + 3)*2*2 + 1")), MutEnv()))
-    assertEquals(Eval.Value.NumVal(-17), Eval().eval(Parser.expression(Lexer.lex("-((1 + 3)*2*2 + 1)")), MutEnv()))
+    assertEquals(Eval.Value.NumVal(14), Eval().eval(Parser().expression(Lexer.lex("1 + 3*2*2 + 1")), MutEnv()))
+    assertEquals(Eval.Value.BoolVal(true), Eval().eval(Parser().expression(Lexer.lex("1 + 3*2*2 + 1 < 15")), MutEnv()))
+    assertEquals(Eval.Value.NumVal(17), Eval().eval(Parser().expression(Lexer.lex("(1 + 3)*2*2 + 1")), MutEnv()))
+    assertEquals(Eval.Value.NumVal(-15), Eval().eval(Parser().expression(Lexer.lex("-(1 + 3)*2*2 + 1")), MutEnv()))
+    assertEquals(Eval.Value.NumVal(-17), Eval().eval(Parser().expression(Lexer.lex("-((1 + 3)*2*2 + 1)")), MutEnv()))
   }
 }

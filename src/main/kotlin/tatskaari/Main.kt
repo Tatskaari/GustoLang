@@ -9,8 +9,16 @@ object Main {
   @JvmStatic
   fun main(args: Array<String>) {
     val programFile = BufferedReader(File(args[0]).reader())
-    val program = programFile.use { it.readText() }
-    Eval().eval(Parser.parse(program), HashMap())
+    val source = programFile.use { it.readText() }
+    val parser = Parser()
+    val program = parser.parse(source)
+    if (program != null){
+      Eval().eval(program, HashMap())
+    } else {
+      parser.parserExceptions.forEach{
+        println(it.reason)
+      }
+    }
   }
 }
 

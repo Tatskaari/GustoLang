@@ -1,7 +1,6 @@
 package tatskaari
 
 import org.testng.annotations.Test
-import tatskaari.eval.Eval
 import tatskaari.parsing.Expression
 import tatskaari.parsing.BinaryOperators
 import tatskaari.parsing.Parser
@@ -29,7 +28,7 @@ object ParserTest {
       )
     )
 
-    val actualAST = Parser.parse(program)
+    val actualAST = Parser().parse(program)!!
 
     TestUtil.compareASTs(expectedAST, actualAST)
   }
@@ -49,7 +48,7 @@ object ParserTest {
       )
     )
 
-    val actualAST = Parser.parse(program)
+    val actualAST = Parser().parse(program)!!
 
     TestUtil.compareASTs(expectedAST, actualAST)
   }
@@ -69,15 +68,15 @@ object ParserTest {
       )
     )
 
-    TestUtil.compareASTs(expectedAST, Parser.parse(program))
+    TestUtil.compareASTs(expectedAST, Parser().parse(program)!!)
   }
 
   @Test
   fun testIncompleteBlock(){
     val program = "{ val a := 1 { val b := 2 } output a"
-    assertFailsWith<Parser.UnexpectedEndOfFile> {
-      Parser.parse(program)
-    }
+    val parser = Parser()
+    parser.parse(program)
+    assertEquals(1, parser.parserExceptions.size)
   }
 
   @Test
@@ -92,60 +91,74 @@ object ParserTest {
       )
     )
 
-    TestUtil.compareASTs(expectedAST, Parser.parse(program))
+    TestUtil.compareASTs(expectedAST, Parser().parse(program)!!)
   }
 
   @Test
   fun testInvalidTokenInExpression() {
     val program = "{val someVariable := 12 + val}"
-    assertFailsWith<Lexer.InvalidInputException> {
-      Parser.parse(program)
-    }
+    val parser = Parser()
+    parser.parse(program)
+    assertEquals(1, parser.parserExceptions.size)
+    val exception = parser.parserExceptions.first
+    assert(exception is Parser.UnexpectedToken)
+    assertEquals(TokenType.Val, (exception as Parser.UnexpectedToken).token!!.tokenType)
   }
 
   @Test
   fun testEOFInExpression() {
     val program = "{val someVariable := 12 +"
-    assertFailsWith<Parser.UnexpectedEndOfFile> {
-      Parser.parse(program)
-    }
+    val parser = Parser()
+    parser.parse(program)
+    assertEquals(1, parser.parserExceptions.size)
   }
 
   @Test
   fun testMissingAssignInExpression() {
-    val program = "{val someVariable + 12"
-    assertFailsWith<Lexer.InvalidInputException> {
-      Parser.parse(program)
-    }
+    val program = "{val someVariable + 12}"
+    val parser = Parser()
+    parser.parse(program)
+    assertEquals(1, parser.parserExceptions.size)
+    val exception = parser.parserExceptions.first
+    assert(exception is Parser.UnexpectedToken)
+    assertEquals(TokenType.Add, (exception as Parser.UnexpectedToken).token!!.tokenType)
   }
 
   @Test
   fun testEOFAfterVal() {
     val program = "{val"
-    assertFailsWith<Parser.UnexpectedEndOfFile> {
-      Parser.parse(program)
-    }
+    val parser = Parser()
+    parser.parse(program)
+    assertEquals(1, parser.parserExceptions.size)
   }
 
   @Test
   fun testInvalidInputMidBlock() {
     val program = "{val a := 5 1234}"
-    assertFailsWith<Lexer.InvalidInputException> {
-      Parser.parse(program)
-    }
+    val parser = Parser()
+    parser.parse(program)
+    assertEquals(1, parser.parserExceptions.size)
+    val exception = parser.parserExceptions.first
+    assert(exception is Parser.UnexpectedToken)
+    assertEquals(TokenType.Num, (exception as Parser.UnexpectedToken).token!!.tokenType)
+
   }
 
   @Test
   fun testMissingIdentifier() {
     val program = "{val := 5}"
-    assertFailsWith<Lexer.InvalidInputException> {
-      Parser.parse(program)
-    }
+    val parser = Parser()
+    parser.parse(program)
+    assertEquals(1, parser.parserExceptions.size)
+    val exception = parser.parserExceptions.first
+    assert(exception is Parser.UnexpectedToken)
+    assertEquals(TokenType.AssignOp, (exception as Parser.UnexpectedToken).token!!.tokenType)
+
   }
 
   @Test
   fun testIfMidBlock() {
-    val program = Parser.parse("{if (1 = 1) { } output 1}")
+    val program = Parser().parse("{if (1 = 1) { } output 1}")
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(
@@ -158,12 +171,12 @@ object ParserTest {
       )
     )
 
-    TestUtil.compareASTs(expectedAST, program)
+    TestUtil.compareASTs(expectedAST, program!!)
   }
 
   @Test
   fun testFunction() {
-    val program = Parser.parse("function add(a, b) { output a + b }")
+    val program = Parser().parse("function add(a, b) { output a + b }")
     val expectedAST = listOf(
       Statement.Function(
         Token.Identifier(TokenType.Identifier,"add", 0, 0),
@@ -176,12 +189,12 @@ object ParserTest {
       )
     )
 
-    TestUtil.compareASTs(expectedAST, program)
+    TestUtil.compareASTs(expectedAST, program!!)
   }
 
   @Test
   fun testFunctionCall() {
-    val program = Parser.parse("val a := add(1 2)")
+    val program = Parser().parse("val a := add(1 2)")
     val expectedAST = listOf(
       Statement.ValDeclaration(
         Token.Identifier(TokenType.Identifier,"a", 0, 0),
@@ -195,6 +208,6 @@ object ParserTest {
       )
     )
 
-    TestUtil.compareASTs(expectedAST, program)
+    TestUtil.compareASTs(expectedAST, program!!)
   }
 }

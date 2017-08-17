@@ -1,21 +1,19 @@
 package tatskaari.parsing
 
 import tatskaari.tokenising.Token
-import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.TokenType
 import java.util.*
-import kotlin.reflect.full.cast
 
 fun LinkedList<Token>.consumeToken(): Token {
   if(isEmpty()){
-    throw Parser.UnexpectedEndOfFile()
+    throw Parser.UnexpectedEndOfFile
   }
   return removeFirst()
 }
 
 fun LinkedList<Token>.lookAhead(): Token {
   if(isEmpty()){
-    throw Parser.UnexpectedEndOfFile()
+    throw Parser.UnexpectedEndOfFile
   }
   return this[0]
 }
@@ -28,13 +26,13 @@ fun LinkedList<Token>.matchAny(tokensToMatch: List<TokenType>) : Boolean{
   return tokensToMatch.any { it == token.tokenType }
 }
 
-fun LinkedList<Token>.getNextToken(expectedToken: TokenType): Token {
+fun LinkedList<Token>.getNextToken(type: TokenType): Token {
 
   val token = consumeToken()
-  if (token.tokenType == expectedToken) {
+  if (token.tokenType == type) {
     return token
   }
-  throw Lexer.InvalidInputException("unexpected input '$token', expected '$expectedToken'")
+  throw Parser.UnexpectedToken(token, listOf(type))
 }
 
 fun LinkedList<Token>.getIdentifier(): Token.Identifier {
