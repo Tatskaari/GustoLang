@@ -2,46 +2,46 @@ package tatskaari.tokenising
 
 import tatskaari.StringUtils.rest
 
-enum class Tokenisers(val lexer: (String) -> LexResult?) {
-  KEYWORD({ tokeniseKeyWord(it) }),
-  IDENTIFIER({ regexTokeniser(it, """^[a-zA-Z]+""", Token::Identifier) }),
-  NUMBER({ regexTokeniser(it, "^[0-9]+", Token::Num, String::toInt) });
+data class LexResult(val restOfProgram: String, val token: Token)
 
-  data class LexResult(val restOfProgram: String, val token: IToken)
+sealed class Tokeniser {
 
-  companion object {
-    fun stringTokeniser(program: String, token: IToken): LexResult? {
-      if (program.startsWith(token.getTokenText())) {
-        return LexResult(program.rest(token.getTokenText()), token)
-      }
-      return null
+    abstract fun lex(program: String): LexResult?
+
+    class KeywordTokeniser(val constructor: (String) -> Token, val tokenText: String): Tokeniser() {
+        override fun lex(program: String): LexResult? {
+            if (program.startsWith(tokenText)) {
+                return LexResult(program.rest(tokenText), constructor(tokenText))
+            }
+            return null
+        }
     }
 
-    fun tokeniseKeyWord(program: String): LexResult? {
-      return KeyWords.values()
-        .map { stringTokeniser(program, it) }
-        .filterNotNull()
-        .minBy { it.restOfProgram }
+    object NumberTokeniser: Tokeniser() {
+        val regex = Regex("^[0-9]+")
+
+
+        override fun lex(program: String): LexResult? {
+            val matchResult = regex.find(program)
+            if (matchResult != null) {
+                val result = matchResult.value
+                return LexResult(program.rest(matchResult.value), Token.Num(result.toInt()))
+            }
+            return null
+        }
     }
 
-    fun regexTokeniser(program: String, regexString: String, tokenConstructor: (String) -> Token): LexResult? {
-      return regexTokeniser(program, regexString, tokenConstructor, { it })
+    object IdentifierTokeniser: Tokeniser() {
+        val regex = Regex("""^[a-zA-Z]+""")
+
+
+        override fun lex(program: String): LexResult? {
+            val matchResult = regex.find(program)
+            if (matchResult != null) {
+                val result = matchResult.value
+                return LexResult(program.rest(matchResult.value), Token.Identifier(result))
+            }
+            return null
+        }
     }
-
-    fun <T> regexTokeniser(program: String, regexString: String, tokenConstructor: (T) -> Token, parser: ((String) -> T)): LexResult? {
-      val regex = Regex(regexString)
-      val matchResult = regex.find(program)
-      if (matchResult != null) {
-        val result: T = parser(matchResult.value)
-        return LexResult(program.rest(matchResult.value), tokenConstructor(result))
-      }
-      return null
-    }
-
-
-  }
-
-  fun lex(program: String): LexResult? {
-    return lexer(program)
-  }
 }

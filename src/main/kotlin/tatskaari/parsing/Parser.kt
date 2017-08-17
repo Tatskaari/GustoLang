@@ -1,9 +1,8 @@
 package tatskaari.parsing
 
-import tatskaari.tokenising.IToken
-import tatskaari.tokenising.KeyWords
-import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
+import tatskaari.tokenising.Lexer
+import tatskaari.tokenising.TokenType
 import java.util.*
 
 object Parser {
@@ -14,7 +13,7 @@ object Parser {
   }
 
   // program => (statement)*
-  fun program(tokens: LinkedList<IToken>) : List<Statement> {
+  fun program(tokens: LinkedList<Token>) : List<Statement> {
     val statements = LinkedList<Statement>()
     while(tokens.isNotEmpty()){
       statements.add(statement(tokens))
@@ -24,28 +23,28 @@ object Parser {
   }
 
   // statement => if | while | codeBlock | function | return | valueDeclaration | input | output | assignment;
-  fun statement(tokens: LinkedList<IToken>): Statement {
+  fun statement(tokens: LinkedList<Token>): Statement {
     val token = tokens.lookAhead()
-    when(token){
-      KeyWords.If -> return iff(tokens)
-      KeyWords.While -> return whilee(tokens)
-      KeyWords.OpenBlock -> return codeBlock(tokens)
-      KeyWords.Function -> return function(tokens)
-      KeyWords.Return -> return returnn(tokens)
-      KeyWords.Val -> return valueDeclaration(tokens)
-      KeyWords.Input -> return input(tokens)
-      KeyWords.Output -> return output(tokens)
-      is Token.Identifier -> return assignment(tokens)
+    when(token.tokenType){
+      TokenType.If -> return iff(tokens)
+      TokenType.While -> return whilee(tokens)
+      TokenType.OpenBlock -> return codeBlock(tokens)
+      TokenType.Function -> return function(tokens)
+      TokenType.Return -> return returnn(tokens)
+      TokenType.Val -> return valueDeclaration(tokens)
+      TokenType.Input -> return input(tokens)
+      TokenType.Output -> return output(tokens)
+      TokenType.Identifier -> return assignment(tokens)
+      else -> throw Lexer.InvalidInputException("Unexpected token $token, expected statement")
     }
-    throw Lexer.InvalidInputException("Unexpected token $token, expected statement")
   }
 
   // if => "if" expression codeBlock ("else" codeBlock)?
-  fun iff(tokens: LinkedList<IToken>): Statement {
-    tokens.getNextToken(KeyWords.If)
+  fun iff(tokens: LinkedList<Token>): Statement {
+    tokens.getNextToken(TokenType.If)
     val condition = expression(tokens)
     val trueBody = codeBlock(tokens)
-    if (tokens.match(KeyWords.Else)){
+    if (tokens.match(TokenType.Else)){
       tokens.consumeToken()
       val elseBody = codeBlock(tokens)
       return Statement.IfElse(condition, trueBody, elseBody)
@@ -55,90 +54,92 @@ object Parser {
   }
 
   // while => "while" "(" expression ")" codeBlock
-  fun whilee(tokens: LinkedList<IToken>): Statement.While {
-    tokens.getNextToken(KeyWords.While)
+  fun whilee(tokens: LinkedList<Token>): Statement.While {
+    tokens.getNextToken(TokenType.While)
     val condition = expression(tokens)
     val body = codeBlock(tokens)
     return Statement.While(condition, body)
   }
 
   // codeBlock => "{" (statement)* "}"
-  fun codeBlock(tokens: LinkedList<IToken>): Statement.CodeBlock {
-    tokens.getNextToken(KeyWords.OpenBlock)
+  fun codeBlock(tokens: LinkedList<Token>): Statement.CodeBlock {
+    tokens.getNextToken(TokenType.OpenBlock)
     val body = LinkedList<Statement>()
-    while(!tokens.match(KeyWords.CloseBlock)){
+    while(!tokens.match(TokenType.CloseBlock)){
       body.add(statement(tokens))
     }
-    tokens.getNextToken(KeyWords.CloseBlock)
+    tokens.getNextToken(TokenType.CloseBlock)
     return Statement.CodeBlock(body)
   }
 
   // function => STRING "(" (STRING(",")?)*  ")" codeBlock
-  fun function(tokens: LinkedList<IToken>): Statement.Function {
-    tokens.getNextToken(KeyWords.Function)
-    val name = tokens.getNextToken(Token.Identifier("someIdentifier"))
-    tokens.getNextToken(KeyWords.OpenParen)
+  fun function(tokens: LinkedList<Token>): Statement.Function {
+    tokens.getNextToken(TokenType.Function)
+    val name = tokens.getIdentifier()
+    tokens.getNextToken(TokenType.OpenParen)
     val parameters = LinkedList<Token.Identifier>()
-    while (!tokens.match(KeyWords.CloseParen)){
+    while (!tokens.match(TokenType.CloseParen)){
       val token = tokens.consumeToken()
-      when(token){
-        KeyWords.Comma -> {}
-        is Token.Identifier -> parameters.add(token)
+      when(token.tokenType){
+        TokenType.Comma -> {}
+        TokenType.Identifier -> parameters.add(token as Token.Identifier)
+        else -> throw Lexer.InvalidInputException("Invalid input in exception $token")
       }
     }
-    tokens.getNextToken(KeyWords.CloseParen)
+
+    tokens.getNextToken(TokenType.CloseParen)
     val body = codeBlock(tokens)
 
     return Statement.Function(name, parameters, body)
   }
 
   // return => "return" expression
-  fun returnn(tokens: LinkedList<IToken>): Statement.Return {
-    tokens.getNextToken(KeyWords.Return)
+  fun returnn(tokens: LinkedList<Token>): Statement.Return {
+    tokens.getNextToken(TokenType.Return)
     val expression = expression(tokens)
     return Statement.Return(expression)
   }
 
   // valueDeclaration => "val" STRING ":=" expression
-  fun valueDeclaration(tokens: LinkedList<IToken>): Statement.ValDeclaration {
-    tokens.getNextToken(KeyWords.Val)
-    val identifier = tokens.getNextToken(Token.Identifier("someValue"))
-    tokens.getNextToken(KeyWords.AssignOp)
+  fun valueDeclaration(tokens: LinkedList<Token>): Statement.ValDeclaration {
+    tokens.getNextToken(TokenType.Val)
+    val identifier = tokens.getIdentifier()
+    tokens.getNextToken(TokenType.AssignOp)
     val expression = expression(tokens)
     return Statement.ValDeclaration(identifier, expression)
   }
 
   // assignment => STRING ":=" expression
-  fun assignment(tokens: LinkedList<IToken>): Statement.Assignment {
-    val identifier = tokens.getNextToken(Token.Identifier("someValue"))
-    tokens.getNextToken(KeyWords.AssignOp)
+  fun assignment(tokens: LinkedList<Token>): Statement.Assignment {
+    val identifier = tokens.getIdentifier()
+    tokens.getNextToken(TokenType.AssignOp)
     val expression = expression(tokens)
     return Statement.Assignment(identifier, expression)
   }
 
   // input => "input" STRING
-  fun input(tokens: LinkedList<IToken>): Statement.Input {
-    tokens.getNextToken(KeyWords.Input)
-    val identifier = tokens.getNextToken(Token.Identifier("someValue"))
+  fun input(tokens: LinkedList<Token>): Statement.Input {
+    tokens.getNextToken(TokenType.Input)
+    val identifier = tokens.getIdentifier()
     return Statement.Input(identifier)
   }
 
   // output => "output" expression
-  fun output(tokens: LinkedList<IToken>): Statement.Output {
-    tokens.getNextToken(KeyWords.Output)
+  fun output(tokens: LinkedList<Token>): Statement.Output {
+    tokens.getNextToken(TokenType.Output)
     val expression = expression(tokens)
     return Statement.Output(expression)
   }
 
   // expression => logical
-  fun expression(tokens: LinkedList<IToken>) : Expression{
+  fun expression(tokens: LinkedList<Token>) : Expression{
     return logical(tokens)
   }
 
   // logical => equality ( ( "and" | "or" ) equality )*
-  fun logical(tokens: LinkedList<IToken>) : Expression{
+  fun logical(tokens: LinkedList<Token>) : Expression{
     var expr = equality(tokens)
-    while(tokens.matchAny( listOf<IToken>(KeyWords.Or, KeyWords.And))){
+    while(tokens.matchAny( listOf(TokenType.Or, TokenType.And))){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = equality(tokens)
       expr = Expression.BinaryOperator(operator, expr, rhs)
@@ -147,9 +148,9 @@ object Parser {
   }
 
   // equality => comparison ( ( "!=" | "==" ) comparison )*
-  fun equality(tokens: LinkedList<IToken>) : Expression{
+  fun equality(tokens: LinkedList<Token>) : Expression{
     var expr = comparison(tokens)
-    while(tokens.matchAny(listOf<IToken>(KeyWords.Equality, KeyWords.NotEquality))){
+    while(tokens.matchAny(listOf(TokenType.Equality, TokenType.NotEquality))){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = comparison(tokens)
       expr = Expression.BinaryOperator(operator, expr, rhs)
@@ -158,9 +159,9 @@ object Parser {
   }
 
   // comparison => addition ( ( ">" | ">=" | "<" | "<=" ) addition )*
-  fun comparison(tokens: LinkedList<IToken>) : Expression{
+  fun comparison(tokens: LinkedList<Token>) : Expression{
     var expr = addition(tokens)
-    while(tokens.matchAny(listOf<IToken>(KeyWords.GreaterThan, KeyWords.GreaterThanEq, KeyWords.LessThan, KeyWords.LessThanEq))){
+    while(tokens.matchAny(listOf(TokenType.GreaterThan, TokenType.GreaterThanEq, TokenType.LessThan, TokenType.LessThanEq))){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = addition(tokens)
       expr = Expression.BinaryOperator(operator, expr, rhs)
@@ -169,9 +170,9 @@ object Parser {
   }
 
   // addition => multiplication ( ( "-" | "+" ) multiplication )*
-  fun addition(tokens: LinkedList<IToken>) : Expression{
+  fun addition(tokens: LinkedList<Token>) : Expression{
     var expr = multiplication(tokens)
-    while(tokens.matchAny( listOf<IToken>(KeyWords.Add, KeyWords.Sub))){
+    while(tokens.matchAny( listOf(TokenType.Add, TokenType.Sub))){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = multiplication(tokens)
       expr = Expression.BinaryOperator(operator, expr, rhs)
@@ -180,9 +181,9 @@ object Parser {
   }
 
   // multiplication => unary ( ( "/" | "*" ) unary )*
-  fun multiplication(tokens: LinkedList<IToken>) : Expression{
+  fun multiplication(tokens: LinkedList<Token>) : Expression{
     var expr = unary(tokens)
-    while(tokens.matchAny(listOf<IToken>(KeyWords.Mul, KeyWords.Div))){
+    while(tokens.matchAny(listOf(TokenType.Mul, TokenType.Div))){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = unary(tokens)
       expr = Expression.BinaryOperator(operator, expr, rhs)
@@ -191,8 +192,8 @@ object Parser {
   }
 
   // unary => ( "!" | "-" ) unary | primary
-  fun unary(tokens: LinkedList<IToken>) : Expression{
-    if (tokens.matchAny(listOf<IToken>(KeyWords.Not, KeyWords.Sub))) {
+  fun unary(tokens: LinkedList<Token>) : Expression{
+    if (tokens.matchAny(listOf(TokenType.Not, TokenType.Sub))) {
       val operator = tokens.removeFirst()
       val right = unary(tokens)
       return Expression.UnaryOperator(UnaryOperators.getOperator(operator), right)
@@ -202,23 +203,24 @@ object Parser {
   }
 
   // primary => NUMBER | functionCall | "false" | "true" | "nil" | "(" expression ")"
-  fun primary(tokens : LinkedList<IToken>) : Expression{
-    if(tokens.matchAny(listOf(KeyWords.OpenParen, Token.Num(0), Token.Identifier("someVar"), KeyWords.True, KeyWords.False))) {
-      if (tokens.match(Token.Identifier("someVar"))) {
+  fun primary(tokens : LinkedList<Token>) : Expression{
+    if(tokens.matchAny(listOf(TokenType.OpenParen, TokenType.Num, TokenType.Identifier, TokenType.True, TokenType.False))) {
+      if (tokens.match(TokenType.Identifier)) {
         return functionCall(tokens)
       }
 
       val token = tokens.consumeToken()
 
-      when (token) {
-        is Token.Num -> return Expression.Num(token.value)
-        KeyWords.True -> return Expression.Bool(true)
-        KeyWords.False -> return Expression.Bool(false)
+      when (token.tokenType) {
+        TokenType.Num -> return Expression.Num((token as Token.Num).value)
+        TokenType.True -> return Expression.Bool(true)
+        TokenType.False -> return Expression.Bool(false)
+        else -> {
+          val expr = expression(tokens)
+          tokens.getNextToken(TokenType.CloseParen)
+          return expr
+        }
       }
-
-      val expr = expression(tokens)
-      tokens.getNextToken(KeyWords.CloseParen)
-      return expr
     } else {
       if (tokens.isEmpty()){
         throw Parser.UnexpectedEndOfFile()
@@ -230,18 +232,18 @@ object Parser {
 
   }
   // functionCall => STRING ("(" (expression (",")*)* ")")?
-  fun functionCall(tokens: LinkedList<IToken>): Expression {
-    val token = tokens.getNextToken(Token.Identifier("someVariable"))
-    if (tokens.match(KeyWords.OpenParen)){
+  fun functionCall(tokens: LinkedList<Token>): Expression {
+    val token = tokens.getIdentifier()
+    if (tokens.match(TokenType.OpenParen)){
       tokens.consumeToken()
       val params = LinkedList<Expression>()
-      while (!tokens.match(KeyWords.CloseParen)){
-        if (tokens.match(KeyWords.Comma)){
+      while (!tokens.match(TokenType.CloseParen)){
+        if (tokens.match(TokenType.Comma)){
           tokens.consumeToken()
         }
         params.add(expression(tokens))
       }
-      tokens.getNextToken(KeyWords.CloseParen)
+      tokens.getNextToken(TokenType.CloseParen)
 
       return Expression.FunctionCall(token, params)
     } else {

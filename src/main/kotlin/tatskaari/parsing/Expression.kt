@@ -1,8 +1,8 @@
 package tatskaari.parsing
 
-import tatskaari.tokenising.IToken
 import tatskaari.tokenising.Token
-data class InvalidOperatorToken(val token : IToken) : RuntimeException("Invalid operator $token")
+
+data class InvalidOperatorToken(val token : Token) : RuntimeException("Invalid operator $token")
 
 sealed class Expression {
   data class Num(val value: Int) : Expression()

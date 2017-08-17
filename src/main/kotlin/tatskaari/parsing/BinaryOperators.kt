@@ -1,7 +1,7 @@
 package tatskaari.parsing
 
-import tatskaari.tokenising.IToken
-import tatskaari.tokenising.KeyWords
+import tatskaari.tokenising.Token
+import tatskaari.tokenising.TokenType
 
 enum class BinaryOperators {
   Add,
@@ -18,20 +18,20 @@ enum class BinaryOperators {
   NotEquality;
 
   companion object {
-    fun getOperator(token : IToken) : BinaryOperators {
-      when(token) {
-        KeyWords.Add -> return Add
-        KeyWords.Sub -> return Sub
-        KeyWords.Mul -> return Mul
-        KeyWords.Div -> return Div
-        KeyWords.LessThan -> return LessThan
-        KeyWords.GreaterThan -> return GreaterThan
-        KeyWords.LessThanEq -> return LessThanEq
-        KeyWords.GreaterThanEq -> return GreaterThanEq
-        KeyWords.And -> return And
-        KeyWords.Or -> return Or
-        KeyWords.Equality -> return Equality
-        KeyWords.NotEquality -> return NotEquality
+    fun getOperator(token : Token) : BinaryOperators {
+      when(token.tokenType) {
+        TokenType.Add -> return Add
+        TokenType.Sub -> return Sub
+        TokenType.Mul -> return Mul
+        TokenType.Div -> return Div
+        TokenType.LessThan -> return LessThan
+        TokenType.GreaterThan -> return GreaterThan
+        TokenType.LessThanEq -> return LessThanEq
+        TokenType.GreaterThanEq -> return GreaterThanEq
+        TokenType.And -> return And
+        TokenType.Or -> return Or
+        TokenType.Equality -> return Equality
+        TokenType.NotEquality -> return NotEquality
         else -> throw InvalidOperatorToken(token)
       }
     }

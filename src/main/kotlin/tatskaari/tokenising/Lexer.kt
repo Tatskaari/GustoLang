@@ -5,9 +5,9 @@ import java.util.*
 object Lexer {
   class InvalidInputException(reason: String) : RuntimeException(reason)
 
-  fun lex(program: String): LinkedList<IToken> {
+  fun lex(program: String): LinkedList<Token> {
     var rest = program.trim()
-    val tokens = LinkedList<IToken>()
+    val tokens = LinkedList<Token>()
     while (rest.isNotEmpty()) {
       val tokenResult = getNextToken(rest)
       if (tokenResult != null) {
@@ -21,9 +21,9 @@ object Lexer {
     return tokens
   }
 
-  fun getNextToken(program: String): Tokenisers.LexResult? {
-    return Tokenisers.values()
-      .map { it.lex(program) }.filterNotNull()
+  fun getNextToken(program: String): LexResult? {
+    return TokenType.values()
+      .map { it.tokeniser.lex(program) }.filterNotNull()
       .minBy { it.restOfProgram.length }
   }
 }
