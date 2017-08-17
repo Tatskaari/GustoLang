@@ -1,15 +1,22 @@
 package tatskaari.tokenising
-sealed class Token (val tokenType: TokenType, val tokenText: String){
+sealed class Token (val tokenType: TokenType, val tokenText: String, val lineNumber: Int, val columnNumber: Int){
 
-  data class Keyword(val type: TokenType, val text: String): Token(type, text)
-  data class Identifier(val name: String): Token(TokenType.Identifier, name)
-  data class Num(val value: Int): Token(TokenType.Num, value.toString())
+  class Keyword(type: TokenType, text: String, line: Int, col: Int): Token(type, text, line, col)
+  class Identifier(type: TokenType, val name: String, line: Int, col: Int): Token(TokenType.Identifier, name, line, col)
 
-  fun isSameToken(token : Token) : Boolean {
-    return token.tokenType == tokenType
+  class Num(type: TokenType, value: String, line: Int, col: Int) : Token(type, value, line, col) {
+    val value: Int = value.toInt()
   }
+
 
   override fun toString(): String {
     return tokenText
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other is Token){
+      return other.tokenText == tokenText
+    }
+    return false
   }
 }

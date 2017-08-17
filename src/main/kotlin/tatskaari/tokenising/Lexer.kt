@@ -1,18 +1,51 @@
 package tatskaari.tokenising
 
 import java.util.*
-
 object Lexer {
   class InvalidInputException(reason: String) : RuntimeException(reason)
 
+  fun String.rest(head: String): String {
+    return substring(head.length, length)
+  }
+
   fun lex(program: String): LinkedList<Token> {
-    var rest = program.trim()
+    var lineNumber = 0
+    var columnNumber = 0
+    val trimPred = fun (it:Char): Boolean {
+      if (it.isWhitespace()){
+        if (it == '\n'){
+          lineNumber++
+          columnNumber = 0
+        } else {
+          columnNumber++
+        }
+        return true
+      } else {
+        return false
+      }
+    }
+
+    var rest = program.trim(trimPred)
+
     val tokens = LinkedList<Token>()
     while (rest.isNotEmpty()) {
-      val tokenResult = getNextToken(rest)
+      val tokenResult = TokenType.values()
+        .map {
+          val result = it.matcher.lex(rest)
+          if (result != null){
+            Pair(it, result)
+          } else {
+            null
+          }
+        }
+        .filterNotNull()
+        .maxBy { it.second.length }
       if (tokenResult != null) {
-        rest = tokenResult.restOfProgram.trim()
-        tokens.add(tokenResult.token)
+        val (tokenType, tokenText) = tokenResult
+        val token = tokenResult.first.tokenConstructor(tokenType, tokenText, lineNumber, columnNumber)
+        tokens.add(token)
+        columnNumber+=tokenText.length
+        rest = rest.rest(tokenText).trim(trimPred)
       } else {
         throw InvalidInputException("Unexpected character: '" + program.substring(10) + "...'")
       }
@@ -21,9 +54,6 @@ object Lexer {
     return tokens
   }
 
-  fun getNextToken(program: String): LexResult? {
-    return TokenType.values()
-      .map { it.tokeniser.lex(program) }.filterNotNull()
-      .minBy { it.restOfProgram.length }
-  }
+
+
 }

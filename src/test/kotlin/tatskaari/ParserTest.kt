@@ -8,6 +8,7 @@ import tatskaari.parsing.Parser
 import tatskaari.parsing.Statement
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
+import tatskaari.tokenising.TokenType
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -20,10 +21,10 @@ object ParserTest {
         listOf(
           Statement.CodeBlock(
             listOf(
-              Statement.ValDeclaration(Token.Identifier("someVar"), Expression.Num(5))
+              Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 1), Expression.Num(5))
             )
           ),
-          Statement.ValDeclaration(Token.Identifier("someOtherVar"), Expression.Num(5))
+          Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someOtherVar", 1, 1), Expression.Num(5))
         )
       )
     )
@@ -41,7 +42,7 @@ object ParserTest {
       Statement.CodeBlock(
         listOf(
           Statement.ValDeclaration(
-            Token.Identifier("someVariable"),
+            Token.Identifier(TokenType.Identifier,"someVariable", 1, 1),
             Expression.BinaryOperator(BinaryOperators.Add, Expression.Num(12), Expression.Num(12))
           )
         )
@@ -59,9 +60,9 @@ object ParserTest {
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(
-          Statement.ValDeclaration(Token.Identifier("someVariable"),  Expression.Num(12)),
+          Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVariable",6, 8),  Expression.Num(12)),
           Statement.ValDeclaration(
-            Token.Identifier("someVar"),
+            Token.Identifier(TokenType.Identifier,"someVar", 1, 1),
             Expression.BinaryOperator(BinaryOperators.Add, Expression.Identifier("someVariable"), Expression.Num(1))
           )
         )
@@ -85,7 +86,7 @@ object ParserTest {
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(
-          Statement.Input(Token.Identifier("a")),
+          Statement.Input(Token.Identifier(TokenType.Identifier,"a", 1, 1)),
           Statement.Output(Expression.Identifier("a"))
         )
       )
@@ -165,8 +166,8 @@ object ParserTest {
     val program = Parser.parse("function add(a, b) { output a + b }")
     val expectedAST = listOf(
       Statement.Function(
-        Token.Identifier("add"),
-        listOf(Token.Identifier("a"), Token.Identifier("b")),
+        Token.Identifier(TokenType.Identifier,"add", 0, 0),
+        listOf(Token.Identifier(TokenType.Identifier,"a", 0,0), Token.Identifier(TokenType.Identifier, "b", 0, 0)),
         Statement.CodeBlock(
           listOf(
             Statement.Output(Expression.BinaryOperator(BinaryOperators.Add, Expression.Identifier("a"), Expression.Identifier("b")))
@@ -183,9 +184,9 @@ object ParserTest {
     val program = Parser.parse("val a := add(1 2)")
     val expectedAST = listOf(
       Statement.ValDeclaration(
-        Token.Identifier("a"),
+        Token.Identifier(TokenType.Identifier,"a", 0, 0),
         Expression.FunctionCall(
-          Token.Identifier("add"),
+          Token.Identifier(TokenType.Identifier,"add", 0, 0),
           listOf(
             Expression.Num(1),
             Expression.Num(2)
