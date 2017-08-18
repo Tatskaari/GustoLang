@@ -6,6 +6,7 @@ sealed class Statement {
   data class CodeBlock(val statementList: List<Statement>) : Statement()
   data class ValDeclaration(val identifier: Token.Identifier, val expression: Expression) : Statement()
   data class Assignment(val identifier: Token.Identifier, val expression: Expression) : Statement()
+  data class ListAssignment(val identifier: Token.Identifier, val indexExpression: Expression, val expression: Expression) : Statement()
   data class If(val condition: Expression, val body: CodeBlock) : Statement()
   data class IfElse(val condition: Expression, val ifBody: CodeBlock, val elseBody: CodeBlock) : Statement()
   data class Input(val identifier: Token.Identifier) : Statement()

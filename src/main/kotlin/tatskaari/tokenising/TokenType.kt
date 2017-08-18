@@ -18,6 +18,8 @@ enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, Str
   Or(KeywordMatcher("or"), Token::Keyword),
   OpenBlock(KeywordMatcher("{"), Token::Keyword),
   CloseBlock(KeywordMatcher("}"), Token::Keyword),
+  ListStart(KeywordMatcher("["), Token::Keyword),
+  ListEnd(KeywordMatcher("]"), Token::Keyword),
   Val(KeywordMatcher("val"), Token::Keyword),
   AssignOp(KeywordMatcher(":="), Token::Keyword),
   Not(KeywordMatcher("!"), Token::Keyword),

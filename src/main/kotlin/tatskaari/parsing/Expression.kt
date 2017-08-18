@@ -10,5 +10,7 @@ sealed class Expression {
   data class Identifier(val name: String) : Expression()
   data class BinaryOperator(val operator: BinaryOperators, val lhs: Expression, val rhs: Expression) : Expression()
   data class UnaryOperator(val operator: UnaryOperators, val expression: Expression) : Expression()
-  data class FunctionCall(val functionIdentifier: Token.Identifier, val params: List<Expression>) : Expression()
+  data class FunctionCall(val functionExpression: Expression, val params: List<Expression>) : Expression()
+  data class ListAccess(val listExpression: Expression, val indexExpression: Expression): Expression()
+  data class ListDeclaration(val items: List<Expression>): Expression()
 }

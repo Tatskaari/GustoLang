@@ -149,12 +149,21 @@ class Parser {
     return Statement.ValDeclaration(identifier, expression)
   }
 
-  // assignment => STRING ":=" expression
-  fun assignment(tokens: LinkedList<Token>): Statement.Assignment {
+  // assignment => STRING ":=" expression | STRING "[" expression "]" ":=" expression
+  fun assignment(tokens: LinkedList<Token>): Statement {
     val identifier = tokens.getIdentifier()
-    tokens.getNextToken(AssignOp)
-    val expression = expression(tokens)
-    return Statement.Assignment(identifier, expression)
+    if (tokens.match(AssignOp)){
+      tokens.getNextToken(AssignOp)
+      val expression = expression(tokens)
+      return Statement.Assignment(identifier, expression)
+    } else {
+      tokens.getNextToken(ListStart)
+      val indexExpression = expression(tokens)
+      tokens.getNextToken(ListEnd)
+      tokens.getNextToken(AssignOp)
+      val expression = expression(tokens)
+      return Statement.ListAssignment(identifier, indexExpression, expression)
+    }
   }
 
   // input => "input" STRING
@@ -242,48 +251,76 @@ class Parser {
     return primary(tokens)
   }
 
-  // primary => NUMBER | functionCall | "false" | "true" | "nil" | "(" expression ")"
+  // primary => listDeclaration | functionCall | listAccess | NUMBER | STRING | listAccess | "false" | "true" | "(" expression ")"
   fun primary(tokens : LinkedList<Token>) : Expression{
-    val expectedTokens = listOf(OpenParen, Num, Identifier, True, False)
-    if(tokens.matchAny(expectedTokens)) {
-      if (tokens.match(Identifier)) {
-        return functionCall(tokens)
-      }
+    val expectedTokens = listOf(OpenParen, Num, Identifier, True, False, ListStart)
 
-      val token = tokens.consumeToken()
-
-      when (token.tokenType) {
-        Num -> return Expression.Num((token as Token.Num).value)
-        True -> return Expression.Bool(true)
-        False -> return Expression.Bool(false)
-        else -> {
-          val expr = expression(tokens)
-          tokens.getNextToken(CloseParen)
-          return expr
-        }
-      }
-    } else {
+    if (!tokens.matchAny(expectedTokens)){
       throw UnexpectedToken(tokens.consumeToken(), expectedTokens)
     }
 
-  }
-  // functionCall => STRING ("(" (expression (",")*)* ")")?
-  fun functionCall(tokens: LinkedList<Token>): Expression {
-    val token = tokens.getIdentifier()
-    if (tokens.match(OpenParen)){
-      tokens.consumeToken()
-      val params = LinkedList<Expression>()
-      while (!tokens.match(CloseParen)){
-        if (tokens.match(Comma)){
-          tokens.consumeToken()
-        }
-        params.add(expression(tokens))
+    val token = tokens.consumeToken()
+    when (token.tokenType) {
+      Num -> return Expression.Num((token as Token.Num).value)
+      True -> return Expression.Bool(true)
+      False -> return Expression.Bool(false)
+      OpenParen -> {
+        val expr = expression(tokens)
+        tokens.getNextToken(CloseParen)
+        return expr
       }
-      tokens.getNextToken(CloseParen)
-
-      return Expression.FunctionCall(token, params)
-    } else {
-      return Expression.Identifier(token.name)
+      ListStart -> {
+        tokens.addFirst(token)
+        return listDeclaration(tokens)
+      }
+      Identifier -> {
+        val identifier = Expression.Identifier(token.tokenText)
+        when{
+          tokens.match(OpenParen) -> return functionCall(identifier, tokens)
+          tokens.match(ListStart) -> return listAccess(identifier, tokens)
+          else -> return identifier
+        }
+      }
+      else -> throw UnexpectedToken(tokens.consumeToken(), expectedTokens)
     }
+
+  }
+
+  // functionCall = expression "(" (expression (",")*)* ")"
+  fun functionCall(expression: Expression, tokens: LinkedList<Token>): Expression {
+    tokens.getNextToken(OpenParen)
+    val params = LinkedList<Expression>()
+    while(!tokens.match(CloseParen)){
+      params.add(expression(tokens))
+      if (tokens.match(Comma)){
+        tokens.consumeToken()
+      }
+    }
+    tokens.getNextToken(CloseParen)
+    return Expression.FunctionCall(expression, params)
+  }
+
+  // listAccess = expression "[" expression "]"
+  fun listAccess(expression: Expression, tokens: LinkedList<Token>): Expression {
+    tokens.getNextToken(ListStart)
+    val indexExpression = expression(tokens)
+    tokens.getNextToken(ListEnd)
+
+    return Expression.ListAccess(expression, indexExpression)
+  }
+
+  // listDeclaration = "[" (expression (",")*)* "]"
+  fun listDeclaration(tokens: LinkedList<Token>): Expression.ListDeclaration {
+    tokens.getNextToken(ListStart)
+    val listItems = LinkedList<Expression>()
+    while (!tokens.match(ListEnd)){
+      if (tokens.match(Comma)){
+        tokens.consumeToken()
+      }
+      listItems.add(expression(tokens))
+    }
+    tokens.getNextToken(ListEnd)
+
+    return Expression.ListDeclaration(listItems)
   }
 }

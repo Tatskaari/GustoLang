@@ -12,6 +12,12 @@ assignment => STRING ":=" expression
 input => "input" STRING
 output => "output" expression
 
+
+
+functionCall = expression "(" (expression (",")*)* ")"
+listAccess = expression "[" expression "]"
+listDeclaration = "[" (expression (",")*)* "]"
+
 expression => logical
 logical => equality ( ( "and" | "or" ) equality )*
 equality => comparison ( ( "!=" | "==" ) comparison )*
@@ -19,5 +25,4 @@ comparison => addition ( ( ">" | ">=" | "<" | "<=" ) addition )*
 addition => multiplication ( ( "-" | "+" ) multiplication )*
 multiplication => unary ( ( "/" | "*" ) unary )*
 unary => ( "!" | "-" ) unary | primary
-primary => NUMBER | functionCall | "false" | "true" | "(" expression ")"
-functionCall => STRING ("(" (expression (",")*)* ")")?
+primary => NUMBER | STRING | listAccess | "false" | "true" | "(" expression ")" | listDeclaration | functionCall | listAccess

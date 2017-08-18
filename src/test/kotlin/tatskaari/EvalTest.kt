@@ -419,4 +419,22 @@ object EvalTest {
     assertEquals(-15, Eval().eval(Parser().expression(Lexer.lex("-(1 + 3)*2*2 + 1")), MutEnv()).intVal())
     assertEquals(-17, Eval().eval(Parser().expression(Lexer.lex("-((1 + 3)*2*2 + 1)")), MutEnv()).intVal())
   }
+
+  @Test
+  fun listTest(){
+    val program = "val a := [10, 232, 31] val out := a[1]"
+    val parser = Parser()
+    val env = MutEnv()
+    Eval().eval(parser.parse(program)!!, env)
+    assertEquals(232, env.getValue("out").intVal())
+  }
+
+  @Test
+  fun listAssignTest(){
+    val program = "val a := [] a[1]:= 232 val out := a[1]"
+    val parser = Parser()
+    val env = MutEnv()
+    Eval().eval(parser.parse(program)!!, env)
+    assertEquals(232, env.getValue("out").intVal())
+  }
 }

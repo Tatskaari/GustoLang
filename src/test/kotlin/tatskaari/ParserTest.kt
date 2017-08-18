@@ -53,7 +53,7 @@ object ParserTest {
 
   @Test
   fun TestExpressionWithIdentifier() {
-    val program = "{val someVariable := 12 val someVar := someVariable + 1 }"
+    val program =  Parser().parse("{val someVariable := 12 val someVar := someVariable + 1 }")!!
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(
@@ -66,7 +66,7 @@ object ParserTest {
       )
     )
 
-    TestUtil.compareASTs(expectedAST, Parser().parse(program)!!)
+    TestUtil.compareASTs(expectedAST,program)
   }
 
   @Test
@@ -197,7 +197,7 @@ object ParserTest {
       Statement.ValDeclaration(
         Token.Identifier(TokenType.Identifier,"a", 0, 0),
         Expression.FunctionCall(
-          Token.Identifier(TokenType.Identifier,"add", 0, 0),
+          Expression.Identifier("add"),
           listOf(
             Expression.Num(1),
             Expression.Num(2)

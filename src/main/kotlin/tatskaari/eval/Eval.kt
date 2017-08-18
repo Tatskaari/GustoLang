@@ -6,6 +6,8 @@ import tatskaari.parsing.Statement
 import tatskaari.parsing.UnaryOperators
 import java.io.BufferedReader
 import java.io.PrintStream
+import java.util.*
+import kotlin.collections.ArrayList
 
 typealias Env = Map<String, Eval.Value>
 typealias MutEnv = HashMap<String, Eval.Value>
@@ -19,11 +21,12 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   sealed class Value(var value: Any) {
     class NumVal(intVal: Int) : Value(intVal)
     class BoolVal(boolVal: Boolean) : Value(boolVal)
-    class FunctionVal(function: Statement.Function, val env : MutableMap<String, Value>) : Value(function)
+    class FunctionVal(functionVal: Statement.Function, val env : MutableMap<String, Value>) : Value(functionVal)
+    class ListVal(listVal: HashMap<Int, Value>): Value(listVal)
 
     fun intVal():Int{
       if (this is NumVal){
-        return this.value as Int
+        return value as Int
       } else {
         throw CastException
       }
@@ -31,7 +34,15 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
 
     fun boolVal():Boolean{
       if (this is BoolVal){
-        return this.value as Boolean
+        return value as Boolean
+      } else {
+        throw CastException
+      }
+    }
+
+    fun listVal(): HashMap<Int, Value> {
+      if (this is ListVal){
+        return value as HashMap<Int, Value>
       } else {
         throw CastException
       }
@@ -39,7 +50,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
 
     fun functionVal(): Statement.Function {
       if (this is FunctionVal){
-        return this.value as Statement.Function
+        return value as Statement.Function
       } else {
         throw CastException
       }
@@ -106,6 +117,20 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
         }
         return null
       }
+      is Statement.ListAssignment -> {
+        val index = eval(statement.indexExpression, env).intVal()
+        val value = eval(statement.expression, env)
+        val identifier = statement.identifier.name
+
+        if (env.containsKey(identifier)) {
+          val list = env.getValue(identifier).listVal()
+          list[index] = value
+        } else {
+          throw UndefinedIdentifier(identifier)
+        }
+
+        return null
+      }
       is Statement.Input -> {
         val identifier = statement.identifier.name
         val input = inputReader.readLine()
@@ -157,6 +182,8 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
       is Expression.BinaryOperator -> return applyBinaryOperator(expression, env)
       is Expression.UnaryOperator -> return applyUnaryOperator(expression, env)
       is Expression.FunctionCall -> return callFunction(expression, env)
+      is Expression.ListDeclaration -> return evalList(expression, env)
+      is Expression.ListAccess -> return evalListAccess(expression, env)
       is Expression.Identifier -> {
         val value = env[expression.name]
         if (value != null) {
@@ -168,6 +195,22 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     }
   }
 
+  fun evalList(expression: Expression.ListDeclaration, env: Env): Value.ListVal {
+    val list = HashMap<Int, Value>()
+    expression.items.forEachIndexed() { index, expr->
+      list.put(index, eval(expr, env))
+    }
+
+    return Value.ListVal(list)
+  }
+
+  fun evalListAccess(expression: Expression.ListAccess, env: Env): Value{
+    val list = eval(expression.listExpression, env)
+    val index = eval(expression.indexExpression, env).intVal()
+    return list.listVal().getValue(index)
+  }
+
+
   fun callFunction(functionCall: Expression.FunctionCall, env: Env) : Eval.Value{
     val functionVal = getFunction(functionCall, env)
     val funEnv = getFunctionCallEnv(functionVal.functionVal(), functionCall, functionVal.env, env)
@@ -176,11 +219,8 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   }
 
   fun getFunction(functionCall: Expression.FunctionCall, env: Env): Value.FunctionVal {
-    if (!env.containsKey(functionCall.functionIdentifier.name)){
-      throw UndefinedIdentifier(functionCall.functionIdentifier.name)
-    }
 
-    val function = env[functionCall.functionIdentifier.name]
+    val function = eval(functionCall.functionExpression, env)
 
     if (function !is Value.FunctionVal){
       throw TypeMismatch("$function is not callable")
