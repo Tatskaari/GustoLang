@@ -19,5 +19,5 @@ comparison => addition ( ( ">" | ">=" | "<" | "<=" ) addition )*
 addition => multiplication ( ( "-" | "+" ) multiplication )*
 multiplication => unary ( ( "/" | "*" ) unary )*
 unary => ( "!" | "-" ) unary | primary
-primary => NUMBER | functionCall | "false" | "true" | "nil" | "(" expression ")"
+primary => NUMBER | functionCall | "false" | "true" | "(" expression ")"
 functionCall => STRING ("(" (expression (",")*)* ")")?

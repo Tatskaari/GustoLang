@@ -16,14 +16,14 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
   constructor(outputStream: PrintStream) : this(System.`in`.bufferedReader(), outputStream)
 
 
-  sealed class Value(val value: Any) {
-    data class NumVal(val intVal: Int) : Value(intVal)
-    data class BoolVal(val boolVal: Boolean) : Value(boolVal)
-    data class FunctionVal(val function: Statement.Function, val env : MutableMap<String, Value>) : Value(function)
+  sealed class Value(var value: Any) {
+    class NumVal(intVal: Int) : Value(intVal)
+    class BoolVal(boolVal: Boolean) : Value(boolVal)
+    class FunctionVal(function: Statement.Function, val env : MutableMap<String, Value>) : Value(function)
 
     fun intVal():Int{
       if (this is NumVal){
-        return this.intVal
+        return this.value as Int
       } else {
         throw CastException
       }
@@ -31,7 +31,15 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
 
     fun boolVal():Boolean{
       if (this is BoolVal){
-        return this.boolVal
+        return this.value as Boolean
+      } else {
+        throw CastException
+      }
+    }
+
+    fun functionVal(): Statement.Function {
+      if (this is FunctionVal){
+        return this.value as Statement.Function
       } else {
         throw CastException
       }
@@ -59,10 +67,10 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
 
   fun eval(statement: Statement, env: MutEnv) : Value? {
     when (statement) {
-      is Statement.CodeBlock -> return eval(statement.statementList, env)
-      is Statement.If -> return evalIf(statement.condition, statement.body.statementList, null, env)
-      is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody.statementList, statement.elseBody.statementList, env)
-      is Statement.While -> return evalWhile(statement.condition, statement.body.statementList, env)
+      is Statement.CodeBlock -> return eval(statement.statementList, HashMap(env))
+      is Statement.If -> return evalIf(statement.condition, statement.body.statementList, null, HashMap(env))
+      is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody.statementList, statement.elseBody.statementList, HashMap(env))
+      is Statement.While -> return evalWhile(statement.condition, statement.body.statementList, HashMap(env))
       is Statement.ValDeclaration -> {
         val identifierName = statement.identifier.name
 
@@ -71,14 +79,18 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
         } else {
           env[identifierName] = eval(statement.expression, env)
         }
+        return null
       }
       is Statement.Function -> {
         val identifierName = statement.identifier.name
         if (env.containsKey(identifierName)){
           throw VariableAlreadyDefined(identifierName)
         } else {
-          env[identifierName] = Value.FunctionVal(statement, env)
+          val functionVal = Value.FunctionVal(statement, HashMap(env))
+          functionVal.env.put(identifierName, functionVal)
+          env[identifierName] = functionVal
         }
+        return null
       }
       is Statement.Assignment -> {
         val identifier = statement.identifier.name
@@ -88,10 +100,11 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
           if (existingValue::class != value::class) {
             throw TypeMismatch("$identifier was already set to $existingValue, new value was $value")
           }
-          env[identifier] = value
+          env.getValue(identifier).value = value.value
         } else {
           throw UndefinedIdentifier(identifier)
         }
+        return null
       }
       is Statement.Input -> {
         val identifier = statement.identifier.name
@@ -105,21 +118,21 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
         } else {
           env[identifier] = Value.NumVal(input.toInt())
         }
+        return null
       }
       is Statement.Output -> {
         val value = eval(statement.expression, env)
         outputStream.println(value.value)
+        return null
       }
       is Statement.Return -> {
         return eval(statement.expression, env)
       }
     }
-
-    return null
   }
 
   private fun evalWhile(condition: Expression, body: List<Statement>, env: MutEnv) : Value? {
-    while(evalCondition(condition, env).boolVal){
+    while(evalCondition(condition, env).boolVal()){
       val value : Value? = eval(body, env)
       if (value != null) {
         return value
@@ -157,9 +170,9 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
 
   fun callFunction(functionCall: Expression.FunctionCall, env: Env) : Eval.Value{
     val functionVal = getFunction(functionCall, env)
-    val funEnv = getFunctionCallEnv(functionVal.function, functionCall, functionVal.env, env)
+    val funEnv = getFunctionCallEnv(functionVal.functionVal(), functionCall, functionVal.env, env)
 
-    return evalFunction(functionVal.function.body.statementList, funEnv)
+    return evalFunction(functionVal.functionVal().body.statementList, funEnv)
   }
 
   fun getFunction(functionCall: Expression.FunctionCall, env: Env): Value.FunctionVal {
@@ -222,7 +235,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
         BinaryOperators.Or -> return Value.BoolVal(lhsVal.boolVal() || rhsVal.boolVal())
       }
     } catch (e: CastException) {
-      throw TypeMismatch("$operation cannot be applid to $lhsVal and $rhsVal")
+      throw TypeMismatch("$operation cannot be applied to $lhsVal and $rhsVal")
     }
   }
 
@@ -235,7 +248,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
         UnaryOperators.Negative -> return Value.NumVal(-result.intVal())
       }
     } catch (e: CastException) {
-      throw TypeMismatch("$operator cannot be applid to $result")
+      throw TypeMismatch("$operator cannot be applied to $result")
     }
   }
 
@@ -243,7 +256,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     val conditionResult = eval(condition, env)
     if (conditionResult is Value.BoolVal) {
       var value : Value? = null
-      if (conditionResult.boolVal) {
+      if (conditionResult.boolVal()) {
         value = eval(ifBody, env)
       } else if (elseBody != null) {
         value = eval(elseBody, env)

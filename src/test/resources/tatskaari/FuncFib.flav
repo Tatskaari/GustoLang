@@ -1,5 +1,5 @@
 function fib(pN, pLast, pLastLast) {
-    if (pN = 0){
+    if (pN = 1){
       return pLast + pLastLast
     }
     val new := pLast + pLastLast
@@ -10,7 +10,7 @@ function fib(pN, pLast, pLastLast) {
 }
 
 function getNthFib(pN) {
-  return fib(pN - 3, 1, 1)
+  return fib(pN - 2, 1, 1)
 }
 
 val out := getNthFib(7)

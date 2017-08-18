@@ -61,7 +61,12 @@ class Parser {
           try{
             statement(tokens)
             isPanicMode = false
-            program(tokens)
+            while(tokens.isNotEmpty()){
+              if (tokens.match(CloseBlock)){
+                tokens.consumeToken()
+              }
+              statement(tokens)
+            }
           } catch (cascadingException: ParsingFailedException){
             // Ignore
           } catch (cascadingException: UnexpectedEndOfFile){
@@ -70,6 +75,7 @@ class Parser {
         }
       }
     }
+
     throw ParsingFailedException
   }
 
@@ -78,7 +84,7 @@ class Parser {
     tokens.getNextToken(If)
     val condition = expression(tokens)
     val trueBody = codeBlock(tokens)
-    if (tokens.match(Else)){
+    if (tokens.isNotEmpty() && tokens.match(Else)){
       tokens.consumeToken()
       val elseBody = codeBlock(tokens)
       return Statement.IfElse(condition, trueBody, elseBody)

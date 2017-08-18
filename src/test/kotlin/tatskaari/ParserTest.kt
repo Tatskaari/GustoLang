@@ -94,7 +94,7 @@ object ParserTest {
 
   @Test
   fun testInvalidTokenInExpression() {
-    val program = "{val someVariable := 12 + val}"
+    val program = "val someVariable := 12 + val"
     val parser = Parser()
     parser.parse(program)
     assertEquals(1, parser.parserExceptions.size)
@@ -207,5 +207,12 @@ object ParserTest {
     )
 
     TestUtil.compareASTs(expectedAST, program!!)
+  }
+
+  @Test
+  fun testErrorMidBlock() {
+    val parser = Parser()
+    parser.parse("{var a := 1 val c := 1} var b := 2")
+    assertEquals(2, parser.parserExceptions.size)
   }
 }

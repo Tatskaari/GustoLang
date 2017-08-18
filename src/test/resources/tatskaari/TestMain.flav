@@ -1,7 +1,7 @@
-{
-    val a := 1
 
-    if (a = 1) {
-        val b := a
-    }
+val a := 1
+val b := 0
+
+if (a = 1) {
+    b := a
 }

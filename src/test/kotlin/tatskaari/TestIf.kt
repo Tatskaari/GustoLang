@@ -33,23 +33,19 @@ object TestIf {
     TestUtil.compareASTs(expected, actual!!)
   }
 
-
   @Test
   fun testIfElse() {
     val program = Parser().parse(TestUtil.loadProgram("IfElse"))
     val expectedAST = listOf(
-      Statement.CodeBlock(
-        listOf(
-          Statement.Input(Token.Identifier(TokenType.Identifier, "a", 1,2 )),
-          Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.Num(0)),
-          Statement.IfElse(
-            Expression.BinaryOperator(BinaryOperators.Equality, Expression.Num(10), Expression.Identifier("a")),
-            Statement.CodeBlock(listOf(Statement.Assignment(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.Num(1)))),
-            Statement.CodeBlock(listOf(Statement.Assignment(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.Num(2))))
-          )
-        )
+      Statement.Input(Token.Identifier(TokenType.Identifier, "a", 1,2 )),
+      Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.Num(0)),
+      Statement.IfElse(
+        Expression.BinaryOperator(BinaryOperators.Equality, Expression.Num(10), Expression.Identifier("a")),
+        Statement.CodeBlock(listOf(Statement.Assignment(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.Num(1)))),
+        Statement.CodeBlock(listOf(Statement.Assignment(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.Num(2))))
       )
     )
+
 
     TestUtil.compareASTs(expectedAST, program!!)
   }
