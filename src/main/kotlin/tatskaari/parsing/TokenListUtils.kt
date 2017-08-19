@@ -41,14 +41,6 @@ fun LinkedList<Token>.getIdentifier(): Token.Identifier {
 
 
 fun LinkedList<Token>.match(expectedToken: TokenType): Boolean {
-  return expectedToken == this.lookAhead().tokenType
+  return this.matchAny(listOf(expectedToken))
 }
 
-fun LinkedList<Token>.lookAhead(parser: (LinkedList<Token>) -> Expression): Boolean {
-  try {
-    parser(this)
-    return true
-  } catch (ex: Parser.ParserException){
-    return false
-  }
-}

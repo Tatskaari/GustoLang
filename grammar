@@ -24,7 +24,5 @@ equality => comparison ( ( "!=" | "==" ) comparison )*
 comparison => addition ( ( ">" | ">=" | "<" | "<=" ) addition )*
 addition => multiplication ( ( "-" | "+" ) multiplication )*
 multiplication => unary ( ( "/" | "*" ) unary )*
-unary => ( "!" | "-" ) unary | functionCall | listAccess | primary
-functionCall = primary "(" expressionList ")"
-listAccess = primary "[" expression "]"
-primary => NUMBER | STRING | listAccess | "false" | "true" | "(" expression ")" | listDeclaration
+unary => ( "!" | "-" ) unary | primary ("[" expressionList "]" | "(" expressionList ")")*
+primary => NUMBER | STRING | "false" | "true" | "(" expression ")" | listDeclaration
