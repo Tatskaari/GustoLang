@@ -7,7 +7,6 @@ import tatskaari.parsing.UnaryOperators
 import java.io.BufferedReader
 import java.io.PrintStream
 import java.util.*
-import kotlin.collections.ArrayList
 
 typealias Env = Map<String, Eval.Value>
 typealias MutEnv = HashMap<String, Eval.Value>
@@ -53,6 +52,14 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
         return value as Statement.Function
       } else {
         throw CastException
+      }
+    }
+
+    fun copyOrReference(): Value{
+      when(this){
+        is BoolVal -> return BoolVal(this.value as Boolean)
+        is NumVal -> return NumVal(this.value as Int)
+        else -> return this
       }
     }
   }
@@ -124,7 +131,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
 
         if (env.containsKey(identifier)) {
           val list = env.getValue(identifier).listVal()
-          list[index] = value
+          list[index] = value.copyOrReference()
         } else {
           throw UndefinedIdentifier(identifier)
         }
@@ -137,11 +144,11 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
         if (input == null || input.isEmpty()) {
           throw InvalidUserInput
         } else if ("true" == input) {
-          env[identifier] = Value.BoolVal(true)
+          setValueInEnv(env, identifier, Value.BoolVal(true))
         } else if ("false" == input) {
-          env[identifier] = Value.BoolVal(false)
+          setValueInEnv(env, identifier, Value.BoolVal(false))
         } else {
-          env[identifier] = Value.NumVal(input.toInt())
+          setValueInEnv(env, identifier, Value.NumVal(input.toInt()))
         }
         return null
       }
@@ -153,6 +160,18 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
       is Statement.Return -> {
         return eval(statement.expression, env)
       }
+    }
+  }
+
+  fun setValueInEnv(env: MutEnv, identifier: String, value: Value){
+    if (env.containsKey(identifier)){
+      val existingValue = env.getValue(identifier)
+      if (existingValue::class != value::class) {
+        throw TypeMismatch("$identifier was already set to $existingValue, new value was $value")
+      }
+      env.getValue(identifier).value = value.value
+    } else {
+      env[identifier] = value
     }
   }
 

@@ -437,4 +437,13 @@ object EvalTest {
     Eval().eval(parser.parse(program)!!, env)
     assertEquals(232, env.getValue("out").intVal())
   }
+
+  @Test
+  fun sumListFromIput(){
+    val program = TestUtil.loadProgram("SumListInput")
+    val env = MutEnv()
+    val inputReader = BufferedReader(StringReader("1\n12\n123\n-1\n"))
+    Eval(inputReader).eval(Parser().parse(program)!!, env)
+    assertEquals(136, env.getValue("out").intVal())
+  }
 }

@@ -14,9 +14,9 @@ output => "output" expression
 
 
 
-functionCall = expression "(" (expression (",")*)* ")"
-listAccess = expression "[" expression "]"
-listDeclaration = "[" (expression (",")*)* "]"
+
+listDeclaration = "[" expressionList "]"
+expressionList =  (expression (",")*)*
 
 expression => logical
 logical => equality ( ( "and" | "or" ) equality )*
@@ -24,5 +24,7 @@ equality => comparison ( ( "!=" | "==" ) comparison )*
 comparison => addition ( ( ">" | ">=" | "<" | "<=" ) addition )*
 addition => multiplication ( ( "-" | "+" ) multiplication )*
 multiplication => unary ( ( "/" | "*" ) unary )*
-unary => ( "!" | "-" ) unary | primary
-primary => NUMBER | STRING | listAccess | "false" | "true" | "(" expression ")" | listDeclaration | functionCall | listAccess
+unary => ( "!" | "-" ) unary | functionCall | listAccess | primary
+functionCall = primary "(" expressionList ")"
+listAccess = primary "[" expression "]"
+primary => NUMBER | STRING | listAccess | "false" | "true" | "(" expression ")" | listDeclaration
