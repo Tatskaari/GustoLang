@@ -1,0 +1,49 @@
+html, body, h1, h2{
+	padding: 0;
+	margin: 0;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #333333;
+}
+h1, h2, h3, h4, h5 {
+	font-variant: small-caps;
+}
+.content{
+    width: 100%;
+    padding: 0 1em;
+    box-sizing: border-box;
+}
+.toolbar, .header {
+	width: 100%;
+	padding: 1em;
+	box-sizing: border-box;
+}
+.toolbar button {
+    background-color: #4CAF50; 
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    float: right;
+}
+
+.toolbar::after {
+	content: "";
+	clear: both;
+	display: block;
+}
+
+#code {
+	width: 100%;
+	height: 30em;
+	font-family: monospace;
+}
+
+#output{
+	margin-top: 1em;
+}
+.error{
+    color: red;
+}

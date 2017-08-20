@@ -1,9 +1,8 @@
 package tatskaari.eval
-import kotlin.browser.window
 
-object PromptInputProvider: InputProvider {
+external fun input(): String
+object JSHookInputProvider : InputProvider {
   override fun readLine(): String? {
-    val value = window.prompt()
-    return value
+    return input()
   }
 }

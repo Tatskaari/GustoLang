@@ -1,7 +1,7 @@
 
 package tatskaari
 
-import org.testng.annotations.Test
+import org.junit.Test
 import tatskaari.tokenising.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

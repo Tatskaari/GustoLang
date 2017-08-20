@@ -1,11 +1,50 @@
 <html>
-    <head>
+<head>
 
-    </head>
-    <body>
-        <textarea id="code"></textarea>
-        <button type="button" onclick="KotlinLang.tatskaari.BrowserHooks.eval(document.getElementById('code').value)">Run</button>
-        <script type="text/javascript" src="lib/kotlin.js"></script>
-        <script type="text/javascript" src="KotlinLang.js"></script>
-    </body>
+</head>
+<body>
+<div class="header">
+    <h1>Try Mortarboard</h1>
+</div>
+<div class="content">
+            <textarea id="code">
+function fib(pN, pLast, pLastLast) {
+    if (pN = 1){
+      return pLast + pLastLast
+    }
+    val new := pLast + pLastLast
+    val last := pLastLast
+    val lastLast := new
+    val n := pN - 1
+    return fib(n, last, lastLast)
+}
+
+function getNthFib(pN) {
+  return fib(pN - 2, 1, 1)
+}
+
+val out := getNthFib(7)
+            </textarea>
+</div>
+<div class="toolbar">
+    <button type="button" class="run-button" onclick="KotlinLang.tatskaari.BrowserHooks.eval(document.getElementById('code').value)">Run</button>
+</div>
+<div class="content">
+    <h2>Output</h2>
+    <div id="output"></div>
+</div>
+
+<link  rel="stylesheet" type="text/css" href="style.css">
+<script type="text/javascript">
+            var outputElement = document.getElementById("output");
+            function output(text){
+                outputElement.innerHTML += text + "\n"
+            }
+            function input(){
+                window.prompt("Please enter a value")
+            }
+        </script>
+<script type="text/javascript" src="lib/kotlin.js"></script>
+<script type="text/javascript" src="KotlinLang.js"></script>
+</body>
 </html>
