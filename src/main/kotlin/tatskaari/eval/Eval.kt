@@ -4,17 +4,12 @@ import tatskaari.parsing.Expression
 import tatskaari.parsing.BinaryOperators
 import tatskaari.parsing.Statement
 import tatskaari.parsing.UnaryOperators
-import java.io.BufferedReader
-import java.io.PrintStream
-import java.util.*
+
 
 typealias Env = Map<String, Eval.Value>
 typealias MutEnv = HashMap<String, Eval.Value>
 
-class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
-  constructor() : this(System.`in`.bufferedReader(), System.out)
-  constructor(inputReader: BufferedReader) : this(inputReader, System.out)
-  constructor(outputStream: PrintStream) : this(System.`in`.bufferedReader(), outputStream)
+class Eval {
 
 
   sealed class Value(var value: Any) {
@@ -148,22 +143,24 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
         return null
       }
       is Statement.Input -> {
-        val identifier = statement.identifier.name
-        val input = inputReader.readLine()
-        if (input == null || input.isEmpty()) {
-          throw InvalidUserInput
-        } else if ("true" == input) {
-          setValueInEnv(env, identifier, Value.BoolVal(true))
-        } else if ("false" == input) {
-          setValueInEnv(env, identifier, Value.BoolVal(false))
-        } else {
-          setValueInEnv(env, identifier, Value.NumVal(input.toInt()))
-        }
+        //TODO make this work in JS and JVM envs
+//        val identifier = statement.identifier.name
+//        val input = inputReader.readLine()
+//        if (input == null || input.isEmpty()) {
+//          throw InvalidUserInput
+//        } else if ("true" == input) {
+//          setValueInEnv(env, identifier, Value.BoolVal(true))
+//        } else if ("false" == input) {
+//          setValueInEnv(env, identifier, Value.BoolVal(false))
+//        } else {
+//          setValueInEnv(env, identifier, Value.NumVal(input.toInt()))
+//        }
         return null
       }
       is Statement.Output -> {
+        //TODO make this work with io redirection
         val value = eval(statement.expression, env)
-        outputStream.println(value.value)
+        println(value.value)
         return null
       }
       is Statement.Return -> {

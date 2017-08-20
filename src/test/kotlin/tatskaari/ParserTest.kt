@@ -98,7 +98,7 @@ object ParserTest {
     val parser = Parser()
     parser.parse(program)
     assertEquals(1, parser.parserExceptions.size)
-    val exception = parser.parserExceptions.first
+    val exception = parser.parserExceptions.first()
     assert(exception is Parser.UnexpectedToken)
     assertEquals(TokenType.Val, (exception as Parser.UnexpectedToken).token!!.tokenType)
   }
@@ -117,7 +117,7 @@ object ParserTest {
     val parser = Parser()
     parser.parse(program)
     assertEquals(1, parser.parserExceptions.size)
-    val exception = parser.parserExceptions.first
+    val exception = parser.parserExceptions.first()
     assert(exception is Parser.UnexpectedToken)
     assertEquals(TokenType.Add, (exception as Parser.UnexpectedToken).token!!.tokenType)
   }
@@ -136,7 +136,7 @@ object ParserTest {
     val parser = Parser()
     parser.parse(program)
     assertEquals(1, parser.parserExceptions.size)
-    val exception = parser.parserExceptions.first
+    val exception = parser.parserExceptions.first()
     assert(exception is Parser.UnexpectedToken)
     assertEquals(TokenType.Num, (exception as Parser.UnexpectedToken).token!!.tokenType)
 
@@ -148,7 +148,7 @@ object ParserTest {
     val parser = Parser()
     parser.parse(program)
     assertEquals(1, parser.parserExceptions.size)
-    val exception = parser.parserExceptions.first
+    val exception = parser.parserExceptions.first()
     assert(exception is Parser.UnexpectedToken)
     assertEquals(TokenType.AssignOp, (exception as Parser.UnexpectedToken).token!!.tokenType)
 

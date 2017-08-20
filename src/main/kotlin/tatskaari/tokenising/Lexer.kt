@@ -1,6 +1,6 @@
 package tatskaari.tokenising
 
-import java.util.*
+import tatskaari.compatibility.TokenList
 object Lexer {
   class InvalidInputException(reason: String) : RuntimeException(reason)
 
@@ -8,7 +8,7 @@ object Lexer {
     return substring(head.length, length)
   }
 
-  fun lex(program: String): LinkedList<Token> {
+  fun lex(program: String): TokenList {
     var lineNumber = 1
     var columnNumber = 1
     val trimPred = fun (it:Char): Boolean {
@@ -27,7 +27,7 @@ object Lexer {
 
     var rest = program.trimStart(trimPred)
 
-    val tokens = LinkedList<Token>()
+    val tokens = TokenList()
     while (rest.isNotEmpty()) {
       val tokenResult = TokenType.values()
         .map {

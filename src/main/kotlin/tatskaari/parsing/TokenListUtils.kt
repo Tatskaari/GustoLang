@@ -1,24 +1,24 @@
 package tatskaari.parsing
 
+import tatskaari.compatibility.*
 import tatskaari.tokenising.Token
 import tatskaari.tokenising.TokenType
-import java.util.*
 
-fun LinkedList<Token>.consumeToken(): Token {
+fun TokenList.consumeToken(): Token {
   if(isEmpty()){
     throw Parser.UnexpectedEndOfFile
   }
   return removeFirst()
 }
 
-fun LinkedList<Token>.lookAhead(): Token {
+fun TokenList.lookAhead(): Token {
   if(isEmpty()){
     throw Parser.UnexpectedEndOfFile
   }
   return this[0]
 }
 
-fun LinkedList<Token>.matchAny(tokensToMatch: List<TokenType>) : Boolean{
+fun TokenList.matchAny(tokensToMatch: List<TokenType>) : Boolean{
   if (isEmpty()) {
     return false
   }
@@ -26,7 +26,7 @@ fun LinkedList<Token>.matchAny(tokensToMatch: List<TokenType>) : Boolean{
   return tokensToMatch.any { it == token.tokenType }
 }
 
-fun LinkedList<Token>.getNextToken(type: TokenType): Token {
+fun TokenList.getNextToken(type: TokenType): Token {
 
   val token = consumeToken()
   if (token.tokenType == type) {
@@ -35,12 +35,12 @@ fun LinkedList<Token>.getNextToken(type: TokenType): Token {
   throw Parser.UnexpectedToken(token, listOf(type))
 }
 
-fun LinkedList<Token>.getIdentifier(): Token.Identifier {
+fun TokenList.getIdentifier(): Token.Identifier {
   return getNextToken(TokenType.Identifier) as Token.Identifier
 }
 
 
-fun LinkedList<Token>.match(expectedToken: TokenType): Boolean {
+fun TokenList.match(expectedToken: TokenType): Boolean {
   return this.matchAny(listOf(expectedToken))
 }
 
