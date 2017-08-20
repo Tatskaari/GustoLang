@@ -35,6 +35,7 @@ enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, Str
   Input(KeywordMatcher("input"), Token::Keyword),
   Output(KeywordMatcher("output"), Token::Keyword),
   Num(NumberMatcher, Token::Num),
+  TextLiteral(TextMatcher, Token::TextLiteral),
   Identifier(IdentifierMatcher, Token::Identifier);
 
   override fun toString(): String {

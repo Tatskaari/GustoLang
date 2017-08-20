@@ -19,6 +19,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
 
   sealed class Value(var value: Any) {
     class NumVal(intVal: Int) : Value(intVal)
+    class TextVal(textVal: String) : Value(textVal)
     class BoolVal(boolVal: Boolean) : Value(boolVal)
     class FunctionVal(functionVal: Statement.Function, val env : MutableMap<String, Value>) : Value(functionVal)
     class ListVal(listVal: HashMap<Int, Value>): Value(listVal)
@@ -26,6 +27,14 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     fun intVal():Int{
       if (this is NumVal){
         return value as Int
+      } else {
+        throw CastException
+      }
+    }
+
+    fun textVal(): String {
+      if (this is TextVal){
+        return value as String
       } else {
         throw CastException
       }
@@ -198,6 +207,7 @@ class Eval(val inputReader: BufferedReader, val outputStream: PrintStream) {
     when (expression) {
       is Expression.Num -> return Value.NumVal(expression.value)
       is Expression.Bool -> return Value.BoolVal(expression.value)
+      is Expression.Text -> return Value.TextVal(expression.value)
       is Expression.BinaryOperator -> return applyBinaryOperator(expression, env)
       is Expression.UnaryOperator -> return applyUnaryOperator(expression, env)
       is Expression.FunctionCall -> return callFunction(expression, env)

@@ -446,4 +446,12 @@ object EvalTest {
     Eval(inputReader).eval(Parser().parse(program)!!, env)
     assertEquals(136, env.getValue("out").intVal())
   }
+
+  @Test
+  fun testText(){
+    val program = "val a := \"asdf\""
+    val env = MutEnv()
+    Eval().eval(Parser().parse(program)!!, env)
+    assertEquals("asdf", env.getValue("a").textVal())
+  }
 }

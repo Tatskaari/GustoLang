@@ -242,7 +242,7 @@ class Parser {
     return expr
   }
 
-  // unary => ( "!" | "-" ) unary | primary "(" expressionList ")" | primary "[" expression "]" | primary
+  // unary => ( "!" | "-" ) unary | primary ("(" expressionList ")" | "[" expression "]")
   fun unary(tokens: LinkedList<Token>) : Expression{
     if (tokens.matchAny(listOf(Not, Sub))) {
       val operator = tokens.removeFirst()
@@ -269,6 +269,7 @@ class Parser {
     return expr
   }
 
+  // expressionList =  (expression (",")*)*
   fun expressionList(tokens: LinkedList<Token>, listEndTokenType: TokenType): List<Expression>{
     val list = LinkedList<Expression>()
     while (!tokens.match(listEndTokenType)){
@@ -289,6 +290,7 @@ class Parser {
       Num -> return Expression.Num((token as Token.Num).value)
       True -> return Expression.Bool(true)
       False -> return Expression.Bool(false)
+      TextLiteral -> return Expression.Text((token as Token.TextLiteral).text)
       OpenParen -> {
         val expr = expression(tokens)
         tokens.getNextToken(CloseParen)
@@ -303,7 +305,6 @@ class Parser {
     }
 
   }
-
 
   // listDeclaration = "[" (expression (",")*)* "]"
   fun listDeclaration(tokens: LinkedList<Token>): Expression.ListDeclaration {

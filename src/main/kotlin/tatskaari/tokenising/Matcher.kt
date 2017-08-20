@@ -48,4 +48,29 @@ sealed class Matcher {
       return "identifier"
     }
   }
+  object TextMatcher: Matcher() {
+    override fun lex(program: String): String? {
+      var rest = program
+      if (program.startsWith("\"")){
+        rest = program.substring(1)
+        var stringText = "\""
+        while(program.isNotEmpty()){
+          if(rest.startsWith("\"\"")){
+            rest = rest.substring(2)
+            stringText+="\"\""
+          } else if(rest.startsWith("\"")){
+            return stringText + "\""
+          } else {
+            stringText+=rest[0]
+            rest = rest.substring(1)
+          }
+        }
+      }
+      return null
+    }
+
+    override fun getTokenDescription(): String {
+      return "text literal"
+    }
+  }
 }
