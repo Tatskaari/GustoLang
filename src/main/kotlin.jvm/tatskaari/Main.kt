@@ -1,6 +1,8 @@
 package tatskaari
 
 import tatskaari.eval.Eval
+import tatskaari.eval.StdinInputProvider
+import tatskaari.eval.SystemOutputProvider
 import tatskaari.parsing.Parser
 import java.io.BufferedReader
 import java.io.File
@@ -13,7 +15,7 @@ object Main {
     val parser = Parser()
     val program = parser.parse(source)
     if (program != null){
-      Eval().eval(program, HashMap())
+      Eval(StdinInputProvider, SystemOutputProvider).eval(program, HashMap())
     } else {
       parser.parserExceptions.forEach{
         println(it.reason)

@@ -9,9 +9,7 @@ import tatskaari.parsing.UnaryOperators
 typealias Env = Map<String, Eval.Value>
 typealias MutEnv = HashMap<String, Eval.Value>
 
-class Eval {
-
-
+class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider) {
   sealed class Value(var value: Any) {
     class NumVal(intVal: Int) : Value(intVal)
     class TextVal(textVal: String) : Value(textVal)
@@ -143,24 +141,23 @@ class Eval {
         return null
       }
       is Statement.Input -> {
-        //TODO make this work in JS and JVM envs
-//        val identifier = statement.identifier.name
-//        val input = inputReader.readLine()
-//        if (input == null || input.isEmpty()) {
-//          throw InvalidUserInput
-//        } else if ("true" == input) {
-//          setValueInEnv(env, identifier, Value.BoolVal(true))
-//        } else if ("false" == input) {
-//          setValueInEnv(env, identifier, Value.BoolVal(false))
-//        } else {
-//          setValueInEnv(env, identifier, Value.NumVal(input.toInt()))
-//        }
+        val identifier = statement.identifier.name
+        val input = inputProvider.readLine()
+        if (input == null || input.isEmpty()) {
+          throw InvalidUserInput
+        } else if ("true" == input) {
+          setValueInEnv(env, identifier, Value.BoolVal(true))
+        } else if ("false" == input) {
+          setValueInEnv(env, identifier, Value.BoolVal(false))
+        } else {
+          setValueInEnv(env, identifier, Value.NumVal(input.toInt()))
+        }
         return null
       }
       is Statement.Output -> {
         //TODO make this work with io redirection
         val value = eval(statement.expression, env)
-        println(value.value)
+        outputProvider.println(value.value.toString())
         return null
       }
       is Statement.Return -> {
