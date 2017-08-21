@@ -8,9 +8,9 @@ h1, h2, h3, h4, h5 {
 	font-variant: small-caps;
 }
 .content{
-    width: 100%;
-    padding: 0 1em;
-    box-sizing: border-box;
+	width: 100%;
+	padding: 0 1em;
+	box-sizing: border-box;
 }
 .toolbar, .header {
 	width: 100%;
@@ -18,15 +18,15 @@ h1, h2, h3, h4, h5 {
 	box-sizing: border-box;
 }
 .toolbar button {
-    background-color: #4CAF50; 
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    float: right;
+	background-color: #4CAF50;
+	border: none;
+	color: white;
+	padding: 15px 32px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 16px;
+	float: right;
 }
 
 .toolbar::after {
@@ -43,7 +43,19 @@ h1, h2, h3, h4, h5 {
 
 #output{
 	margin-top: 1em;
+	font-family: monospace;
+	padding: 1em;
+	box-sizing:border-box;
+	border: 1px solid black
+}
+
+#output p{
+	margin-top: 0;
+}
+#output p.error{
+	color: red;
+	font-weight: bold;
 }
 .error{
-    color: red;
+	color: red;
 }

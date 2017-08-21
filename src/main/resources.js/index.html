@@ -38,7 +38,10 @@ val out := getNthFib(7)
 <script type="text/javascript">
             var outputElement = document.getElementById("output");
             function output(text){
-                outputElement.innerHTML += text + "\n"
+                outputElement.innerHTML += '<p>' + text + '</p>'
+            }
+            function error(text){
+              outputElement.innerHTML += '<p class="error">' + text + '</p>'
             }
             function input(){
                 window.prompt("Please enter a value")

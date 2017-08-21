@@ -1,10 +1,4 @@
 language: java
 sudo: false # faster builds
-addons:
-  apt:
-    sources:
-      - sshpass
-addons:
-  ssh_known_hosts: jon-poole.uk
 after_success:
   - bash <(curl -s https://codecov.io/bash)
