@@ -7,8 +7,7 @@
     <h1>Try Mortarboard</h1>
 </div>
 <div class="content">
-            <textarea id="code">
-function fib(pN, pLast, pLastLast) {
+            <div id="code">function fib(pN, pLast, pLastLast) {
     if (pN = 1){
       return pLast + pLastLast
     }
@@ -23,11 +22,10 @@ function getNthFib(pN) {
   return fib(pN - 2, 1, 1)
 }
 
-val out := getNthFib(7)
-            </textarea>
+return getNthFib(7)</div>
 </div>
 <div class="toolbar">
-    <button type="button" class="run-button" onclick="KotlinLang.tatskaari.BrowserHooks.eval(document.getElementById('code').value)">Run</button>
+    <button type="button" class="run-button" onclick="KotlinLang.tatskaari.BrowserHooks.eval(editor.getValue())">Run</button>
 </div>
 <div class="content">
     <h2>Output</h2>
@@ -35,19 +33,23 @@ val out := getNthFib(7)
 </div>
 
 <link  rel="stylesheet" type="text/css" href="style.css">
-<script type="text/javascript">
-            var outputElement = document.getElementById("output");
-            function output(text){
-                outputElement.innerHTML += '<p>' + text + '</p>'
-            }
-            function error(text){
-              outputElement.innerHTML += '<p class="error">' + text + '</p>'
-            }
-            function input(){
-                window.prompt("Please enter a value")
-            }
-        </script>
 <script type="text/javascript" src="lib/kotlin.js"></script>
 <script type="text/javascript" src="KotlinLang.js"></script>
+<script src="https://ace.c9.io/build/src/ace.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript">
+  var outputElement = document.getElementById("output");
+  function output(text){
+    outputElement.innerHTML += '<p>' + text + '</p>'
+  }
+  function error(text){
+    outputElement.innerHTML += '<p class="error">' + text + '</p>'
+  }
+  function input(){
+    window.prompt("Please enter a value")
+  }
+  var editor = ace.edit("code");
+  editor.setTheme("ace/theme/monokai");
+  editor.getSession().setMode("ace/mode/javascript");
+</script>
 </body>
 </html>
