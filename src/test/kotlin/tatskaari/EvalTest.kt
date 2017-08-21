@@ -428,14 +428,13 @@ object EvalTest {
     assertEquals(232, env.getValue("out").intVal())
   }
 
-//  @Test
-//  fun sumListFromIput(){
-//    val program = TestUtil.loadProgram("SumListInput")
-//    val env = MutEnv()
-//    val inputReader = BufferedReader(StringReader("1\n12\n123\n-1\n"))
-//    Eval(inputReader).eval(Parser().parse(program)!!, env)
-//    assertEquals(136, env.getValue("out").intVal())
-//  }
+  @Test
+  fun sumListFromIput(){
+    val program = TestUtil.loadProgram("SumListInput")
+    val env = MutEnv()
+    Eval(StringInputProvider("1\n12\n123\n-1\n"), SystemOutputProvider).eval(Parser().parse(program)!!, env)
+    assertEquals(136, env.getValue("out").intVal())
+  }
 
   @Test
   fun testText(){
@@ -443,5 +442,15 @@ object EvalTest {
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
     assertEquals("asdf", env.getValue("a").textVal())
+  }
+
+  @Test
+  fun testReduce(){
+    val program = TestUtil.loadProgram("TestReducer")
+    val env = MutEnv()
+    Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
+
+    assertEquals(10, env.getValue("addRes").intVal())
+    assertEquals(24, env.getValue("mulRes").intVal())
   }
 }

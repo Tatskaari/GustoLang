@@ -57,7 +57,7 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
       }
     }
 
-    fun copyOrReference(): Value{
+    fun copyLiteralOrReferenceList(): Value{
       when(this){
         is BoolVal -> return BoolVal(this.value as Boolean)
         is NumVal -> return NumVal(this.value as Int)
@@ -133,7 +133,7 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
 
         if (env.containsKey(identifier)) {
           val list = env.getValue(identifier).listVal()
-          list[index] = value.copyOrReference()
+          list[index] = value.copyLiteralOrReferenceList()
         } else {
           throw UndefinedIdentifier(identifier)
         }
@@ -230,13 +230,13 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
   fun evalListAccess(expression: Expression.ListAccess, env: Env): Value{
     val list = eval(expression.listExpression, env)
     val index = eval(expression.indexExpression, env).intVal()
-    return list.listVal().getValue(index)
+    return list.listVal().getValue(index).copyLiteralOrReferenceList()
   }
 
 
   fun callFunction(functionCall: Expression.FunctionCall, env: Env) : Eval.Value{
     val functionVal = getFunction(functionCall, env)
-    val funEnv = getFunctionCallEnv(functionVal.functionVal(), functionCall, functionVal.env, env)
+    val funEnv = getFunctionRunEnv(functionVal.functionVal(), functionCall, functionVal.env, env)
 
     return evalFunction(functionVal.functionVal().body.statementList, funEnv)
   }
@@ -252,13 +252,12 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
     return function
   }
 
-  fun getFunctionCallEnv(function : Statement.Function, functionCall: Expression.FunctionCall, functionDefEnv: Env, functionCallEnv: Env) : MutEnv {
+  fun getFunctionRunEnv(function : Statement.Function, functionCall: Expression.FunctionCall, functionDefEnv: Env, functionCallEnv: Env) : MutEnv {
     if (functionCall.params.size != function.params.size){
       throw TypeMismatch("Wrong number of arguments to call $function ")
     }
 
-    val functionRunEnv = HashMap<String, Value>()
-    functionRunEnv.putAll(functionDefEnv)
+    val functionRunEnv = HashMap<String, Value>(functionDefEnv)
 
     functionCall.params.forEachIndexed({index, expression ->
       val paramVal : Value = eval(expression, functionCallEnv)

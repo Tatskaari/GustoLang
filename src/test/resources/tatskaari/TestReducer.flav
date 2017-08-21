@@ -1,0 +1,26 @@
+function add(a, b){
+  return a + b
+}
+
+function mul(a, b){
+  return a * b
+}
+
+function reduce(start, list, reducer){
+  val total := start
+
+  val n := 0
+  val next := list[n]
+
+  while(next != -1){
+    total := reducer(total, next)
+    n := n + 1
+    next := list[n]
+  }
+
+  return total
+}
+
+val list := [1, 2, 3, 4, -1]
+val addRes := reduce(0, list, add)
+val mulRes := reduce(1, list, mul)
