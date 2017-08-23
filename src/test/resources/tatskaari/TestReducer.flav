@@ -1,25 +1,25 @@
-function add(a, b){
+function add(a, b) do
   return a + b
-}
+end
 
-function mul(a, b){
+function mul(a, b) do
   return a * b
-}
+end
 
-function reduce(start, list, reducer){
+function reduce(start, list, reducer) do
   val total := start
 
   val n := 0
   val next := list[n]
 
-  while(next != -1){
+  while(next != -1) do
     total := reducer(total, next)
     n := n + 1
     next := list[n]
-  }
+  end
 
   return total
-}
+end
 
 val list := [1, 2, 3, 4, -1]
 val addRes := reduce(0, list, add)

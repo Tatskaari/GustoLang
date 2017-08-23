@@ -7,29 +7,28 @@
     <h1>Try Mortarboard</h1>
 </div>
 <div class="content">
-            <div id="code">function fib(pN, pLast, pLastLast) {
-    if (pN = 1){
+    <button type="button" class="clear-button" onclick="outputElement.innerHTML=''">Clear</button>
+
+    <div id="code">function fib(pN, pLast, pLastLast) do
+    if (pN = 1) do
       return pLast + pLastLast
-    }
+    end
     val new := pLast + pLastLast
     val last := pLastLast
     val lastLast := new
     val n := pN - 1
     return fib(n, last, lastLast)
-}
+end
 
-function getNthFib(pN) {
+function getNthFib(pN) do
   return fib(pN - 2, 1, 1)
-}
+end
 
-return getNthFib(7)</div>
+output getNthFib(7)</div>
+    <div id="output"> </div>
 </div>
 <div class="toolbar">
     <button type="button" class="run-button" onclick="KotlinLang.tatskaari.BrowserHooks.eval(editor.getValue())">Run</button>
-</div>
-<div class="content">
-    <h2>Output</h2>
-    <div id="output"></div>
 </div>
 
 <link  rel="stylesheet" type="text/css" href="style.css">
@@ -39,7 +38,7 @@ return getNthFib(7)</div>
 <script type="text/javascript">
   var outputElement = document.getElementById("output");
   function output(text){
-    outputElement.innerHTML += '<p>' + text + '</p>'
+    outputElement.innerHTML += '<p>> ' + text + '</p>'
   }
   function error(text){
     outputElement.innerHTML += '<p class="error">' + text + '</p>'
@@ -49,7 +48,7 @@ return getNthFib(7)</div>
   }
   var editor = ace.edit("code");
   editor.setTheme("ace/theme/monokai");
-  editor.getSession().setMode("ace/mode/javascript");
+  editor.getSession().setMode("ace/mode/ada");
 </script>
 </body>
 </html>

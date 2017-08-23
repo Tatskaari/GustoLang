@@ -1,8 +1,8 @@
 
 input a
 val someVar := 0
-if (10 = a) {
+if (10 = a) do
     someVar := 1
-} else {
+else
     someVar := 2
-}
+end

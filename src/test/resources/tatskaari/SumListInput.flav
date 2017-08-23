@@ -1,23 +1,23 @@
-function sum(values) {
+function sum(values) do
 	val n := 0
 	val total := 0
 
-	while(values[n] != -1){
+	while(values[n] != -1) do
 		total := total + values[n]
 		n := n + 1
-	}
+	end
 
 	return total
-}
+end
 
 val nextVal := 0
 val inputVals := []
 val index := 0
 
-while(nextVal != -1){
+while(nextVal != -1) do
 	input nextVal
 	inputVals[index] := nextVal
 	index := index + 1
-}
+end
 
 val out := sum(inputVals)

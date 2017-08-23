@@ -1,6 +1,6 @@
-{
-    {
-        val someVar := 5
-    }
+do
+    do
+       val someVar := 5
+    end
     val someOtherVar := 5
-}
+end

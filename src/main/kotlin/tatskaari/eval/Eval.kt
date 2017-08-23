@@ -88,8 +88,8 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
   fun eval(statement: Statement, env: MutEnv) : Value? {
     when (statement) {
       is Statement.CodeBlock -> return eval(statement.statementList, HashMap(env))
-      is Statement.If -> return evalIf(statement.condition, statement.body.statementList, null, HashMap(env))
-      is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody.statementList, statement.elseBody.statementList, HashMap(env))
+      is Statement.If -> return evalIf(statement.condition, statement.body, null, HashMap(env))
+      is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody, statement.elseBody, HashMap(env))
       is Statement.While -> return evalWhile(statement.condition, statement.body.statementList, HashMap(env))
       is Statement.ValDeclaration -> {
         val identifierName = statement.identifier.name

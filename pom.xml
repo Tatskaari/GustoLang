@@ -219,18 +219,6 @@
                                 </configuration>
 
                             </execution>
-                            <!--<execution>-->
-                                <!--<id>test</id>-->
-                                <!--<phase>test</phase>-->
-                                <!--<goals>-->
-                                    <!--<goal>test-js</goal>-->
-                                <!--</goals>-->
-                                <!--<configuration>-->
-                                    <!--<sourceDirs>-->
-                                        <!--<source>src/test/kotlin</source>-->
-                                    <!--</sourceDirs>-->
-                                <!--</configuration>-->
-                            <!--</execution>-->
                         </executions>
                     </plugin>
                     <plugin>

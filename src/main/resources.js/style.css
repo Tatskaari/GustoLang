@@ -2,7 +2,8 @@ html, body, h1, h2{
 	padding: 0;
 	margin: 0;
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-	color: #333333;
+	/* color: #333333; */
+	background-color: #2f3129;
 }
 h1, h2, h3, h4, h5 {
 	font-variant: small-caps;
@@ -16,6 +17,7 @@ h1, h2, h3, h4, h5 {
 	width: 100%;
 	padding: 1em;
 	box-sizing: border-box;
+	color: white;
 }
 .toolbar button {
 	background-color: #4CAF50;
@@ -29,6 +31,19 @@ h1, h2, h3, h4, h5 {
 	float: right;
 }
 
+.clear-button {
+	border: none;
+	color: #ffffff;
+	background: none;
+	padding: 1em 1.5em;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	font-size: 16px;
+	float: right;
+	margin-bottom: -40em
+}
+
 .toolbar::after {
 	content: "";
 	clear: both;
@@ -36,28 +51,34 @@ h1, h2, h3, h4, h5 {
 }
 
 #code {
-	width: 100%;
-	height: 30em;
+	width: 50%;
+	height: 30rem;
 	font-family: monospace;
+	float: left;
+	border: 2px solid #404040;
+	border-right: none;
+	box-sizing: border-box;
 }
 
 #output{
-	margin-top: 1em;
-	font-family: monospace;
-	padding: 1em;
-	box-sizing:border-box;
-	border: 1px solid black
+    height: 30rem;
+    width: 50%;
+    overflow: auto;
+	border: 2px solid #404040;
+    border-left: 8px solid #404040;
+    box-sizing: border-box;
+    color: white;
+    background-color: #272822;
+    padding: 0.5em;
 }
 
 #output p{
 	margin: 0;
+	font-family: monospace;
 }
 #output p.error{
-	color: red;
+	color: #ff9d00;
 	font-weight: bold;
-}
-.error{
-	color: red;
 }
 
 .ace_gutter-cell {

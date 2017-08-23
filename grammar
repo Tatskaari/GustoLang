@@ -3,7 +3,7 @@ program => (statement)*
 statement => if | while | codeBlock | function | return | valueDeclaration | input | output | assignment
 
 if => "if" expression codeBlock ("else" codeBlock)?
-while => "while" "(" expression ")" codeBlock
+while => "while" expression "do" (statement)* "end"
 codeBlock => "{" program "}"
 function => STRING "(" (STRING (",")*)* ")" codeBlock
 return => "return" expression

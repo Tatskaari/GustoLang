@@ -26,7 +26,7 @@ object EvalTest {
   @Test
   fun numValInCondition() {
     assertFailsWith<Eval.TypeMismatch> {
-      val program = "{if (1) {}}"
+      val program = "if (1) do end"
       val env = MutEnv()
       Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
     }
@@ -35,7 +35,7 @@ object EvalTest {
   @Test
   fun missingIdentifier() {
     assertFailsWith<Eval.UndefinedIdentifier> {
-      val program = "{if (1 = a) {}}"
+      val program = "if 1 = a do end"
       val env = MutEnv()
       Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
     }
@@ -44,7 +44,7 @@ object EvalTest {
   @Test
   fun numIdentifierAssignBoolean() {
     assertFailsWith<Eval.TypeMismatch> {
-      val program = "{val a := 1 a := 1 = 1}"
+      val program = "val a := 1 a := 1 = 1"
       val env = MutEnv()
       Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
     }
@@ -53,7 +53,7 @@ object EvalTest {
   @Test
   fun testAddBoolRHS() {
     assertFailsWith<Eval.TypeMismatch> {
-      val program = "{val a := (1 = 1) + 1}"
+      val program = "val a := (1 = 1) + 1"
       val env = MutEnv()
       Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
     }
@@ -62,7 +62,7 @@ object EvalTest {
   @Test
   fun testAddBoolLHS() {
     assertFailsWith<Eval.TypeMismatch> {
-      val program = "{val a := 1 + (1 = 1) }"
+      val program = "val a := 1 + (1 = 1) "
       val env = MutEnv()
       Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
     }
@@ -112,19 +112,19 @@ object EvalTest {
   fun testNullInput() {
     assertFailsWith<Eval.InvalidUserInput> {
       val env = MutEnv()
-      Eval(StringInputProvider("\n"), SystemOutputProvider).eval(Parser().parse("{input a}")!!, env)
+      Eval(StringInputProvider("\n"), SystemOutputProvider).eval(Parser().parse("input a")!!, env)
     }
 
     assertFailsWith<Eval.InvalidUserInput> {
       val env2 = MutEnv()
-      Eval(StringInputProvider(""), SystemOutputProvider).eval(Parser().parse("{input a}")!!, env2)
+      Eval(StringInputProvider(""), SystemOutputProvider).eval(Parser().parse("input a")!!, env2)
     }
   }
 
   @Test
   fun outputTest() {
     val output = StringOutputProvider()
-    Eval(StdinInputProvider, output).eval(Parser().parse("{output 1}")!!, MutEnv())
+    Eval(StdinInputProvider, output).eval(Parser().parse("output 1")!!, MutEnv())
 
     assertEquals('1', output.outputString[0])
 
@@ -171,12 +171,12 @@ object EvalTest {
 
   @Test
   fun testIfLiteral() {
-    val program = Parser().parse("val a := 0 if (true) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if (true) do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program, env)
     assertEquals(1, env.getValue("a").intVal())
 
-    val program2 = Parser().parse("val a := 0 if (false) {a := 1} else { a := 2}")!!
+    val program2 = Parser().parse("val a := 0 if (false) do a := 1 else a := 2 end")!!
     val env2 = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program2, env2)
     assertEquals(2, env2.getValue("a").intVal())
@@ -192,7 +192,7 @@ object EvalTest {
 
   @Test
   fun whileWithNonBoolResult() {
-    val program = Parser().parse("while (1) { }")!!
+    val program = Parser().parse("while (1) do end")!!
     assertFailsWith<Eval.TypeMismatch> {
       Eval(StdinInputProvider, SystemOutputProvider).eval(program, MutEnv())
     }
@@ -216,7 +216,7 @@ object EvalTest {
 
   @Test
   fun testAnd() {
-    val program = Parser().parse("val a := 0 if(true and true) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if(true and true) do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(1, env.getValue("a").intVal())
@@ -224,7 +224,7 @@ object EvalTest {
 
   @Test
   fun testOr() {
-    val program = Parser().parse("val a := 0 if(true or false) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if(true or false) do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(1, env.getValue("a").intVal())
@@ -232,7 +232,7 @@ object EvalTest {
 
   @Test
   fun testNotAnd() {
-    val program = Parser().parse("val a := 0 if(true and false) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if(true and false) do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(2, env.getValue("a").intVal())
@@ -240,7 +240,7 @@ object EvalTest {
 
   @Test
   fun testNotOr() {
-    val program = Parser().parse("val a := 0 if(false or false) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if(false or false) do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(2, env.getValue("a").intVal())
@@ -248,7 +248,7 @@ object EvalTest {
 
   @Test
   fun testLT() {
-    val program = Parser().parse("val a := 0 if(1 < 2) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if(1 < 2) do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(1, env.getValue("a").intVal())
@@ -256,7 +256,7 @@ object EvalTest {
 
   @Test
   fun testGT() {
-    val program = Parser().parse("val a := 0 if(2 > 1) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if 2 > 1 do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(1, env.getValue("a").intVal())
@@ -264,7 +264,7 @@ object EvalTest {
 
   @Test
   fun testGTE() {
-    val program = Parser().parse("val a := 0 if(1 >= 1) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if(1 >= 1) do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(1, env.getValue("a").intVal())
@@ -272,7 +272,7 @@ object EvalTest {
 
   @Test
   fun testLTE() {
-    val program = Parser().parse("val a := 0 if(1 <= 1) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if(1 <= 1) do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(1, env.getValue("a").intVal())
@@ -281,7 +281,7 @@ object EvalTest {
 
   @Test
   fun testNotLT() {
-    val program = Parser().parse("val a := 0 if(2 < 1) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if(2 < 1) do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(2, env.getValue("a").intVal())
@@ -289,7 +289,7 @@ object EvalTest {
 
   @Test
   fun testNotGT() {
-    val program = Parser().parse("val a := 0 if(1 > 2) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if(1 > 2) do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(2, env.getValue("a").intVal())
@@ -297,7 +297,7 @@ object EvalTest {
 
   @Test
   fun testNotGTE() {
-    val program = Parser().parse("val a := 0 if(1 >= 2) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if(1 >= 2) do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(2, env.getValue("a").intVal())
@@ -305,7 +305,7 @@ object EvalTest {
 
   @Test
   fun testNotLTE() {
-    val program = Parser().parse("val a := 0 if(2 <= 1) {a := 1} else {a := 2}")!!
+    val program = Parser().parse("val a := 0 if(2 <= 1) do a := 1 else a := 2 end")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(2, env.getValue("a").intVal())
@@ -345,7 +345,7 @@ object EvalTest {
 
   @Test
   fun missingReturnFromFunc(){
-    val program = Parser().parse("function add(a, b) { } val c := add(1, 2)")!!
+    val program = Parser().parse("function add(a, b) do end val c := add(1, 2)")!!
     assertFailsWith<Eval.FunctionExitedWithoutReturn> {
       Eval(StdinInputProvider, SystemOutputProvider).eval(program, MutEnv())
     }
@@ -361,7 +361,7 @@ object EvalTest {
 
   @Test
   fun wrongNumParams(){
-    val program = Parser().parse("function add(a, b) { return a + b } val b := add(1)")!!
+    val program = Parser().parse("function add(a, b) do return a + b end val b := add(1)")!!
     assertFailsWith<Eval.TypeMismatch> {
       Eval(StdinInputProvider, SystemOutputProvider).eval(program, MutEnv())
     }
@@ -369,7 +369,7 @@ object EvalTest {
 
   @Test
   fun paramDoesntExist(){
-    val program = Parser().parse("function add(a, b) { return a + b } val b := add(1, 2, 3)")!!
+    val program = Parser().parse("function add(a, b) do return a + b end val b := add(1, 2, 3)")!!
     assertFailsWith<Eval.TypeMismatch> {
       Eval(StdinInputProvider, SystemOutputProvider).eval(program, MutEnv())
     }

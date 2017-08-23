@@ -1,5 +1,5 @@
-function add(a, b) {
+function add(a, b) do
   return a + b
-}
+end
 
 val c := add(1, 2)

@@ -50,7 +50,7 @@ sealed class Matcher {
   }
   object TextMatcher: Matcher() {
     override fun lex(program: String): String? {
-      var rest = program
+      var rest: String
       if (program.startsWith("\"")){
         rest = program.substring(1)
         var stringText = "\""

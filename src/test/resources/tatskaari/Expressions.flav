@@ -1,1 +1,1 @@
-{val someVariable := 12 + 12}
+do val someVariable := 12 + 12 end

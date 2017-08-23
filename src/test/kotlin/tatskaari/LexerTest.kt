@@ -29,12 +29,12 @@ object LexerTest {
 
   @Test
   fun testInvalidToken() {
-    assertFailsWith<Lexer.InvalidInputException> { Lexer.lex("{ var a := 123 } []';") }
+    assertFailsWith<Lexer.InvalidInputException> { Lexer.lex("do var a := 123 end []';") }
   }
 
   @Test
   fun testAssignExpression() {
-    val program = "{val someVariable := + 12 12}"
+    val program = "do val someVariable := + 12 12 end"
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
       TokenType.OpenBlock,
@@ -54,10 +54,9 @@ object LexerTest {
 
   @Test
   fun testIfStatement() {
-    val program = "{if (1 = 1) {val someVariable := 2}}"
+    val program = "if (1 = 1) do val someVariable := 2 end"
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
-      TokenType.OpenBlock,
       TokenType.If,
       TokenType.OpenParen,
       TokenType.Num,
@@ -69,10 +68,9 @@ object LexerTest {
       TokenType.Identifier,
       TokenType.AssignOp,
       TokenType.Num,
-      TokenType.CloseBlock,
       TokenType.CloseBlock
     )
-    assert(tokenList.size == expectedTokens.size)
+
     tokenList.zip(expectedTokens)
       .forEach { (actual, expect) -> assertEquals(actual.tokenType, expect) }
   }

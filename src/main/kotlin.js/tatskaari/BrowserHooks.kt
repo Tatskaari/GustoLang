@@ -13,7 +13,7 @@ object BrowserHooks {
       val eval = Eval(JSHookInputProvider, JSHookOutputProvider)
       val ast = parser.parse(program)
       if (ast != null){
-        JSHookOutputProvider.println(eval.eval(ast, MutEnv())?.value.toString())
+        eval.eval(ast, MutEnv())?.value.toString()
       } else {
         parser.parserExceptions.forEach{
           error(it.reason)
