@@ -34,7 +34,7 @@ sealed class Matcher {
   }
 
   object CommentMatcher : Matcher() {
-    val regex = Regex("""^\(\*.*\*\)""")
+    val regex = Regex("""^\(\*(.|\n|\r)*\*\)""")
     override fun lex(program: String): String? {
       val matchResult = regex.find(program)
       if (matchResult != null) {

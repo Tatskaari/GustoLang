@@ -2,7 +2,8 @@ function add(a, b) do
   return a + b
 end
 
-(* This is a comment that has no bearing on the code *)
+(* This is a comment that has
+no bearing on the code *)
 
 function mul(a, b) do
   return a * b
