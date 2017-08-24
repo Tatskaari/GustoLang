@@ -2,6 +2,7 @@ package tatskaari
 
 import org.testng.annotations.Test
 import tatskaari.eval.*
+import tatskaari.eval.values.Value
 import tatskaari.parsing.Parser
 import tatskaari.tokenising.Lexer
 import kotlin.test.assertEquals
@@ -451,5 +452,42 @@ object EvalTest {
     assertEquals(10, env.getValue("addRes").intVal())
     assertEquals(24, env.getValue("mulRes").intVal())
   }
+
+  @Test
+  fun testStringConcat(){
+    val program = """val out := 1 + "test" + 1 + true + 1.1 val outt := true + "test" """
+    val env = MutEnv()
+    val parser = Parser()
+    val ast = parser.parse(program)
+    Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
+
+    assertEquals("1test1true1.1", env.getValue("out").textVal())
+    assertEquals("truetest", env.getValue("outt").textVal())
+  }
+
+  @Test
+  fun testMulDiv(){
+    val program = "val out := (1.0*1)*1.0/1 + 10 * 2.1 val outt := 3.0/1.5 val outtt := 1/2.0"
+    val env = MutEnv()
+    val parser = Parser()
+    val ast = parser.parse(program)
+    Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
+    assertEquals(22.0, env.getValue("out").numVal())
+    assertEquals(2.0, env.getValue("outt").numVal())
+    assertEquals(0.5, env.getValue("outtt").numVal())
+  }
+
+  @Test
+  fun testAddSub(){
+    val program = "val out := 1.0 + 1 - 1.0 val outt := 1-1.0 val outtt := 0.5+1"
+    val env = MutEnv()
+    val parser = Parser()
+    val ast = parser.parse(program)
+    Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
+    assertEquals(1.0, env.getValue("out").numVal())
+    assertEquals(0.0, env.getValue("outt").numVal())
+    assertEquals(1.5, env.getValue("outtt").numVal())
+  }
+
 
 }
