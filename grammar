@@ -2,9 +2,9 @@ program => (statement)*
 
 statement => if | while | codeBlock | function | return | valueDeclaration | input | output | assignment
 
-if => "if" expression codeBlock ("else" codeBlock)?
+if => "if" expression "do" (statement)* ("else" (statement)*)? "end"
 while => "while" expression "do" (statement)* "end"
-codeBlock => "{" program "}"
+codeBlock => "do" program "end"
 function => STRING "(" (STRING (",")*)* ")" codeBlock
 return => "return" expression
 valueDeclaration => "val" STRING ":=" expression

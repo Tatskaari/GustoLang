@@ -10,20 +10,34 @@ Another goal of this project is to try out a few idioms. You may have noticed th
 this project is run through Travis CI and passed through a suite of unit tests. 
 
 # Road Map
-- Language features
+- Desired features
   - Code blocks - Done
   - Variables and assignment - Done
-  - expressions - Done
-  - if statements - Done
-  - while loops - Done
-  - input and output - Done
-  - function calls - Done
-  - variable types (decimal, character?)
-  - lists - Done
-- byte code
+  - Expressions - Done
+  - If statements - Done
+  - While loops - Done
+  - Input and output - Done
+  - Function calls - Done
+  - Variable types (decimal, character?) - Done
+  - Lists - Done
+  - Foreach over lists
+  - List API to find size, remove first, append lists together etc.
+  - Make lists indexed by strings as well
+  - Change do to then in if statement
+  - Allow functions to return nothing. Detect all code paths return the same value.
+  - Static type checking (possibly inference but maybe change val to integer and number)
+
+- Features that might be interesting to implement but add little to the educational value
+  - Add garbage collection and
+    - Compile to byte code 
+    - Compile to LLVM 
+  - Dead variable analysis
+  - Unreachable code analysis
+  - Constant propagation and expression simplifications
+
 
 # Syntax/Grammar 
-For a formal definitions see the file grammar
+For a formal definitions see the file "grammar"
 
 Here is a simple if statement:
 ~~~~
