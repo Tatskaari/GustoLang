@@ -7,8 +7,6 @@
     <h1>Try Mortarboard</h1>
 </div>
 <div class="content">
-    <button type="button" class="clear-button" onclick="outputElement.innerHTML=''">Clear</button>
-
     <div id="code">function fib(pN, pLast, pLastLast) do
     if (pN = 1) do
       return pLast + pLastLast
@@ -29,6 +27,7 @@ output getNthFib(7)</div>
 </div>
 <div class="toolbar">
     <button type="button" class="run-button" onclick="KotlinLang.tatskaari.BrowserHooks.eval(editor.getValue())">Run</button>
+    <button type="button" class="clear-button" onclick="outputElement.innerHTML=''">Clear</button>
 </div>
 
 <link  rel="stylesheet" type="text/css" href="style.css">
