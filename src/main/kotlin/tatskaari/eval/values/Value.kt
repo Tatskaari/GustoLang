@@ -8,6 +8,15 @@ sealed class Value(var value: Any) {
     infix fun plus(value: Addable): Value
   }
 
+  interface Stringable : Addable {
+    override fun plus(value: Addable): Value {
+      if (value is TextVal){
+        return TextVal(toString() + value.toString())
+      }
+      throw Eval.TypeMismatch("You cannot add $this and $value")
+    }
+  }
+
   interface Subtractable {
     infix fun minus(value: Subtractable): Value
   }
@@ -25,7 +34,9 @@ sealed class Value(var value: Any) {
       return when(value){
         is IntVal -> IntVal(intVal() + value.intVal())
         is NumVal -> NumVal(intVal() + value.numVal())
+        is TextVal -> TextVal( toString() + value.toString())
         else -> throw Eval.TypeMismatch("You cannot add $this and $value")
+
       }
     }
 
@@ -75,6 +86,7 @@ sealed class Value(var value: Any) {
       return when(value){
         is IntVal -> NumVal(numVal() + value.intVal())
         is NumVal -> NumVal(numVal() + value.numVal())
+        is TextVal -> TextVal( toString() + value.toString())
         else -> throw Eval.TypeMismatch("You cannot add $this and $value")
       }
     }
@@ -87,11 +99,12 @@ sealed class Value(var value: Any) {
       }
     }
   }
+
   class TextVal(textVal: String) : Value(textVal), Addable {
     override fun plus(value: Addable): Value = TextVal(textVal() + value.toString() )
   }
 
-  class BoolVal(boolVal: Boolean) : Value(boolVal)
+  class BoolVal(boolVal: Boolean) : Value(boolVal), Stringable
 
   class FunctionVal(functionVal: Statement.Function, val env : MutableMap<String, Value>) : Value(functionVal)
 
@@ -146,10 +159,10 @@ sealed class Value(var value: Any) {
   }
 
   fun copyLiteralOrReferenceList(): Value{
-    when(this){
-      is BoolVal -> return BoolVal(this.value as Boolean)
-      is IntVal -> return IntVal(this.value as Int)
-      else -> return this
+    return when(this){
+      is BoolVal -> BoolVal(this.value as Boolean)
+      is IntVal -> IntVal(this.value as Int)
+      else -> this
     }
   }
 
