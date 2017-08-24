@@ -12,16 +12,16 @@ object Lexer {
     var lineNumber = 1
     var columnNumber = 1
     val trimPred = fun (it:Char): Boolean {
-      if (it.isWhitespace()){
+      return if (it.isWhitespace()){
         if (it == '\n'){
           lineNumber++
           columnNumber = 1
         } else {
           columnNumber++
         }
-        return true
+        true
       } else {
-        return false
+        false
       }
     }
 
@@ -43,8 +43,15 @@ object Lexer {
       if (tokenResult != null) {
         val (tokenType, tokenText) = tokenResult
         val token = tokenResult.first.tokenConstructor(tokenType, tokenText, lineNumber, columnNumber)
-        tokens.add(token)
-        columnNumber+=tokenText.length
+
+        if (tokenType != TokenType.Comment){
+          tokens.add(token)
+        }
+
+        val (newLine, newCol) = getLexingPosition(lineNumber, columnNumber, tokenText)
+        lineNumber = newLine
+        columnNumber = newCol
+
         rest = rest.rest(tokenText).trimStart(trimPred)
       } else {
         throw InvalidInputException("Unexpected character: '" + program.substring(10) + "...'")
@@ -54,6 +61,18 @@ object Lexer {
     return tokens
   }
 
+  private fun getLexingPosition(oldLine: Int, oldCol: Int, text: String): Pair<Int, Int> {
+    val lineNumber = oldLine+text.count{ it == '\n' }
+    var columnNumber = oldCol
 
+    if (lineNumber != 0){
+      val textAfterNewline = text.substringAfterLast('\n')
+      columnNumber = textAfterNewline.length
+    } else {
+      columnNumber += text.length
+    }
+
+    return Pair(lineNumber, columnNumber)
+  }
 
 }

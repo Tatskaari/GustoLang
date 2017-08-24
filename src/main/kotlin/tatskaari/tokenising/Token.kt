@@ -10,6 +10,7 @@ sealed class Token (val tokenType: TokenType, val tokenText: String, val lineNum
   class Num(type: TokenType, value: String, line: Int, col: Int) : Token(type, value, line, col) {
     val value: Int = value.toInt()
   }
+  class Comment(type: TokenType, comment: String, line: Int, col: Int) : Token(TokenType.Comment, comment, line, col)
 
 
   override fun toString(): String {

@@ -33,6 +33,21 @@ sealed class Matcher {
     }
   }
 
+  object CommentMatcher : Matcher() {
+    val regex = Regex("""^\(\*.*\*\)""")
+    override fun lex(program: String): String? {
+      val matchResult = regex.find(program)
+      if (matchResult != null) {
+        return matchResult.value
+      }
+      return null
+    }
+
+    override fun getTokenDescription(): String {
+      return "comment"
+    }
+  }
+
   object IdentifierMatcher : Matcher() {
     val regex = Regex("""^[a-zA-Z]+""")
 

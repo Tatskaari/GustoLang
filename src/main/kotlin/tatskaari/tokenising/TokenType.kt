@@ -3,7 +3,7 @@ package tatskaari.tokenising
 import tatskaari.tokenising.Matcher.*
 
 enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, String, Int, Int) -> Token) {
-  Add(KeywordMatcher("+"), Token::Keyword),
+  Add(KeywordMatcher("+"),Token::Keyword),
   Sub(KeywordMatcher("-"), Token::Keyword),
   Mul(KeywordMatcher("*"), Token::Keyword),
   Div(KeywordMatcher("/"), Token::Keyword),
@@ -34,9 +34,11 @@ enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, Str
   CloseParen(KeywordMatcher(")"), Token::Keyword),
   Input(KeywordMatcher("input"), Token::Keyword),
   Output(KeywordMatcher("output"), Token::Keyword),
+  Comment(CommentMatcher, Token::Comment),
   Num(NumberMatcher, Token::Num),
   TextLiteral(TextMatcher, Token::TextLiteral),
   Identifier(IdentifierMatcher, Token::Identifier);
+
 
   override fun toString(): String {
     return matcher.getTokenDescription()

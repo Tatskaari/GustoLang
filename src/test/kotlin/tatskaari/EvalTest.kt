@@ -448,7 +448,9 @@ object EvalTest {
   fun testReduce(){
     val program = TestUtil.loadProgram("TestReducer")
     val env = MutEnv()
-    Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
+    val parser = Parser()
+    val ast = parser.parse(program)
+    Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
 
     assertEquals(10, env.getValue("addRes").intVal())
     assertEquals(24, env.getValue("mulRes").intVal())
