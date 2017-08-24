@@ -10,24 +10,16 @@ Another goal of this project is to try out a few idioms. You may have noticed th
 this project is run through Travis CI and passed through a suite of unit tests. 
 
 # Road Map
-- Parsing
+- Language features
   - Code blocks - Done
   - Variables and assignment - Done
-  - RPN expressions - Done
+  - expressions - Done
   - if statements - Done
-  - loops - Done
+  - while loops - Done
   - input and output - Done
   - function calls - Done
   - variable types (decimal, character?)
-- Interpreter 
-  - Code Blocks - Done
-  - Assignments - Done
-  - If statements - Done
-  - Expressions - Done
-  - Loops - Done
-  - input and output - Done
-  - functions - Done
-  - variable types
+  - lists - Done
 - byte code
 
 # Syntax/Grammar 
@@ -56,10 +48,12 @@ Lists:
 ~~~~
 val a := []
 val n := 0
-input nextVal
+val nextVal := 0
+
 while nextVal != -1 do
-    a[n] := nextVal
     input nextVal
+    a[n] := nextVal
+    n := n + 1
 end
 
 if n > 0 do

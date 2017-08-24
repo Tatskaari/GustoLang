@@ -5,7 +5,8 @@ import tatskaari.tokenising.Token
 data class InvalidOperatorToken(val token : Token) : RuntimeException("Invalid operator $token")
 
 sealed class Expression {
-  data class Num(val value: Int) : Expression()
+  data class IntLiteral(val value: Int) : Expression()
+  data class NumLiteral(val value: Double): Expression()
   data class Bool(val value: Boolean) : Expression()
   data class Text(val value: String) : Expression()
   data class Identifier(val name: String) : Expression()

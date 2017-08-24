@@ -292,11 +292,12 @@ class Parser {
 
   // primary => NUMBER | STRING | "false" | "true" | "(" expression ")" | listDeclaration
   private fun primary(tokens : TokenList) : Expression{
-    val expectedTokens = listOf(OpenParen, Num, Identifier, True, False, ListStart)
+    val expectedTokens = listOf(OpenParen, IntLiteral, Identifier, True, False, ListStart)
 
     val token = tokens.consumeToken()
     when (token.tokenType) {
-      Num -> return Expression.Num((token as Token.Num).value)
+      IntLiteral -> return Expression.IntLiteral((token as Token.IntLiteral).value)
+      NumLiteral -> return Expression.NumLiteral((token as Token.NumLiteral).value)
       True -> return Expression.Bool(true)
       False -> return Expression.Bool(false)
       TextLiteral -> return Expression.Text((token as Token.TextLiteral).text)

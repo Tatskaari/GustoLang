@@ -8,7 +8,6 @@ import tatskaari.parsing.Statement
 import tatskaari.tokenising.Token
 import tatskaari.tokenising.TokenType
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
 object TestIf {
   @Test
@@ -18,9 +17,9 @@ object TestIf {
       Statement.CodeBlock(
         listOf(
           Statement.If(
-            Expression.BinaryOperator(BinaryOperators.Equality, Expression.Num(1), Expression.Num(1)),
+            Expression.BinaryOperator(BinaryOperators.Equality, Expression.IntLiteral(1), Expression.IntLiteral(1)),
             listOf(
-              Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.Num(1))
+              Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.IntLiteral(1))
             )
           )
         )
@@ -38,11 +37,11 @@ object TestIf {
     val program = parser.parse(TestUtil.loadProgram("IfElse"))
     val expectedAST = listOf(
       Statement.Input(Token.Identifier(TokenType.Identifier, "a", 1,2 )),
-      Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.Num(0)),
+      Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.IntLiteral(0)),
       Statement.IfElse(
-        Expression.BinaryOperator(BinaryOperators.Equality, Expression.Num(10), Expression.Identifier("a")),
-        listOf(Statement.Assignment(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.Num(1))),
-        listOf(Statement.Assignment(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.Num(2)))
+        Expression.BinaryOperator(BinaryOperators.Equality, Expression.IntLiteral(10), Expression.Identifier("a")),
+        listOf(Statement.Assignment(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.IntLiteral(1))),
+        listOf(Statement.Assignment(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.IntLiteral(2)))
       )
     )
 

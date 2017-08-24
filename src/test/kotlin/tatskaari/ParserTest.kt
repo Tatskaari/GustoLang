@@ -18,10 +18,10 @@ object ParserTest {
         listOf(
           Statement.CodeBlock(
             listOf(
-              Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 1), Expression.Num(5))
+              Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 1), Expression.IntLiteral(5))
             )
           ),
-          Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someOtherVar", 1, 1), Expression.Num(5))
+          Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someOtherVar", 1, 1), Expression.IntLiteral(5))
         )
       )
     )
@@ -40,7 +40,7 @@ object ParserTest {
         listOf(
           Statement.ValDeclaration(
             Token.Identifier(TokenType.Identifier,"someVariable", 1, 1),
-            Expression.BinaryOperator(BinaryOperators.Add, Expression.Num(12), Expression.Num(12))
+            Expression.BinaryOperator(BinaryOperators.Add, Expression.IntLiteral(12), Expression.IntLiteral(12))
           )
         )
       )
@@ -57,10 +57,10 @@ object ParserTest {
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(
-          Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVariable",6, 8),  Expression.Num(12)),
+          Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVariable",6, 8),  Expression.IntLiteral(12)),
           Statement.ValDeclaration(
             Token.Identifier(TokenType.Identifier,"someVar", 1, 1),
-            Expression.BinaryOperator(BinaryOperators.Add, Expression.Identifier("someVariable"), Expression.Num(1))
+            Expression.BinaryOperator(BinaryOperators.Add, Expression.Identifier("someVariable"), Expression.IntLiteral(1))
           )
         )
       )
@@ -135,7 +135,7 @@ object ParserTest {
     assertEquals(1, parser.parserExceptions.size)
     val exception = parser.parserExceptions.first()
     assert(exception is Parser.UnexpectedToken)
-    assertEquals(TokenType.Num, (exception as Parser.UnexpectedToken).token!!.tokenType)
+    assertEquals(TokenType.IntLiteral, (exception as Parser.UnexpectedToken).token!!.tokenType)
 
   }
 
@@ -158,10 +158,10 @@ object ParserTest {
       Statement.CodeBlock(
         listOf(
           Statement.If(
-            Expression.BinaryOperator(BinaryOperators.Equality, Expression.Num(1), Expression.Num(1)),
+            Expression.BinaryOperator(BinaryOperators.Equality, Expression.IntLiteral(1), Expression.IntLiteral(1)),
             listOf()
           ),
-          Statement.Output(Expression.Num(1))
+          Statement.Output(Expression.IntLiteral(1))
         )
       )
     )
@@ -196,8 +196,8 @@ object ParserTest {
         Expression.FunctionCall(
           Expression.Identifier("add"),
           listOf(
-            Expression.Num(1),
-            Expression.Num(2)
+            Expression.IntLiteral(1),
+            Expression.IntLiteral(2)
           )
         )
       )

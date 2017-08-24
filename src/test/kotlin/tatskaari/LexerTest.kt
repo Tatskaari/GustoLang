@@ -18,7 +18,7 @@ object LexerTest {
       TokenType.Val,
       TokenType.Identifier,
       TokenType.AssignOp,
-      TokenType.Num,
+      TokenType.IntLiteral,
       TokenType.CloseBlock
     )
 
@@ -42,8 +42,8 @@ object LexerTest {
       TokenType.Identifier,
       TokenType.AssignOp,
       TokenType.Add,
-      TokenType.Num,
-      TokenType.Num,
+      TokenType.IntLiteral,
+      TokenType.IntLiteral,
       TokenType.CloseBlock
     )
 
@@ -59,15 +59,15 @@ object LexerTest {
     val expectedTokens = listOf(
       TokenType.If,
       TokenType.OpenParen,
-      TokenType.Num,
+      TokenType.IntLiteral,
       TokenType.Equality,
-      TokenType.Num,
+      TokenType.IntLiteral,
       TokenType.CloseParen,
       TokenType.OpenBlock,
       TokenType.Val,
       TokenType.Identifier,
       TokenType.AssignOp,
-      TokenType.Num,
+      TokenType.IntLiteral,
       TokenType.CloseBlock
     )
 
@@ -96,7 +96,7 @@ object LexerTest {
   @Test
   fun notEqTest() {
     val program = Lexer.lex("1 != 2")
-    val expectedTokens = listOf(TokenType.Num, TokenType.NotEquality, TokenType.Num)
+    val expectedTokens = listOf(TokenType.IntLiteral, TokenType.NotEquality, TokenType.IntLiteral)
     program.zip(expectedTokens)
       .forEach { (actual, expect) -> assertEquals(actual.tokenType, expect) }
   }

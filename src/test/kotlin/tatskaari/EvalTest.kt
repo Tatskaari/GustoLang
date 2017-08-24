@@ -4,10 +4,6 @@ import org.testng.annotations.Test
 import tatskaari.eval.*
 import tatskaari.parsing.Parser
 import tatskaari.tokenising.Lexer
-import java.io.BufferedReader
-import java.io.ByteArrayOutputStream
-import java.io.PrintStream
-import java.io.StringReader
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -324,7 +320,7 @@ object EvalTest {
     val program = Parser().parse("val a := 9 / 3")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
-    assertEquals(3, env.getValue("a").intVal())
+    assertEquals(3.0, env.getValue("a").numVal())
   }
 
   @Test
@@ -455,4 +451,5 @@ object EvalTest {
     assertEquals(10, env.getValue("addRes").intVal())
     assertEquals(24, env.getValue("mulRes").intVal())
   }
+
 }

@@ -18,8 +18,23 @@ sealed class Matcher {
     }
   }
 
-  object NumberMatcher : Matcher() {
+  object IntMatcher : Matcher() {
     val regex = Regex("^[0-9]+")
+    override fun lex(program: String): String? {
+      val matchResult = regex.find(program)
+      if (matchResult != null) {
+        return matchResult.value
+      }
+      return null
+    }
+
+    override fun getTokenDescription(): String {
+      return "integer"
+    }
+  }
+
+  object NumMatcher : Matcher() {
+    val regex = Regex("^[0-9]+\\.[0-9]+")
     override fun lex(program: String): String? {
       val matchResult = regex.find(program)
       if (matchResult != null) {
@@ -32,7 +47,6 @@ sealed class Matcher {
       return "number"
     }
   }
-
   object CommentMatcher : Matcher() {
     val regex = Regex("""^\(\*(.|\n|\r)*\*\)""")
     override fun lex(program: String): String? {

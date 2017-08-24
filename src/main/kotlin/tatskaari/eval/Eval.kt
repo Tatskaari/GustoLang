@@ -1,70 +1,16 @@
 package tatskaari.eval
 
+import tatskaari.eval.values.Value
 import tatskaari.parsing.Expression
 import tatskaari.parsing.BinaryOperators
 import tatskaari.parsing.Statement
 import tatskaari.parsing.UnaryOperators
 
 
-typealias Env = Map<String, Eval.Value>
-typealias MutEnv = HashMap<String, Eval.Value>
+typealias Env = Map<String, Value>
+typealias MutEnv = HashMap<String, Value>
 
 class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider) {
-  sealed class Value(var value: Any) {
-    class NumVal(intVal: Int) : Value(intVal)
-    class TextVal(textVal: String) : Value(textVal)
-    class BoolVal(boolVal: Boolean) : Value(boolVal)
-    class FunctionVal(functionVal: Statement.Function, val env : MutableMap<String, Value>) : Value(functionVal)
-    class ListVal(listVal: HashMap<Int, Value>): Value(listVal)
-
-    fun intVal():Int{
-      if (this is NumVal){
-        return value as Int
-      } else {
-        throw CastException
-      }
-    }
-
-    fun textVal(): String {
-      if (this is TextVal){
-        return value as String
-      } else {
-        throw CastException
-      }
-    }
-
-    fun boolVal():Boolean{
-      if (this is BoolVal){
-        return value as Boolean
-      } else {
-        throw CastException
-      }
-    }
-
-    fun listVal(): HashMap<Int, Value> {
-      if (this is ListVal){
-        return value as HashMap<Int, Value>
-      } else {
-        throw CastException
-      }
-    }
-
-    fun functionVal(): Statement.Function {
-      if (this is FunctionVal){
-        return value as Statement.Function
-      } else {
-        throw CastException
-      }
-    }
-
-    fun copyLiteralOrReferenceList(): Value{
-      when(this){
-        is BoolVal -> return BoolVal(this.value as Boolean)
-        is NumVal -> return NumVal(this.value as Int)
-        else -> return this
-      }
-    }
-  }
 
   data class TypeMismatch(override val message: String) : RuntimeException(message)
   object CastException: Exception()
@@ -150,7 +96,7 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
         } else if ("false" == input) {
           setValueInEnv(env, identifier, Value.BoolVal(false))
         } else {
-          setValueInEnv(env, identifier, Value.NumVal(input.toInt()))
+          setValueInEnv(env, identifier, Value.IntVal(input.toInt()))
         }
         return null
       }
@@ -199,7 +145,8 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
 
   fun eval(expression: Expression, env: Env): Value {
     when (expression) {
-      is Expression.Num -> return Value.NumVal(expression.value)
+      is Expression.IntLiteral -> return Value.IntVal(expression.value)
+      is Expression.NumLiteral -> return Value.NumVal(expression.value)
       is Expression.Bool -> return Value.BoolVal(expression.value)
       is Expression.Text -> return Value.TextVal(expression.value)
       is Expression.BinaryOperator -> return applyBinaryOperator(expression, env)
@@ -234,7 +181,7 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
   }
 
 
-  fun callFunction(functionCall: Expression.FunctionCall, env: Env) : Eval.Value{
+  fun callFunction(functionCall: Expression.FunctionCall, env: Env) : Value{
     val functionVal = getFunction(functionCall, env)
     val funEnv = getFunctionRunEnv(functionVal.functionVal(), functionCall, functionVal.env, env)
 
@@ -267,7 +214,7 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
     return functionRunEnv
   }
 
-  fun evalFunction(body: List<Statement>, env: MutEnv) : Eval.Value {
+  fun evalFunction(body: List<Statement>, env: MutEnv) : Value {
     body.forEach{
       val value = eval(it, env)
       if (value != null){
@@ -281,24 +228,45 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
     val operation = operatorExpression.operator
     val lhsVal = eval(operatorExpression.lhs, env)
     val rhsVal = eval(operatorExpression.rhs, env)
-    try {
-      when (operation) {
-        BinaryOperators.Add -> return Value.NumVal(lhsVal.intVal() + rhsVal.intVal())
-        BinaryOperators.Sub -> return Value.NumVal(lhsVal.intVal() - rhsVal.intVal())
-        BinaryOperators.Div -> return Value.NumVal(lhsVal.intVal() / rhsVal.intVal())
-        BinaryOperators.Mul -> return Value.NumVal(lhsVal.intVal() * rhsVal.intVal())
-        BinaryOperators.Equality -> return Value.BoolVal(lhsVal.intVal() == rhsVal.intVal())
-        BinaryOperators.NotEquality -> return Value.BoolVal(lhsVal.intVal() != rhsVal.intVal())
-        BinaryOperators.LessThan -> return Value.BoolVal(lhsVal.intVal() < rhsVal.intVal())
-        BinaryOperators.GreaterThan -> return Value.BoolVal(lhsVal.intVal() > rhsVal.intVal())
-        BinaryOperators.LessThanEq -> return Value.BoolVal(lhsVal.intVal() <= rhsVal.intVal())
-        BinaryOperators.GreaterThanEq -> return Value.BoolVal(lhsVal.intVal() >= rhsVal.intVal())
-        BinaryOperators.And -> return Value.BoolVal(lhsVal.boolVal() && rhsVal.boolVal())
-        BinaryOperators.Or -> return Value.BoolVal(lhsVal.boolVal() || rhsVal.boolVal())
+    when (operation) {
+      BinaryOperators.Add -> {
+        if (lhsVal is Value.Addable && rhsVal is Value.Addable){
+          return lhsVal.plus(rhsVal)
+        } else {
+          throw TypeMismatch("$operation cannot be applied to $lhsVal and $rhsVal")
+        }
       }
-    } catch (e: CastException) {
-      throw TypeMismatch("$operation cannot be applied to $lhsVal and $rhsVal")
+      BinaryOperators.Sub -> {
+        if (lhsVal is Value.Subtractable && rhsVal is Value.Subtractable){
+          return lhsVal.minus(rhsVal)
+        } else {
+          throw TypeMismatch("$operation cannot be applied to $lhsVal and $rhsVal")
+        }
+      }
+      BinaryOperators.Div -> {
+        if (lhsVal is Value.Divisible && rhsVal is Value.Divisible){
+          return lhsVal.div(rhsVal)
+        } else {
+          throw TypeMismatch("$operation cannot be applied to $lhsVal and $rhsVal")
+        }
+      }
+      BinaryOperators.Mul -> {
+        if (lhsVal is Value.Multiplicable && rhsVal is Value.Multiplicable){
+          return lhsVal.times(rhsVal)
+        } else {
+          throw TypeMismatch("$operation cannot be applied to $lhsVal and $rhsVal")
+        }
+      }
+      BinaryOperators.Equality -> return Value.BoolVal(lhsVal.intVal() == rhsVal.intVal())
+      BinaryOperators.NotEquality -> return Value.BoolVal(lhsVal.intVal() != rhsVal.intVal())
+      BinaryOperators.LessThan -> return Value.BoolVal(lhsVal.intVal() < rhsVal.intVal())
+      BinaryOperators.GreaterThan -> return Value.BoolVal(lhsVal.intVal() > rhsVal.intVal())
+      BinaryOperators.LessThanEq -> return Value.BoolVal(lhsVal.intVal() <= rhsVal.intVal())
+      BinaryOperators.GreaterThanEq -> return Value.BoolVal(lhsVal.intVal() >= rhsVal.intVal())
+      BinaryOperators.And -> return Value.BoolVal(lhsVal.boolVal() && rhsVal.boolVal())
+      BinaryOperators.Or -> return Value.BoolVal(lhsVal.boolVal() || rhsVal.boolVal())
     }
+
   }
 
   fun applyUnaryOperator(operatorExpr: Expression.UnaryOperator, env: Env): Value{
@@ -307,7 +275,7 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
     try {
       when(operator){
         UnaryOperators.Not -> return Value.BoolVal(!result.boolVal())
-        UnaryOperators.Negative -> return Value.NumVal(-result.intVal())
+        UnaryOperators.Negative -> return Value.IntVal(-result.intVal())
       }
     } catch (e: CastException) {
       throw TypeMismatch("$operator cannot be applied to $result")

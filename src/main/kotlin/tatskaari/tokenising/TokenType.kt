@@ -35,7 +35,8 @@ enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, Str
   Input(KeywordMatcher("input"), Token::Keyword),
   Output(KeywordMatcher("output"), Token::Keyword),
   Comment(CommentMatcher, Token::Comment),
-  Num(NumberMatcher, Token::Num),
+  IntLiteral(IntMatcher, Token::IntLiteral),
+  NumLiteral(NumMatcher, Token::NumLiteral),
   TextLiteral(TextMatcher, Token::TextLiteral),
   Identifier(IdentifierMatcher, Token::Identifier);
 
