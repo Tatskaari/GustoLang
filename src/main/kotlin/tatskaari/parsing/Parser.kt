@@ -85,7 +85,7 @@ class Parser {
   private fun iff(tokens: TokenList): Statement {
     tokens.getNextToken(If)
     val condition = expression(tokens)
-    tokens.getNextToken(OpenBlock)
+    tokens.getNextToken(Then)
     val trueBody = ArrayList<Statement>()
     while (!tokens.matchAny(listOf(TokenType.CloseBlock, TokenType.Else))){
       trueBody.add(statement(tokens))

@@ -54,7 +54,7 @@ object LexerTest {
 
   @Test
   fun testIfStatement() {
-    val program = "if (1 = 1) do val someVariable := 2 end"
+    val program = "if (1 = 1) then val someVariable := 2 end"
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
       TokenType.If,
@@ -63,7 +63,7 @@ object LexerTest {
       TokenType.Equality,
       TokenType.IntLiteral,
       TokenType.CloseParen,
-      TokenType.OpenBlock,
+      TokenType.Then,
       TokenType.Val,
       TokenType.Identifier,
       TokenType.AssignOp,

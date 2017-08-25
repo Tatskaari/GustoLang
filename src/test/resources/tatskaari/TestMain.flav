@@ -2,6 +2,6 @@
 val a := 1
 val b := 0
 
-if (a = 1) do
+if (a = 1) then
     b := a
 end

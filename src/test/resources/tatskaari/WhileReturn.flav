@@ -3,7 +3,7 @@ function whileTest() do
     val b := 0
     while a <= 10 do
         b := b + a
-        if b >= 20 do
+        if b >= 20 then
             return 100
         end
     end

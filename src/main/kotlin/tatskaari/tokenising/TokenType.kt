@@ -17,6 +17,7 @@ enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, Str
   Comma(KeywordMatcher(","), Token::Keyword),
   Or(KeywordMatcher("or"), Token::Keyword),
   OpenBlock(KeywordMatcher("do"), Token::Keyword),
+  Then(KeywordMatcher("then"), Token::Keyword),
   CloseBlock(KeywordMatcher("end"), Token::Keyword),
   ListStart(KeywordMatcher("["), Token::Keyword),
   ListEnd(KeywordMatcher("]"), Token::Keyword),

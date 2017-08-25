@@ -153,7 +153,7 @@ object ParserTest {
 
   @Test
   fun testIfMidBlock() {
-    val program = Parser().parse("do if (1 = 1) do end output 1 end")
+    val program = Parser().parse("do if (1 = 1) then end output 1 end")
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(

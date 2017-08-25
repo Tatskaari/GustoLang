@@ -1,7 +1,7 @@
 
 input a
 val someVar := 0
-if (10 = a) do
+if (10 = a) then
     someVar := 1
 else
     someVar := 2
