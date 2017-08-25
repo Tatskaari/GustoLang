@@ -18,10 +18,10 @@ object ParserTest {
         listOf(
           Statement.CodeBlock(
             listOf(
-              Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 1), Expression.IntLiteral(5))
+              Statement.IntegerDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 1), Expression.IntLiteral(5))
             )
           ),
-          Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someOtherVar", 1, 1), Expression.IntLiteral(5))
+          Statement.IntegerDeclaration(Token.Identifier(TokenType.Identifier, "someOtherVar", 1, 1), Expression.IntLiteral(5))
         )
       )
     )
@@ -34,11 +34,11 @@ object ParserTest {
 
   @Test
   fun testSimpleExpressions() {
-    val program = "do val someVariable := 12 + 12 end"
+    val program = "do integer someVariable := 12 + 12 end"
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(
-          Statement.ValDeclaration(
+          Statement.IntegerDeclaration(
             Token.Identifier(TokenType.Identifier,"someVariable", 1, 1),
             Expression.BinaryOperator(BinaryOperators.Add, Expression.IntLiteral(12), Expression.IntLiteral(12))
           )
@@ -53,12 +53,12 @@ object ParserTest {
 
   @Test
   fun TestExpressionWithIdentifier() {
-    val program =  Parser().parse("do val someVariable := 12 val someVar := someVariable + 1 end")!!
+    val program =  Parser().parse("do integer someVariable := 12 integer someVar := someVariable + 1 end")!!
     val expectedAST = listOf(
       Statement.CodeBlock(
         listOf(
-          Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVariable",6, 8),  Expression.IntLiteral(12)),
-          Statement.ValDeclaration(
+          Statement.IntegerDeclaration(Token.Identifier(TokenType.Identifier, "someVariable",6, 8),  Expression.IntLiteral(12)),
+          Statement.IntegerDeclaration(
             Token.Identifier(TokenType.Identifier,"someVar", 1, 1),
             Expression.BinaryOperator(BinaryOperators.Add, Expression.Identifier("someVariable"), Expression.IntLiteral(1))
           )
@@ -91,18 +91,18 @@ object ParserTest {
 
   @Test
   fun testInvalidTokenInExpression() {
-    val program = "val someVariable := 12 + val"
+    val program = "integer someVariable := 12 + integer"
     val parser = Parser()
     parser.parse(program)
     assertEquals(1, parser.parserExceptions.size)
     val exception = parser.parserExceptions.first()
     assert(exception is Parser.UnexpectedToken)
-    assertEquals(TokenType.Val, (exception as Parser.UnexpectedToken).token!!.tokenType)
+    assertEquals(TokenType.IntegerVal, (exception as Parser.UnexpectedToken).token!!.tokenType)
   }
 
   @Test
   fun testEOFInExpression() {
-    val program = "do val someVariable := 12 +"
+    val program = "do integer someVariable := 12 +"
     val parser = Parser()
     parser.parse(program)
     assertEquals(1, parser.parserExceptions.size)
@@ -110,7 +110,7 @@ object ParserTest {
 
   @Test
   fun testMissingAssignInExpression() {
-    val program = "do val someVariable + 12 end"
+    val program = "do integer someVariable + 12 end"
     val parser = Parser()
     parser.parse(program)
     assertEquals(1, parser.parserExceptions.size)
@@ -121,7 +121,7 @@ object ParserTest {
 
   @Test
   fun testEOFAfterVal() {
-    val program = "do val"
+    val program = "do integer"
     val parser = Parser()
     parser.parse(program)
     assertEquals(1, parser.parserExceptions.size)
@@ -129,7 +129,7 @@ object ParserTest {
 
   @Test
   fun testInvalidInputMidBlock() {
-    val program = "do val a := 5 123 end"
+    val program = "do integer a := 5 123 end"
     val parser = Parser()
     parser.parse(program)
     assertEquals(1, parser.parserExceptions.size)
@@ -141,7 +141,7 @@ object ParserTest {
 
   @Test
   fun testMissingIdentifier() {
-    val program = "do val := 5 end"
+    val program = "do integer := 5 end"
     val parser = Parser()
     parser.parse(program)
     assertEquals(1, parser.parserExceptions.size)
@@ -189,9 +189,9 @@ object ParserTest {
 
   @Test
   fun testFunctionCall() {
-    val program = Parser().parse("val a := add(1 2)")
+    val program = Parser().parse("integer a := add(1 2)")
     val expectedAST = listOf(
-      Statement.ValDeclaration(
+      Statement.IntegerDeclaration(
         Token.Identifier(TokenType.Identifier,"a", 0, 0),
         Expression.FunctionCall(
           Expression.Identifier("add"),
@@ -209,7 +209,7 @@ object ParserTest {
   @Test
   fun testErrorMidBlock() {
     val parser = Parser()
-    parser.parse("do var a := 1 val c := 1 end var b := 2")
+    parser.parse("do var a := 1 integer c := 1 end var b := 2")
     assertEquals(2, parser.parserExceptions.size)
   }
 }

@@ -15,7 +15,7 @@ object LexerTest {
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
       TokenType.OpenBlock,
-      TokenType.Val,
+      TokenType.IntegerVal,
       TokenType.Identifier,
       TokenType.AssignOp,
       TokenType.IntLiteral,
@@ -29,16 +29,16 @@ object LexerTest {
 
   @Test
   fun testInvalidToken() {
-    assertFailsWith<Lexer.InvalidInputException> { Lexer.lex("do var a := 123 end []';") }
+    assertFailsWith<Lexer.InvalidInputException> { Lexer.lex("do integer a := 123 end []';") }
   }
 
   @Test
   fun testAssignExpression() {
-    val program = "do val someVariable := + 12 12 end"
+    val program = "do integer someVariable := + 12 12 end"
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
       TokenType.OpenBlock,
-      TokenType.Val,
+      TokenType.IntegerVal,
       TokenType.Identifier,
       TokenType.AssignOp,
       TokenType.Add,
@@ -54,7 +54,7 @@ object LexerTest {
 
   @Test
   fun testIfStatement() {
-    val program = "if (1 = 1) then val someVariable := 2 end"
+    val program = "if (1 = 1) then integer someVariable := 2 end"
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
       TokenType.If,
@@ -64,7 +64,7 @@ object LexerTest {
       TokenType.IntLiteral,
       TokenType.CloseParen,
       TokenType.Then,
-      TokenType.Val,
+      TokenType.IntegerVal,
       TokenType.Identifier,
       TokenType.AssignOp,
       TokenType.IntLiteral,

@@ -1,6 +1,6 @@
-val a := 1
-val b := 1
-val c := a + b
+integer a := 1
+integer b := 1
+integer c := a + b
 while c != 13 do
     a := c
     b := b + c

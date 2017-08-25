@@ -37,7 +37,7 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
       is Statement.If -> return evalIf(statement.condition, statement.body, null, HashMap(env))
       is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody, statement.elseBody, HashMap(env))
       is Statement.While -> return evalWhile(statement.condition, statement.body.statementList, HashMap(env))
-      is Statement.ValDeclaration -> {
+      is Statement.ValDeclaration-> {
         val identifierName = statement.identifier.name
 
         if (env.containsKey(identifierName)){

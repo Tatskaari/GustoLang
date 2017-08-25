@@ -23,7 +23,6 @@ this project is run through Travis CI and passed through a suite of unit tests.
   - Foreach over lists
   - List API to find size, remove first, append lists together etc.
   - Make lists indexed by strings as well
-  - Change do to then in if statement
   - Allow functions to return nothing. Detect all code paths return the same value.
   - Static type checking (possibly inference but maybe change val to integer and number)
 
@@ -42,7 +41,7 @@ For a formal definitions see the file "grammar"
 Here is a simple if statement:
 ~~~~
 input a
-if a < 10 do
+if a < 10 then
     output "Larger than 10"
 else
     output "Smaller than 10"
@@ -70,7 +69,7 @@ while nextVal != -1 do
     n := n + 1
 end
 
-if n > 0 do
+if n > 0 then
     val i := 0
     while a[i] != -1 do
         output a[i]

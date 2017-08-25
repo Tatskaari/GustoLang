@@ -1,6 +1,6 @@
 function sum(values) do
-	val n := 0
-	val total := 0
+  integer n := 0
+	integer total := 0
 
 	while(values[n] != -1) do
 		total := total + values[n]
@@ -10,9 +10,9 @@ function sum(values) do
 	return total
 end
 
-val nextVal := 0
-val inputVals := []
-val index := 0
+integer nextVal := 0
+integer inputVals := []
+integer index := 0
 
 while(nextVal != -1) do
 	input nextVal
@@ -20,4 +20,4 @@ while(nextVal != -1) do
 	index := index + 1
 end
 
-val out := sum(inputVals)
+integer out := sum(inputVals)
