@@ -33,7 +33,7 @@ sealed class Value(var value: Any) {
     override fun plus(value: Addable): Value {
       return when(value){
         is IntVal -> IntVal(intVal() + value.intVal())
-        is NumVal -> NumVal(intVal() + value.numVal())
+        is NumVal -> NumVal(intVal() + value.doubleVal())
         is TextVal -> TextVal( toString() + value.toString())
         else -> throw Eval.TypeMismatch("You cannot add $this and $value")
 
@@ -43,7 +43,7 @@ sealed class Value(var value: Any) {
     override fun minus(value: Subtractable): Value {
       return when(value){
         is IntVal -> IntVal(intVal() - value.intVal())
-        is NumVal -> NumVal(intVal() - value.numVal())
+        is NumVal -> NumVal(intVal() - value.doubleVal())
         else -> throw Eval.TypeMismatch("You cannot subtract $this and $value")
       }
     }
@@ -51,7 +51,7 @@ sealed class Value(var value: Any) {
     override fun div(value: Divisible): Value {
       return when(value){
         is IntVal -> NumVal(intVal().toDouble() / value.intVal().toDouble())
-        is NumVal -> NumVal(intVal().toDouble() / value.numVal())
+        is NumVal -> NumVal(intVal().toDouble() / value.doubleVal())
         else -> throw Eval.TypeMismatch("You cannot divide $this and $value")
       }
     }
@@ -59,33 +59,41 @@ sealed class Value(var value: Any) {
     override fun times(value: Multiplicable): Value {
       return when(value){
         is IntVal -> IntVal(intVal() * value.intVal())
-        is NumVal -> NumVal(intVal() * value.numVal())
+        is NumVal -> NumVal(intVal() * value.doubleVal())
         else -> throw Eval.TypeMismatch("You cannot multiply $this and $value")
       }
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (other is Value) {
+        // integers and doubles should be considered equal in gusto if they contain the same value (unlike Kotlin)
+        return this.intVal().toDouble() == other.value || this.intVal() == other.value
+      }
+      return false
     }
   }
 
   class NumVal(numVal: Double): Value(numVal), Addable, Subtractable, Multiplicable, Divisible {
     override fun div(value: Divisible): Value {
       return when(value){
-        is IntVal -> NumVal(numVal() / value.intVal())
-        is NumVal -> NumVal(numVal() / value.numVal())
+        is IntVal -> NumVal(doubleVal() / value.intVal())
+        is NumVal -> NumVal(doubleVal() / value.doubleVal())
         else -> throw Eval.TypeMismatch("You cannot divide $this and $value")
       }
     }
 
     override fun times(value: Multiplicable): Value {
       return when(value){
-        is IntVal -> NumVal(numVal() * value.intVal())
-        is NumVal -> NumVal(numVal() * value.numVal())
+        is IntVal -> NumVal(doubleVal() * value.intVal())
+        is NumVal -> NumVal(doubleVal() * value.doubleVal())
         else -> throw Eval.TypeMismatch("You cannot multiply $this and $value")
       }
     }
 
     override fun plus(value: Addable): Value {
       return when(value){
-        is IntVal -> NumVal(numVal() + value.intVal())
-        is NumVal -> NumVal(numVal() + value.numVal())
+        is IntVal -> NumVal(doubleVal() + value.intVal())
+        is NumVal -> NumVal(doubleVal() + value.doubleVal())
         is TextVal -> TextVal( toString() + value.toString())
         else -> throw Eval.TypeMismatch("You cannot add $this and $value")
       }
@@ -93,8 +101,8 @@ sealed class Value(var value: Any) {
 
     override fun minus(value: Subtractable): Value {
       return when(value){
-        is IntVal -> NumVal(numVal() - value.intVal())
-        is NumVal -> NumVal(numVal() - value.numVal())
+        is IntVal -> NumVal(doubleVal() - value.intVal())
+        is NumVal -> NumVal(doubleVal() - value.doubleVal())
         else -> throw Eval.TypeMismatch("You cannot subtract $this and $value")
       }
     }
@@ -118,9 +126,17 @@ sealed class Value(var value: Any) {
     }
   }
 
-  fun numVal():Double {
+  fun doubleVal():Double {
     if (this is NumVal){
       return value as Double
+    } else {
+      throw Eval.CastException
+    }
+  }
+
+  fun numVal(): Number {
+    if (this.value is Number){
+      return value as Number
     } else {
       throw Eval.CastException
     }
@@ -164,6 +180,13 @@ sealed class Value(var value: Any) {
       is IntVal -> IntVal(this.value as Int)
       else -> this
     }
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other is Value) {
+      return value == other.value
+    }
+    return false
   }
 
   override fun toString(): String = value.toString()

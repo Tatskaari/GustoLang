@@ -10,7 +10,7 @@ import tatskaari.parsing.UnaryOperators
 typealias Env = Map<String, Value>
 typealias MutEnv = HashMap<String, Value>
 
-class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider) {
+class Eval(private val inputProvider: InputProvider, private val outputProvider: OutputProvider) {
 
   data class TypeMismatch(override val message: String) : RuntimeException(message)
   object CastException: Exception()
@@ -112,7 +112,7 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
     }
   }
 
-  fun setValueInEnv(env: MutEnv, identifier: String, value: Value){
+  private fun setValueInEnv(env: MutEnv, identifier: String, value: Value){
     if (env.containsKey(identifier)){
       val existingValue = env.getValue(identifier)
       if (existingValue::class != value::class) {
@@ -134,7 +134,7 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
     return null
   }
 
-  fun evalCondition(condition: Expression, env: Env) : Value.BoolVal {
+  private fun evalCondition(condition: Expression, env: Env) : Value.BoolVal {
     val value = eval(condition, env)
     if (value is Value.BoolVal) {
       return value
@@ -165,30 +165,30 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
     }
   }
 
-  fun evalList(expression: Expression.ListDeclaration, env: Env): Value.ListVal {
+  private fun evalList(expression: Expression.ListDeclaration, env: Env): Value.ListVal {
     val list = HashMap<Int, Value>()
-    expression.items.forEachIndexed() { index, expr->
+    expression.items.forEachIndexed { index, expr->
       list.put(index, eval(expr, env))
     }
 
     return Value.ListVal(list)
   }
 
-  fun evalListAccess(expression: Expression.ListAccess, env: Env): Value{
+  private fun evalListAccess(expression: Expression.ListAccess, env: Env): Value{
     val list = eval(expression.listExpression, env)
     val index = eval(expression.indexExpression, env).intVal()
     return list.listVal().getValue(index).copyLiteralOrReferenceList()
   }
 
 
-  fun callFunction(functionCall: Expression.FunctionCall, env: Env) : Value{
+  private fun callFunction(functionCall: Expression.FunctionCall, env: Env) : Value{
     val functionVal = getFunction(functionCall, env)
     val funEnv = getFunctionRunEnv(functionVal.functionVal(), functionCall, functionVal.env, env)
 
     return evalFunction(functionVal.functionVal().body.statementList, funEnv)
   }
 
-  fun getFunction(functionCall: Expression.FunctionCall, env: Env): Value.FunctionVal {
+  private fun getFunction(functionCall: Expression.FunctionCall, env: Env): Value.FunctionVal {
 
     val function = eval(functionCall.functionExpression, env)
 
@@ -199,7 +199,7 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
     return function
   }
 
-  fun getFunctionRunEnv(function : Statement.Function, functionCall: Expression.FunctionCall, functionDefEnv: Env, functionCallEnv: Env) : MutEnv {
+  private fun getFunctionRunEnv(function : Statement.Function, functionCall: Expression.FunctionCall, functionDefEnv: Env, functionCallEnv: Env) : MutEnv {
     if (functionCall.params.size != function.params.size){
       throw TypeMismatch("Wrong number of arguments to call $function ")
     }
@@ -214,7 +214,7 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
     return functionRunEnv
   }
 
-  fun evalFunction(body: List<Statement>, env: MutEnv) : Value {
+  private fun evalFunction(body: List<Statement>, env: MutEnv) : Value {
     body.forEach{
       val value = eval(it, env)
       if (value != null){
@@ -224,7 +224,7 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
     throw FunctionExitedWithoutReturn
   }
 
-  fun applyBinaryOperator(operatorExpression: Expression.BinaryOperator, env: Env): Value {
+  private fun applyBinaryOperator(operatorExpression: Expression.BinaryOperator, env: Env): Value {
     val operation = operatorExpression.operator
     val lhsVal = eval(operatorExpression.lhs, env)
     val rhsVal = eval(operatorExpression.rhs, env)
@@ -257,32 +257,32 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
           throw TypeMismatch("$operation cannot be applied to $lhsVal and $rhsVal")
         }
       }
-      BinaryOperators.Equality -> return Value.BoolVal(lhsVal.intVal() == rhsVal.intVal())
-      BinaryOperators.NotEquality -> return Value.BoolVal(lhsVal.intVal() != rhsVal.intVal())
-      BinaryOperators.LessThan -> return Value.BoolVal(lhsVal.intVal() < rhsVal.intVal())
-      BinaryOperators.GreaterThan -> return Value.BoolVal(lhsVal.intVal() > rhsVal.intVal())
-      BinaryOperators.LessThanEq -> return Value.BoolVal(lhsVal.intVal() <= rhsVal.intVal())
-      BinaryOperators.GreaterThanEq -> return Value.BoolVal(lhsVal.intVal() >= rhsVal.intVal())
+      BinaryOperators.Equality -> return Value.BoolVal(lhsVal == rhsVal)
+      BinaryOperators.NotEquality -> return Value.BoolVal(lhsVal != rhsVal)
+      BinaryOperators.LessThan -> return Value.BoolVal(lhsVal.numVal() < rhsVal.numVal())
+      BinaryOperators.GreaterThan -> return Value.BoolVal(lhsVal.numVal() > rhsVal.numVal())
+      BinaryOperators.LessThanEq -> return Value.BoolVal(lhsVal.numVal() <= rhsVal.numVal())
+      BinaryOperators.GreaterThanEq -> return Value.BoolVal(lhsVal.numVal() >= rhsVal.numVal())
       BinaryOperators.And -> return Value.BoolVal(lhsVal.boolVal() && rhsVal.boolVal())
       BinaryOperators.Or -> return Value.BoolVal(lhsVal.boolVal() || rhsVal.boolVal())
     }
 
   }
 
-  fun applyUnaryOperator(operatorExpr: Expression.UnaryOperator, env: Env): Value{
+  private fun applyUnaryOperator(operatorExpr: Expression.UnaryOperator, env: Env): Value{
     val result = eval(operatorExpr.expression, env)
     val operator = operatorExpr.operator
-    try {
+    return try {
       when(operator){
-        UnaryOperators.Not -> return Value.BoolVal(!result.boolVal())
-        UnaryOperators.Negative -> return Value.IntVal(-result.intVal())
+        UnaryOperators.Not -> Value.BoolVal(!result.boolVal())
+        UnaryOperators.Negative -> Value.IntVal(-result.intVal())
       }
     } catch (e: CastException) {
       throw TypeMismatch("$operator cannot be applied to $result")
     }
   }
 
-  fun evalIf(condition: Expression, ifBody: List<Statement>, elseBody: List<Statement>?, env: MutEnv) : Value? {
+  private fun evalIf(condition: Expression, ifBody: List<Statement>, elseBody: List<Statement>?, env: MutEnv) : Value? {
     val conditionResult = eval(condition, env)
     if (conditionResult is Value.BoolVal) {
       var value : Value? = null
@@ -300,3 +300,21 @@ class Eval(val inputProvider: InputProvider, val outputProvider: OutputProvider)
     return null
   }
 }
+
+operator fun Number.compareTo(numVal: Number): Int {
+  if (this is Int){
+    if (numVal is Int){
+      return this.compareTo(numVal)
+    } else if (numVal is Double){
+      return this.compareTo(numVal)
+    }
+  } else if(this is Double){
+    if (numVal is Int){
+      return this.compareTo(numVal)
+    } else if (numVal is Double){
+      return this.compareTo(numVal)
+    }
+  }
+  throw Eval.TypeMismatch("Cannot compare $this and $numVal")
+}
+

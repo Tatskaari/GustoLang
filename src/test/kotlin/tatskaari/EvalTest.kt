@@ -2,7 +2,6 @@ package tatskaari
 
 import org.testng.annotations.Test
 import tatskaari.eval.*
-import tatskaari.eval.values.Value
 import tatskaari.parsing.Parser
 import tatskaari.tokenising.Lexer
 import kotlin.test.assertEquals
@@ -321,7 +320,7 @@ object EvalTest {
     val program = Parser().parse("val a := 9 / 3")!!
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
-    assertEquals(3.0, env.getValue("a").numVal())
+    assertEquals(3.0, env.getValue("a").doubleVal())
   }
 
   @Test
@@ -472,9 +471,9 @@ object EvalTest {
     val parser = Parser()
     val ast = parser.parse(program)
     Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
-    assertEquals(22.0, env.getValue("out").numVal())
-    assertEquals(2.0, env.getValue("outt").numVal())
-    assertEquals(0.5, env.getValue("outtt").numVal())
+    assertEquals(22.0, env.getValue("out").doubleVal())
+    assertEquals(2.0, env.getValue("outt").doubleVal())
+    assertEquals(0.5, env.getValue("outtt").doubleVal())
   }
 
   @Test
@@ -484,10 +483,20 @@ object EvalTest {
     val parser = Parser()
     val ast = parser.parse(program)
     Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
-    assertEquals(1.0, env.getValue("out").numVal())
-    assertEquals(0.0, env.getValue("outt").numVal())
-    assertEquals(1.5, env.getValue("outtt").numVal())
+    assertEquals(1.0, env.getValue("out").doubleVal())
+    assertEquals(0.0, env.getValue("outt").doubleVal())
+    assertEquals(1.5, env.getValue("outtt").doubleVal())
   }
 
-
+  @Test
+  fun testComparisons(){
+    val program = "val out := 1.0 <= 1 val outt := \"1\" = \"1\" val outtt := 10 = 10.0"
+    val env = MutEnv()
+    val parser = Parser()
+    val ast = parser.parse(program)
+    Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
+    assertEquals(true, env.getValue("out").boolVal())
+    assertEquals(true, env.getValue("outt").boolVal())
+    assertEquals(true, env.getValue("outtt").boolVal())
+  }
 }
