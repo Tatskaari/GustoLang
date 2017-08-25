@@ -9,21 +9,21 @@ function mul(a, b) do
   return a * b
 end
 
-function reduce(start, list, reducer) do
-  val total := start
+function reduce(start, List, reducer) do
+  integer total := start
 
-  val n := 0
-  val next := list[n]
+  integer n := 0
+  integer next := List[n]
 
   while(next != -1) do
     total := reducer(total, next)
     n := n + 1
-    next := list[n]
+    next := List[n]
   end
 
   return total
 end
 
-val list := [1, 2, 3, 4, -1]
-val addRes := reduce(0, list, add)
-val mulRes := reduce(1, list, mul)
+list List := [1, 2, 3, 4, -1]
+integer addRes := reduce(0, List, add)
+integer mulRes := reduce(1, List, mul)

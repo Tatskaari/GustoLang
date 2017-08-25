@@ -47,11 +47,11 @@ class Parser {
         OpenBlock -> codeBlock(tokens)
         Function -> function(tokens)
         Return -> returnn(tokens)
-        Val -> valueDeclaration(tokens)
+        NumberVal, IntegerVal, BooleanVal, ListVal, TextVal -> valueDeclaration(token.tokenType, tokens)
         Input -> input(tokens)
         Output -> output(tokens)
         Identifier -> assignment(tokens)
-        else -> throw UnexpectedToken(token, listOf(If, While, OpenBlock, Function, Return, Val, Input, Output, Identifier))
+        else -> throw UnexpectedToken(token, listOf(If, While, OpenBlock, Function, Return, NumberVal, IntegerVal, BooleanVal, ListVal, TextVal, Input, Output, Identifier))
       }
     } catch (rootException: ParserException){
       // Attempt to parse the next tokens as a statement until it works then parse the rest of the program to get any further errors
@@ -85,7 +85,7 @@ class Parser {
   private fun iff(tokens: TokenList): Statement {
     tokens.getNextToken(If)
     val condition = expression(tokens)
-    tokens.getNextToken(OpenBlock)
+    tokens.getNextToken(Then)
     val trueBody = ArrayList<Statement>()
     while (!tokens.matchAny(listOf(TokenType.CloseBlock, TokenType.Else))){
       trueBody.add(statement(tokens))
@@ -152,12 +152,19 @@ class Parser {
   }
 
   // valueDeclaration => "val" STRING ":=" expression
-  private fun valueDeclaration(tokens: TokenList): Statement.ValDeclaration {
-    tokens.getNextToken(Val)
+  private fun valueDeclaration(valType: TokenType, tokens: TokenList): Statement {
+    val token = tokens.getNextToken(valType)
     val identifier = tokens.getIdentifier()
     tokens.getNextToken(AssignOp)
     val expression = expression(tokens)
-    return Statement.ValDeclaration(identifier, expression)
+    return when (valType) {
+      NumberVal -> Statement.NumberDeclaration(identifier, expression)
+      IntegerVal -> Statement.IntegerDeclaration(identifier, expression)
+      BooleanVal -> Statement.BooleanDeclaration(identifier, expression)
+      TextVal -> Statement.TextDeclaration(identifier, expression)
+      ListVal -> Statement.ListDeclaration(identifier, expression)
+      else -> throw UnexpectedToken(token, listOf(NumberVal, IntegerVal, BooleanVal, TextVal, ListVal))
+    }
   }
 
   // assignment => STRING ":=" expression | STRING "[" expression "]" ":=" expression

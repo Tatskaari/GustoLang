@@ -1,12 +1,12 @@
 function whileTest() do
-    val a := 10
-    val b := 0
+    integer a := 10
+    integer b := 0
     while a <= 10 do
         b := b + a
-        if b >= 20 do
+        if b >= 20 then
             return 100
         end
     end
 end
 
-val out := whileTest()
+integer out := whileTest()

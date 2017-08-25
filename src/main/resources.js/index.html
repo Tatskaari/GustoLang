@@ -7,22 +7,32 @@
     <h1>Try Gusto</h1>
 </div>
 <div class="content">
-    <div id="code">function fib(pN, pLast, pLastLast) do
-    if (pN = 1) do
-      return pLast + pLastLast
+    <div id="code">output "Please enter numbers, enter -1 to stop"
+list inputList := []
+integer nextVal := 0
+integer n := 0
+
+while nextVal != -1 do
+    input nextVal
+inputList[n] := nextVal
+    n := n + 1
+end
+
+function biggest(current, searchList, n) do
+    integer next := searchList[n]
+
+    if next = -1 then
+        return current
+    else
+        if next > current then
+            return biggest(next, searchList, n+1)
+        else
+            return biggest(current, searchList, n+1)
+        end
     end
-    val new := pLast + pLastLast
-    val last := pLastLast
-    val lastLast := new
-    val n := pN - 1
-    return fib(n, last, lastLast)
 end
 
-function getNthFib(pN) do
-  return fib(pN - 2, 1, 1)
-end
-
-output getNthFib(7)</div>
+output "The biggest number was: " + biggest(0, inputList, 0)</div>
     <div id="output"> </div>
 </div>
 <div class="toolbar">

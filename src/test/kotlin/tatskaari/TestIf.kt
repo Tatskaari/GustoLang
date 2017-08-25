@@ -19,12 +19,15 @@ object TestIf {
           Statement.If(
             Expression.BinaryOperator(BinaryOperators.Equality, Expression.IntLiteral(1), Expression.IntLiteral(1)),
             listOf(
-              Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.IntLiteral(1))
+              Statement.IntegerDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.IntLiteral(1))
             )
           )
         )
       )
     )
+//    Expected <CodeBlock(statementList=[If(condition=BinaryOperator(operator=Equality, lhs=IntLiteral(value=1), rhs=IntLiteral(value=1)), body=[tatskaari.parsing.Statement$IntegerDeclaration@335eadca])])>,
+//    actual   <CodeBlock(statementList=[If(condition=BinaryOperator(operator=Equality, lhs=IntLiteral(value=1), rhs=IntLiteral(value=1)), body=[tatskaari.parsing.Statement$NumberDeclaration@210366b4])])>.
+
 
     val actual = Parser().parse(program)
 
@@ -37,7 +40,7 @@ object TestIf {
     val program = parser.parse(TestUtil.loadProgram("IfElse"))
     val expectedAST = listOf(
       Statement.Input(Token.Identifier(TokenType.Identifier, "a", 1,2 )),
-      Statement.ValDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.IntLiteral(0)),
+      Statement.IntegerDeclaration(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.IntLiteral(0)),
       Statement.IfElse(
         Expression.BinaryOperator(BinaryOperators.Equality, Expression.IntLiteral(10), Expression.Identifier("a")),
         listOf(Statement.Assignment(Token.Identifier(TokenType.Identifier, "someVar", 1, 2), Expression.IntLiteral(1))),
