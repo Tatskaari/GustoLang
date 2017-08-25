@@ -1,10 +1,11 @@
 package tatskaari.eval
 
 import tatskaari.eval.values.Value
-import tatskaari.parsing.Expression
-import tatskaari.parsing.BinaryOperators
-import tatskaari.parsing.Statement
-import tatskaari.parsing.UnaryOperators
+import tatskaari.parsing.*
+import tatskaari.tokenising.Lexer
+import tatskaari.tokenising.Matcher
+import tatskaari.tokenising.Token
+import tatskaari.tokenising.TokenType
 
 
 typealias Env = Map<String, Value>
@@ -16,7 +17,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
   object CastException: Exception()
   data class UndefinedIdentifier(override val message: String) : RuntimeException("Undeclared identifier '$message'")
   data class VariableAlreadyDefined(val identifier: String) : RuntimeException("Identifier aready declared '$identifier'")
-  object InvalidUserInput : RuntimeException("Please enter a number of the value 'true' or 'false'")
+  object InvalidUserInput : RuntimeException("Please enter a number, some text or the value 'true' or 'false'")
   //TODO better error message
   object FunctionExitedWithoutReturn : RuntimeException("Function exited without return")
 
@@ -91,12 +92,16 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         val input = inputProvider.readLine()
         if (input == null || input.isEmpty()) {
           throw InvalidUserInput
-        } else if ("true" == input) {
-          setValueInEnv(env, identifier, Value.BoolVal(true))
-        } else if ("false" == input) {
-          setValueInEnv(env, identifier, Value.BoolVal(false))
         } else {
-          setValueInEnv(env, identifier, Value.IntVal(input.toInt()))
+          val value: Value =
+            when {
+              input.toIntOrNull() != null -> Value.IntVal(input.toInt())
+              input.toDoubleOrNull() != null -> Value.NumVal(input.toDouble())
+              input.equals("true") -> Value.BoolVal(true)
+              input.equals("false") -> Value.BoolVal(false)
+              else -> Value.TextVal(input)
+            }
+          env.put(identifier, value)
         }
         return null
       }

@@ -425,7 +425,7 @@ object EvalTest {
   }
 
   @Test
-  fun sumListFromIput(){
+  fun sumListFromInput(){
     val program = TestUtil.loadProgram("SumListInput")
     val env = MutEnv()
     Eval(StringInputProvider("1\n12\n123\n-1\n"), SystemOutputProvider).eval(Parser().parse(program)!!, env)
@@ -490,7 +490,7 @@ object EvalTest {
 
   @Test
   fun testComparisons(){
-    val program = "val out := 1.0 <= 1 val outt := \"1\" = \"1\" val outtt := 10 = 10.0"
+    val program = "number out := 1.0 <= 1 text outt := \"1\" = \"1\" boolean outtt := 10 = 10.0"
     val env = MutEnv()
     val parser = Parser()
     val ast = parser.parse(program)
@@ -498,5 +498,21 @@ object EvalTest {
     assertEquals(true, env.getValue("out").boolVal())
     assertEquals(true, env.getValue("outt").boolVal())
     assertEquals(true, env.getValue("outtt").boolVal())
+  }
+
+  @Test
+  fun testMoreInput(){
+    val program = "input out input outout input outoutout input realoutout input realrealoutout"
+    val env = MutEnv()
+    val parser = Parser()
+    val ast = parser.parse(program)
+    val input = StringInputProvider("1.0\nasdf\ntrue\nfalse\n10")
+    Eval(input, SystemOutputProvider).eval(ast!!, env)
+    assertEquals(1.0, env.getValue("out").numVal())
+    assertEquals("asdf", env.getValue("outout").textVal())
+    assertEquals(true, env.getValue("outoutout").boolVal())
+    assertEquals(false, env.getValue("realoutout").boolVal())
+    assertEquals(10, env.getValue("realrealoutout").intVal())
+
   }
 }
