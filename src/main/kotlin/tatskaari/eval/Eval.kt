@@ -117,18 +117,6 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     }
   }
 
-  private fun setValueInEnv(env: MutEnv, identifier: String, value: Value){
-    if (env.containsKey(identifier)){
-      val existingValue = env.getValue(identifier)
-      if (existingValue::class != value::class) {
-        throw TypeMismatch("$identifier was already set to $existingValue, new value was $value")
-      }
-      env.getValue(identifier).value = value.value
-    } else {
-      env[identifier] = value
-    }
-  }
-
   private fun evalWhile(condition: Expression, body: List<Statement>, env: MutEnv) : Value? {
     while(evalCondition(condition, env).boolVal()){
       val value : Value? = eval(body, env)

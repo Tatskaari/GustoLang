@@ -513,6 +513,19 @@ object EvalTest {
     assertEquals(true, env.getValue("outoutout").boolVal())
     assertEquals(false, env.getValue("realoutout").boolVal())
     assertEquals(10, env.getValue("realrealoutout").intVal())
+  }
 
+  @Test
+  fun numberComparison(){
+    val intNum: Number = 10
+    val doubleNum: Number = 10.0
+    val byteNum: Byte = 10
+
+    assert(intNum <= doubleNum)
+    assert(doubleNum <= intNum)
+    assert(intNum <= intNum)
+    assert(doubleNum <= doubleNum)
+    assertFailsWith<Eval.TypeMismatch> { doubleNum <= byteNum }
+    assertFailsWith<Eval.TypeMismatch> { intNum <= byteNum }
   }
 }

@@ -178,6 +178,8 @@ sealed class Value(var value: Any) {
     return when(this){
       is BoolVal -> BoolVal(this.value as Boolean)
       is IntVal -> IntVal(this.value as Int)
+      is TextVal -> TextVal(this.value as String)
+      is NumVal -> NumVal(this.value as Double)
       else -> this
     }
   }

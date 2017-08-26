@@ -24,7 +24,7 @@ this project is run through Travis CI and passed through a suite of unit tests.
   - List API to find size, remove first, append lists together etc.
   - Make lists indexed by strings as well
   - Allow functions to return nothing. Detect all code paths return the same value.
-  - Static type checking (possibly inference but maybe change val to integer and number)
+  - Static type checking
 
 - Features that might be interesting to implement but add little to the educational value
   - Add garbage collection and
