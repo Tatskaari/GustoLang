@@ -2,10 +2,6 @@ package tatskaari.eval
 
 import tatskaari.eval.values.Value
 import tatskaari.parsing.*
-import tatskaari.tokenising.Lexer
-import tatskaari.tokenising.Matcher
-import tatskaari.tokenising.Token
-import tatskaari.tokenising.TokenType
 
 
 typealias Env = Map<String, Value>
@@ -140,8 +136,8 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     when (expression) {
       is Expression.IntLiteral -> return Value.IntVal(expression.value)
       is Expression.NumLiteral -> return Value.NumVal(expression.value)
-      is Expression.Bool -> return Value.BoolVal(expression.value)
-      is Expression.Text -> return Value.TextVal(expression.value)
+      is Expression.BooleanLiteral -> return Value.BoolVal(expression.value)
+      is Expression.TextLiteral -> return Value.TextVal(expression.value)
       is Expression.BinaryOperator -> return applyBinaryOperator(expression, env)
       is Expression.UnaryOperator -> return applyUnaryOperator(expression, env)
       is Expression.FunctionCall -> return callFunction(expression, env)
@@ -288,7 +284,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         return value
       }
     } else {
-      throw TypeMismatch("If statement condition type error expected bool got $condition")
+      throw TypeMismatch("If statement condition returnType error expected bool got $condition")
     }
     return null
   }

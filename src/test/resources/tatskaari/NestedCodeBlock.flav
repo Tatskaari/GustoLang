@@ -1,6 +1,6 @@
 do
     do
-      integer someVar := 5
+      val someVar : integer := 5
     end
-    integer someOtherVar := 5
+    val someOtherVar : integer := 5
 end

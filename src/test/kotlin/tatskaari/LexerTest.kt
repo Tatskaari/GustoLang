@@ -8,25 +8,6 @@ import kotlin.test.assertFailsWith
 
 object LexerTest {
 
-
-  @Test
-  fun testLexer() {
-    val program = TestUtil.loadProgram("BasicBlocks")
-    val tokenList = Lexer.lex(program)
-    val expectedTokens = listOf(
-      TokenType.OpenBlock,
-      TokenType.IntegerVal,
-      TokenType.Identifier,
-      TokenType.AssignOp,
-      TokenType.IntLiteral,
-      TokenType.CloseBlock
-    )
-
-    assert(tokenList.size == expectedTokens.size)
-    tokenList.zip(expectedTokens)
-      .forEach { (actual, expect) -> assertEquals(expect, actual.tokenType) }
-  }
-
   @Test
   fun testInvalidToken() {
     assertFailsWith<Lexer.InvalidInputException> { Lexer.lex("do integer a := 123 end []';") }
@@ -38,7 +19,7 @@ object LexerTest {
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
       TokenType.OpenBlock,
-      TokenType.IntegerVal,
+      TokenType.Integer,
       TokenType.Identifier,
       TokenType.AssignOp,
       TokenType.Add,
@@ -64,7 +45,7 @@ object LexerTest {
       TokenType.IntLiteral,
       TokenType.CloseParen,
       TokenType.Then,
-      TokenType.IntegerVal,
+      TokenType.Integer,
       TokenType.Identifier,
       TokenType.AssignOp,
       TokenType.IntLiteral,

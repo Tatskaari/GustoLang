@@ -1,6 +1,6 @@
 function whileTest() do
-    integer a := 10
-    integer b := 0
+    val a : integer := 10
+    val b : integer := 0
     while a <= 10 do
         b := b + a
         if b >= 20 then
@@ -9,4 +9,4 @@ function whileTest() do
     end
 end
 
-integer out := whileTest()
+val out : integer := whileTest()

@@ -1,1 +1,1 @@
-do integer someVariable := 12 + 12 end
+do val someVariable : integer := 12 + 12 end

@@ -21,11 +21,13 @@ enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, Str
   CloseBlock(KeywordMatcher("end"), Token::Keyword),
   ListStart(KeywordMatcher("["), Token::Keyword),
   ListEnd(KeywordMatcher("]"), Token::Keyword),
-  NumberVal(KeywordMatcher("number"), Token::Keyword),
-  IntegerVal(KeywordMatcher("integer"), Token::Keyword),
-  BooleanVal(KeywordMatcher("boolean"), Token::Keyword),
-  ListVal(KeywordMatcher("list"), Token::Keyword),
-  TextVal(KeywordMatcher("text"), Token::Keyword),
+  Value(KeywordMatcher("val"), Token::Keyword),
+  Number(KeywordMatcher("number"), Token::Keyword),
+  Integer(KeywordMatcher("integer"), Token::Keyword),
+  Boolean(KeywordMatcher("boolean"), Token::Keyword),
+  Colon(KeywordMatcher(":"), Token::Keyword),
+  List(KeywordMatcher("list"), Token::Keyword),
+  Text(KeywordMatcher("text"), Token::Keyword),
   AssignOp(KeywordMatcher(":="), Token::Keyword),
   Not(KeywordMatcher("!"), Token::Keyword),
   Equality(KeywordMatcher("="), Token::Keyword),
@@ -39,12 +41,12 @@ enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, Str
   CloseParen(KeywordMatcher(")"), Token::Keyword),
   Input(KeywordMatcher("input"), Token::Keyword),
   Output(KeywordMatcher("output"), Token::Keyword),
+  RightArrow(KeywordMatcher("->"), Token::Keyword),
   Comment(CommentMatcher, Token::Comment),
   IntLiteral(IntMatcher, Token::IntLiteral),
   NumLiteral(NumMatcher, Token::NumLiteral),
   TextLiteral(TextMatcher, Token::TextLiteral),
   Identifier(IdentifierMatcher, Token::Identifier);
-
 
   override fun toString(): String {
     return matcher.getTokenDescription()

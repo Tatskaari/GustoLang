@@ -18,7 +18,7 @@ fun TokenList.lookAhead(): Token {
   return this[0]
 }
 
-fun TokenList.matchAny(tokensToMatch: List<TokenType>) : Boolean{
+fun TokenList.matchAny(vararg tokensToMatch: TokenType) : Boolean{
   if (isEmpty()) {
     return false
   }
@@ -41,6 +41,6 @@ fun TokenList.getIdentifier(): Token.Identifier {
 
 
 fun TokenList.match(expectedToken: TokenType): Boolean {
-  return this.matchAny(listOf(expectedToken))
+  return this.matchAny(expectedToken)
 }
 

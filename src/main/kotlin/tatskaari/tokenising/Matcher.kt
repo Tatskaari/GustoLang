@@ -63,7 +63,7 @@ sealed class Matcher {
   }
 
   object IdentifierMatcher : Matcher() {
-    val regex = Regex("""^[a-zA-Z]+""")
+    val regex = Regex("""^[a-zA-Z_'][a-zA-Z0-9_']*""")
 
     override fun lex(program: String): String? {
       val matchResult = regex.find(program)

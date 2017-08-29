@@ -1,19 +1,19 @@
-function add(a, b) do
+function add(a : number, b : number) -> integer do
   return a + b
 end
 
 (* This is a comment that has
 no bearing on the code *)
 
-function mul(a, b) do
+function mul(a : number, b : number) -> integer do
   return a * b
 end
 
-function reduce(start, List, reducer) do
-  integer total := start
+function reduce(start : number, List : integer list, reducer : (integer, integer) -> integer) -> integer do
+  val total : integer := start
 
-  integer n := 0
-  integer next := List[n]
+  val n : integer := 0
+  val next : integer := List[n]
 
   while(next != -1) do
     total := reducer(total, next)
@@ -24,6 +24,6 @@ function reduce(start, List, reducer) do
   return total
 end
 
-list List := [1, 2, 3, 4, -1]
-integer addRes := reduce(0, List, add)
-integer mulRes := reduce(1, List, mul)
+val List : integer list := [1, 2, 3, 4, -1]
+val addRes : integer := reduce(0, List, add)
+val mulRes : integer := reduce(1, List, mul)

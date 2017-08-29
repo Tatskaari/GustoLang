@@ -7,8 +7,8 @@ data class InvalidOperatorToken(val token : Token) : RuntimeException("Invalid o
 sealed class Expression {
   data class IntLiteral(val value: Int) : Expression()
   data class NumLiteral(val value: Double): Expression()
-  data class Bool(val value: Boolean) : Expression()
-  data class Text(val value: String) : Expression()
+  data class BooleanLiteral(val value: Boolean) : Expression()
+  data class TextLiteral(val value: String) : Expression()
   data class Identifier(val name: String) : Expression()
   data class BinaryOperator(val operator: BinaryOperators, val lhs: Expression, val rhs: Expression) : Expression()
   data class UnaryOperator(val operator: UnaryOperators, val expression: Expression) : Expression()

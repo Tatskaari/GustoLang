@@ -2,6 +2,7 @@ package tatskaari
 
 import tatskaari.eval.*
 import tatskaari.parsing.Parser
+import tatskaari.parsing.TypeChecker
 import kotlin.browser.window
 external fun error(text: String)
 object BrowserHooks {
@@ -12,8 +13,17 @@ object BrowserHooks {
       val parser = Parser()
       val eval = Eval(JSHookInputProvider, JSHookOutputProvider)
       val ast = parser.parse(program)
+      val typeChecker = TypeChecker()
+
       if (ast != null){
-        eval.eval(ast, MutEnv())?.value.toString()
+        typeChecker.checkStatementListTypes(ast, HashMap())
+        if (typeChecker.typeMismatches.isEmpty()){
+          eval.eval(ast, MutEnv())?.value.toString()
+        } else {
+          typeChecker.typeMismatches.forEach{
+            error(it.message!!)
+          }
+        }
       } else {
         parser.parserExceptions.forEach{
           error(it.reason)

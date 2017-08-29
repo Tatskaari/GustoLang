@@ -1,5 +1,5 @@
 do
     if (1 = 1) then
-        integer someVar := 1
+        val someVar : integer := 1
     end
 end

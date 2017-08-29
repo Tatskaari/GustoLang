@@ -1,5 +1,5 @@
-integer a := 10
-integer b := 0
+val a : integer := 10
+val b : integer := 0
 while a != 0 do
     b := b + 2
     a := a - 1

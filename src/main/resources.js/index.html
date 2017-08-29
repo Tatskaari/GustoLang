@@ -14,11 +14,11 @@ integer n := 0
 
 while nextVal != -1 do
     input nextVal
-inputList[n] := nextVal
+    inputList[n] := nextVal
     n := n + 1
 end
 
-function biggest(current, searchList, n) do
+function biggest(integer current, list searchList, integer n) do
     integer next := searchList[n]
 
     if next = -1 then

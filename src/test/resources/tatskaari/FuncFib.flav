@@ -1,17 +1,17 @@
-function fib(pN, pLast, pLastLast) do
+function fib(pN : integer, pLast : integer, pLastLast : integer) -> integer do
     if pN = 1 then
       return pLast + pLastLast
     end
-    integer new := pLast + pLastLast
-    integer last := pLastLast
-    integer lastLast := new
-    integer n := pN - 1
+    val new : integer := pLast + pLastLast
+    val last : integer := pLastLast
+    val lastLast : integer := new
+    val n : integer := pN - 1
     return fib(n, last, lastLast)
 end
 
-function getNthFib(pN) do
+function getNthFib(pN : integer) -> integer do
   return fib(pN - 2, 1, 1)
 end
 
-integer out := getNthFib(7)
+val out : integer := getNthFib(7)
 
