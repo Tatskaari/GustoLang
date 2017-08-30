@@ -492,4 +492,14 @@ object EvalTest {
     Eval(StringInputProvider("Hello, world!"), SystemOutputProvider).eval(program!!, env)
     assertEquals("Hello, world!", env.getValue("a").textVal())
   }
+
+  @Test
+  fun testUnitFunction(){
+    val parser = Parser()
+    val program = parser.parse("function doNothing() do end " +
+      "val a: unit := doNothing()")
+    val env = MutEnv()
+    Eval(StdinInputProvider, SystemOutputProvider).eval(program!!, env)
+    assertEquals(Unit, env.getValue("a").value)
+  }
 }
