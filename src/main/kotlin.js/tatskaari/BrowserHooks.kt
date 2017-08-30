@@ -16,11 +16,8 @@ object BrowserHooks {
       val ast = parser.parse(program)
       val typeChecker = TypeChecker()
 
-      val typeEnv: HashMap<String, GustoType> = HashMap()
-      typeEnv.putAll(BuiltInFunction.values().map{Pair(it.funName, it.type)})
-
-      val evalEnv: MutEnv = MutEnv()
-      evalEnv.putAll(BuiltInFunction.values().map{ Pair(it.funName, Value.BifVal(it))})
+      val typeEnv = BuiltInFunction.getTypeEnv()
+      val evalEnv = BuiltInFunction.getEvalEnv()
 
       if (ast != null){
         typeChecker.checkStatementListTypes(ast, typeEnv)

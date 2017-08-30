@@ -534,4 +534,23 @@ object EvalTest {
     typeChecker.checkStatementListTypes(program!!, hashMapOf(Pair("size", BuiltInFunction.SizeOfList.type)))
     assertEquals(0, typeChecker.typeMismatches.size)
   }
+
+  @Test
+  fun testCastingText(){
+    val parser = Parser()
+    val program = parser.parse("""val int : integer := toInteger("123") val num : number := toNumber("123.123") val bool : boolean := toBoolean("true")""")
+
+    val typeChecker = TypeChecker()
+    val typeEnv = BuiltInFunction.getTypeEnv()
+    typeChecker.checkStatementListTypes(program!!, typeEnv)
+    assertEquals(0, typeChecker.typeMismatches.size)
+
+    val evalEnv = BuiltInFunction.getEvalEnv()
+    Eval(StdinInputProvider, SystemOutputProvider).eval(program, evalEnv)
+
+    assertEquals(123, evalEnv.getValue("int").intVal())
+    assertEquals(123.123, evalEnv.getValue("num").numVal())
+    assertEquals(true, evalEnv.getValue("bool").boolVal())
+
+  }
 }
