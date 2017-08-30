@@ -1,4 +1,4 @@
-function fib(pN : integer, pLast : integer, pLastLast : integer) -> integer do
+function fib(pN : integer, pLast : integer, pLastLast : integer) : integer do
     if pN = 1 then
       return pLast + pLastLast
     end
@@ -9,7 +9,7 @@ function fib(pN : integer, pLast : integer, pLastLast : integer) -> integer do
     return fib(n, last, lastLast)
 end
 
-function getNthFib(pN : integer) -> integer do
+function getNthFib(pN : integer) : integer do
   return fib(pN - 2, 1, 1)
 end
 

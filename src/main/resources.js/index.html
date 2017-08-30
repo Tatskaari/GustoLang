@@ -7,15 +7,14 @@
     <h1>Try Gusto</h1>
 </div>
 <div class="content">
-    <div id="code">function add(a: integer, b: integer) -> integer do
+    <div id="code">function add(a: integer, b: integer) : integer do
     return a + b
 end
 
-function apply(fun: (integer, integer) -> integer, first: integer) -> (integer) -> integer do
-    function applied(second: integer) -> integer do
+function apply(fun: (integer, integer) -> integer, first: integer) : (integer) -> integer do
+    return function (second: integer) : integer do
         return fun(first, second)
     end
-    return applied
 end
 
 val increment : (integer) -> integer := apply(add, 1)

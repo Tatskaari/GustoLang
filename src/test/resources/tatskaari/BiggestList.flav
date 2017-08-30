@@ -9,7 +9,7 @@ while nextVal != -1 do
     n := n + 1
 end
 
-function biggest(current : integer, searchList : integer list, n : integer) -> integer do
+function biggest(current : integer, searchList : integer list, n : integer) : integer do
     val next : integer := searchList[n]
 
     if next = -1 then

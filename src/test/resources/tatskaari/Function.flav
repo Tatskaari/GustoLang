@@ -1,4 +1,4 @@
-function add(a : integer, b : integer) ->  integer do
+function add(a : integer, b : integer) :  integer do
   return a + b
 end
 

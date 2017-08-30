@@ -1,4 +1,4 @@
-function sum(values : integer list) -> integer do
+function sum(values : integer list) : integer do
     val n : integer := 0
     val total : integer := 0
 

@@ -1,15 +1,15 @@
-function add(a : number, b : number) -> integer do
+function add(a : number, b : number) : integer do
   return a + b
 end
 
 (* This is a comment that has
 no bearing on the code *)
 
-function mul(a : number, b : number) -> integer do
+function mul(a : number, b : number) : integer do
   return a * b
 end
 
-function reduce(start : number, List : integer list, reducer : (integer, integer) -> integer) -> integer do
+function reduce(start : number, List : integer list, reducer : (integer, integer) -> integer) : integer do
   val total : integer := start
 
   val n : integer := 0

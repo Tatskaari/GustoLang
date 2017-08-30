@@ -16,6 +16,7 @@ class Parser {
   object UnexpectedEndOfFile: Exception()
   object ParsingFailedException: Exception()
 
+
   private var isPanicMode = false
   val parserExceptions = ArrayList<ParserException>()
 
@@ -132,33 +133,9 @@ class Parser {
   fun function(tokens: TokenList): Statement.FunctionDeclaration {
     val startToken = tokens.getNextToken(TokenType.Function)
     val name = tokens.getIdentifier()
-    tokens.getNextToken(TokenType.OpenParen)
-    val paramTypes = HashMap<Token.Identifier, GustoType>()
-    val params = ArrayList<Token.Identifier>()
-    while (!tokens.match(TokenType.CloseParen)){
-      val paramIdentifier = tokens.getNextToken(TokenType.Identifier) as Token.Identifier
-      tokens.getNextToken(TokenType.Colon)
-      val paramType: GustoType = typeNotation(tokens)
-
-      params.add(paramIdentifier)
-      paramTypes.put(paramIdentifier, paramType)
-
-      if(tokens.match(TokenType.Comma)){
-        tokens.consumeToken()
-      }
-    }
-
-    tokens.getNextToken(TokenType.CloseParen)
-
-    val returnType = if (tokens.match(TokenType.RightArrow)) {
-      tokens.consumeToken()
-      typeNotation(tokens)
-    } else {
-      PrimitiveType.Unit
-    }
-
+    val (params, paramTypes) = functionParams(tokens)
+    val returnType = functionReturnType(tokens)
     val body = codeBlock(tokens)
-
     val function = Expression.Function(returnType, params, paramTypes, body, startToken, body.endToken)
 
     return Statement.FunctionDeclaration(name, function, startToken, body.endToken)
@@ -380,6 +357,13 @@ class Parser {
   // anonymousFunction => "function" "(" (STRING typeNotation(",")?)*  ")" codeBlock
   private fun anonymousFunction(tokens: TokenList): Expression.Function {
     val firstToken = tokens.getNextToken(TokenType.Function)
+    val (params, paramTypes) = functionParams(tokens)
+    val returnType = functionReturnType(tokens)
+    val body = codeBlock(tokens)
+    return Expression.Function(returnType, params, paramTypes, body, firstToken, body.endTok)
+  }
+
+  private fun functionParams(tokens: TokenList): Pair<List<Token.Identifier>, Map<Token.Identifier, GustoType>> {
     tokens.getNextToken(TokenType.OpenParen)
     val paramTypes = HashMap<Token.Identifier, GustoType>()
     val params = ArrayList<Token.Identifier>()
@@ -395,19 +379,18 @@ class Parser {
         tokens.consumeToken()
       }
     }
-
     tokens.getNextToken(TokenType.CloseParen)
 
-    val returnType = if (tokens.match(TokenType.RightArrow)) {
+    return Pair(params, paramTypes)
+  }
+
+  private fun functionReturnType(tokens: TokenList): GustoType {
+    return if (tokens.match(TokenType.Colon)) {
       tokens.consumeToken()
       typeNotation(tokens)
     } else {
       PrimitiveType.Unit
     }
-
-    val body = codeBlock(tokens)
-
-    return Expression.Function(returnType, params, paramTypes, body, firstToken, body.endTok)
   }
 
   // listDeclaration = "[" (expression (",")*)* "]"

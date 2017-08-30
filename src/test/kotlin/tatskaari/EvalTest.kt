@@ -341,7 +341,7 @@ object EvalTest {
 
   @Test
   fun missingReturnFromFunc(){
-    val program = Parser().parse("function add(a: integer, b: integer) -> integer do end val c: integer := add(1, 2)")!!
+    val program = Parser().parse("function add(a: integer, b: integer) : integer do end val c: integer := add(1, 2)")!!
     assertFailsWith<Eval.FunctionExitedWithoutReturn> {
       Eval(StdinInputProvider, SystemOutputProvider).eval(program, MutEnv())
     }
@@ -532,7 +532,7 @@ object EvalTest {
   @Test
   fun testAnonymousFunctions() {
     val parser = Parser()
-    val program = parser.parse("val add : (integer, integer) -> integer := function(a: integer, b: integer) -> integer do return a + b end " +
+    val program = parser.parse("val add : (integer, integer) -> integer := function(a: integer, b: integer) : integer do return a + b end " +
       "val out : integer := add(10, 11)")
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program!!, env)
