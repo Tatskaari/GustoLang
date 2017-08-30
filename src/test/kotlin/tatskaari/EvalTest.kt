@@ -528,4 +528,14 @@ object EvalTest {
     assertFailsWith<Eval.TypeMismatch> { doubleNum <= byteNum }
     assertFailsWith<Eval.TypeMismatch> { intNum <= byteNum }
   }
+
+  @Test
+  fun testAnonymousFunctions() {
+    val parser = Parser()
+    val program = parser.parse("val add : (integer, integer) -> integer := function(a: integer, b: integer) -> integer do return a + b end " +
+      "val out : integer := add(10, 11)")
+    val env = MutEnv()
+    Eval(StdinInputProvider, SystemOutputProvider).eval(program!!, env)
+    assertEquals(21, env.getValue("out").intVal())
+  }
 }

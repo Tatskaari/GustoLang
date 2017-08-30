@@ -52,6 +52,7 @@ class TypeChecker {
         }
       }
       is Expression.ListDeclaration -> getListType(expression, env)
+      is Expression.Function -> FunctionType(expression.params.map { expression.paramTypes.getValue(it) }, expression.returnType)
     }
   }
 
@@ -191,22 +192,22 @@ class TypeChecker {
           //TODO make this input text and supply conversion methods
           env.put(statement.identifier.name, PrimitiveType.Integer)
         }
-        is Statement.Function -> {
+        is Statement.FunctionDeclaration -> {
           val functionEnv = HashMap(env)
-          functionEnv.putAll(statement.paramTypes.mapKeys { it.key.name })
+          functionEnv.putAll(statement.function.paramTypes.mapKeys { it.key.name })
 
-          val functionType = FunctionType(statement.params.map { statement.paramTypes.getValue(it) }, statement.returnType)
+          val functionType = FunctionType(statement.function.params.map { statement.function.paramTypes.getValue(it) }, statement.function.returnType)
 
           functionEnv.put(statement.identifier.name, functionType)
-          val bodyReturnType = checkStatementListTypes(statement.body.statementList, functionEnv)
+          val bodyReturnType = checkStatementListTypes(statement.function.body.statementList, functionEnv)
 
           env.put(statement.identifier.name, functionType)
 
           if(bodyReturnType != null && bodyReturnType != functionType.returnType){
             // if the return type of the body was null, this means that there was already a type missmatch in one of the
-            // expressions so we shouldn't add this as a type missmatch
+            // expressions so we shouldn't add this as a type mismatch
             val functionName = statement.identifier.name
-            val returnType = statement.returnType
+            val returnType = statement.function.returnType
             typeMismatches.add(TypeCheckerException("The return type of $functionName is $returnType however the body of the function returns $bodyReturnType", statement.startToken, statement.endToken))
           }
           return PrimitiveType.Unit

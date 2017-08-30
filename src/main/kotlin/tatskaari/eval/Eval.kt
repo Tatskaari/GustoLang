@@ -1,5 +1,6 @@
 package tatskaari.eval
 
+import tatskaari.FunctionType
 import tatskaari.eval.values.Value
 import tatskaari.parsing.*
 
@@ -44,12 +45,12 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         }
         return null
       }
-      is Statement.Function -> {
+      is Statement.FunctionDeclaration -> {
         val identifierName = statement.identifier.name
         if (env.containsKey(identifierName)){
           throw VariableAlreadyDefined(identifierName)
         } else {
-          val functionVal = Value.FunctionVal(statement, HashMap(env))
+          val functionVal = Value.FunctionVal(statement.function, HashMap(env))
           functionVal.env.put(identifierName, functionVal)
           env[identifierName] = functionVal
         }
@@ -143,6 +144,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       is Expression.FunctionCall -> return callFunction(expression, env)
       is Expression.ListDeclaration -> return evalList(expression, env)
       is Expression.ListAccess -> return evalListAccess(expression, env)
+      is Expression.Function -> return Value.FunctionVal(expression, HashMap(env))
       is Expression.Identifier -> {
         val value = env[expression.name]
         if (value != null) {
@@ -188,7 +190,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     return function
   }
 
-  private fun getFunctionRunEnv(function : Statement.Function, functionCall: Expression.FunctionCall, functionDefEnv: Env, functionCallEnv: Env) : MutEnv {
+  private fun getFunctionRunEnv(function : Expression.Function, functionCall: Expression.FunctionCall, functionDefEnv: Env, functionCallEnv: Env) : MutEnv {
     if (functionCall.params.size != function.params.size){
       throw TypeMismatch("Wrong number of arguments to call $function ")
     }

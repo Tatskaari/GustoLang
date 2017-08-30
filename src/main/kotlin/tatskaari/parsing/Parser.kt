@@ -128,8 +128,8 @@ class Parser {
     return Statement.CodeBlock(body, startToken, endToken)
   }
 
-  // function => STRING "(" (STRING(",")?)*  ")" codeBlock
-  fun function(tokens: TokenList): Statement.Function {
+  // function => STRING "(" (STRING typeNotation(",")?)*  ")" codeBlock
+  fun function(tokens: TokenList): Statement.FunctionDeclaration {
     val startToken = tokens.getNextToken(TokenType.Function)
     val name = tokens.getIdentifier()
     tokens.getNextToken(TokenType.OpenParen)
@@ -159,8 +159,11 @@ class Parser {
 
     val body = codeBlock(tokens)
 
-    return Statement.Function(name, returnType, params, paramTypes, body, startToken, body.endToken)
+    val function = Expression.Function(returnType, params, paramTypes, body, startToken, body.endToken)
+
+    return Statement.FunctionDeclaration(name, function, startToken, body.endToken)
   }
+
   // typeNotation => (("number" | integer | boolean | text ) (list)?) | ("(" (typeNotation)? ",typeNotation"* ")" ("->" typeNotation)?)
   private fun typeNotation(tokens: TokenList): GustoType {
       val token = tokens.consumeToken()
@@ -347,7 +350,7 @@ class Parser {
 
   // primary => NUMBER | STRING | "false" | "true" | "(" expression ")" | listDeclaration
   private fun primary(tokens : TokenList) : Expression{
-    val expectedTokens = listOf(TokenType.OpenParen, TokenType.IntLiteral, TokenType.Identifier, TokenType.True, TokenType.False, TokenType.ListStart)
+    val expectedTokens = listOf(TokenType.OpenParen, TokenType.IntLiteral, TokenType.Function, TokenType.Identifier, TokenType.True, TokenType.False, TokenType.ListStart)
 
     val token = tokens.consumeToken()
     when (token.tokenType) {
@@ -356,6 +359,10 @@ class Parser {
       TokenType.True -> return Expression.BooleanLiteral(true, token, token)
       TokenType.False -> return Expression.BooleanLiteral(false, token, token)
       TokenType.TextLiteral -> return Expression.TextLiteral((token as Token.TextLiteral).text, token, token)
+      TokenType.Function -> {
+        tokens.addFirst(token)
+        return anonymousFunction(tokens)
+      }
       TokenType.OpenParen -> {
         val expr = expression(tokens)
         tokens.getNextToken(TokenType.CloseParen)
@@ -369,6 +376,38 @@ class Parser {
       else -> throw UnexpectedToken(token, expectedTokens)
     }
 
+  }
+  // anonymousFunction => "function" "(" (STRING typeNotation(",")?)*  ")" codeBlock
+  private fun anonymousFunction(tokens: TokenList): Expression.Function {
+    val firstToken = tokens.getNextToken(TokenType.Function)
+    tokens.getNextToken(TokenType.OpenParen)
+    val paramTypes = HashMap<Token.Identifier, GustoType>()
+    val params = ArrayList<Token.Identifier>()
+    while (!tokens.match(TokenType.CloseParen)){
+      val paramIdentifier = tokens.getNextToken(TokenType.Identifier) as Token.Identifier
+      tokens.getNextToken(TokenType.Colon)
+      val paramType: GustoType = typeNotation(tokens)
+
+      params.add(paramIdentifier)
+      paramTypes.put(paramIdentifier, paramType)
+
+      if(tokens.match(TokenType.Comma)){
+        tokens.consumeToken()
+      }
+    }
+
+    tokens.getNextToken(TokenType.CloseParen)
+
+    val returnType = if (tokens.match(TokenType.RightArrow)) {
+      tokens.consumeToken()
+      typeNotation(tokens)
+    } else {
+      PrimitiveType.Unit
+    }
+
+    val body = codeBlock(tokens)
+
+    return Expression.Function(returnType, params, paramTypes, body, firstToken, body.endTok)
   }
 
   // listDeclaration = "[" (expression (",")*)* "]"

@@ -1,6 +1,7 @@
 package tatskaari.eval.values
 
 import tatskaari.eval.Eval
+import tatskaari.parsing.Expression
 import tatskaari.parsing.Statement
 
 sealed class Value(var value: Any) {
@@ -109,12 +110,12 @@ sealed class Value(var value: Any) {
   }
 
   class TextVal(textVal: String) : Value(textVal), Addable {
-    override fun plus(value: Addable): Value = TextVal(textVal() + value.toString() )
+    override fun plus(value: Addable): Value = TextVal(textVal() + value.toString())
   }
 
   class BoolVal(boolVal: Boolean) : Value(boolVal), Stringable
 
-  class FunctionVal(functionVal: Statement.Function, val env : MutableMap<String, Value>) : Value(functionVal)
+  class FunctionVal(functionVal: Expression.Function, val env : MutableMap<String, Value>) : Value(functionVal)
 
   class ListVal(listVal: HashMap<Int, Value>): Value(listVal)
 
@@ -166,9 +167,9 @@ sealed class Value(var value: Any) {
     }
   }
 
-  fun functionVal(): Statement.Function {
+  fun functionVal(): Expression.Function {
     if (this is FunctionVal){
-      return value as Statement.Function
+      return value as Expression.Function
     } else {
       throw Eval.CastException
     }

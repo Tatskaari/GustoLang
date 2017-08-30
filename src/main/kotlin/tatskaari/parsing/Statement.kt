@@ -14,6 +14,6 @@ sealed class Statement(val startTok: Token, val endTok: Token) {
   data class Input(val identifier: Token.Identifier, val startToken: Token, val endToken: Token) : Statement(startToken, endToken)
   data class Output(val expression: Expression, val startToken: Token, val endToken: Token) : Statement(startToken, endToken)
   data class While(val condition: Expression, val body: CodeBlock, val startToken: Token, val endToken: Token) : Statement(startToken, endToken)
-  data class Function(val identifier: Token.Identifier, val returnType: GustoType, val params: List<Token.Identifier>, val paramTypes: Map<Token.Identifier, GustoType>, val body: CodeBlock, val startToken: Token, val endToken: Token) : Statement(startToken, endToken)
+  data class FunctionDeclaration(val identifier: Token.Identifier, val function: Expression.Function, val startToken: Token, val endToken: Token) : Statement(startToken, endToken)
   data class Return(val expression: Expression, val startToken: Token, val endToken: Token) : Statement(startToken, endToken)
 }

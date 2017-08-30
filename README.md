@@ -23,8 +23,9 @@ this project is run through Travis CI and passed through a suite of unit tests.
   - Foreach over lists
   - List API to find size, remove first, append lists together etc.
   - Make lists indexed by strings as well
-  - Allow functions to return nothing. Detect all code paths return the same value.
-  - Static type checking
+  - Allow functions to return nothing. Detect all code paths return the same value. - done (need to add statement expressions to make this useful though)
+  - Static type checking - Done
+  - Anonymous functions
 
 - Features that might be interesting to implement but add little to the educational value
   - Add garbage collection and
