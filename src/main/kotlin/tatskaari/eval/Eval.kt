@@ -16,7 +16,6 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
   data class VariableAlreadyDefined(val identifier: String) : RuntimeException("Identifier aready declared '$identifier'")
   object InvalidUserInput : RuntimeException("Please enter a number, some text or the value 'true' or 'false'")
   //TODO better error message
-  object FunctionExitedWithoutReturn : RuntimeException("Function exited without return")
 
 
   fun eval(statements: List<Statement>, env: MutEnv) : Value?  {
@@ -90,20 +89,12 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         if (input == null || input.isEmpty()) {
           throw InvalidUserInput
         } else {
-          val value: Value =
-            when {
-              input.toIntOrNull() != null -> Value.IntVal(input.toInt())
-              input.toDoubleOrNull() != null -> Value.NumVal(input.toDouble())
-              input.equals("true") -> Value.BoolVal(true)
-              input.equals("false") -> Value.BoolVal(false)
-              else -> Value.TextVal(input)
-            }
+          val value: Value = Value.TextVal(input)
           env.put(identifier, value)
         }
         return null
       }
       is Statement.Output -> {
-        //TODO make this work with io redirection
         val value = eval(statement.expression, env)
         outputProvider.println(value.value.toString())
         return null
@@ -212,7 +203,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         return value
       }
     }
-    throw FunctionExitedWithoutReturn
+    return Value.Unit
   }
 
   private fun applyBinaryOperator(operatorExpression: Expression.BinaryOperator, env: Env): Value {

@@ -7,73 +7,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 object TypeCheckTest {
-//  }
-
-  //  @Test
-//  fun testExpressionTypeCheck(){
-//    var expression: Expression = Expression.BinaryOperator(
-//      BinaryOperators.Add,
-//      Expression.NumLiteral(12.0),
-//      Expression.IntLiteral(12)
-//    )
-//
-//    assertEquals(PrimitiveType.Number, TypeChecker().getExpressionType(expression, HashMap()))
-//
-//    expression = Expression.BinaryOperator(
-//      BinaryOperators.Add,
-//      Expression.NumLiteral(12.0),
-//      Expression.TextLiteral("test")
-//    )
-//
-//    assertEquals(PrimitiveType.Text, TypeChecker().getExpressionType(expression, HashMap()))
-//
-//    expression = Expression.BinaryOperator(
-//      BinaryOperators.Add,
-//      Expression.IntLiteral(12),
-//      Expression.IntLiteral(12)
-//    )
-//
-//    assertEquals(PrimitiveType.Integer, TypeChecker().getExpressionType(expression, HashMap()))
-//
-//    expression = Expression.UnaryOperator(
-//      UnaryOperators.Not,
-//      Expression.BinaryOperator(BinaryOperators.LessThanEq, Expression.IntLiteral(12), Expression.IntLiteral(12))
-//    )
-//
-//    assertEquals(PrimitiveType.Boolean, TypeChecker().getExpressionType(expression, HashMap()))
-//  @Test
-//  fun testBadExpressions(){
-//    assertFailsWith<TypeChecker.TypeMismatch> {
-//      TypeChecker().getExpressionType(
-//        Expression.BinaryOperator(
-//          BinaryOperators.LessThan,
-//          Expression.TextLiteral("asf"),
-//          Expression.TextLiteral("asf")
-//        ),
-//        HashMap()
-//      )
-//    }
-//
-//    assertFailsWith<TypeChecker.TypeMismatch> {
-//      TypeChecker().getExpressionType(
-//        Expression.UnaryOperator(
-//          UnaryOperators.Not,
-//          Expression.TextLiteral("asf")
-//        ),
-//        HashMap()
-//      )
-//    }
-//
-//    assertFailsWith<TypeChecker.TypeMismatch> {
-//      TypeChecker().getExpressionType(
-//        Expression.UnaryOperator(
-//          UnaryOperators.Not,
-//          Expression.TextLiteral("asf")
-//        ),
-//        HashMap()
-//      )
-//    }
-//  }
 
   @Test
   fun testIfStatementType(){
@@ -98,5 +31,66 @@ object TypeCheckTest {
     val typeChecker = TypeChecker()
     typeChecker.checkStatementListTypes(ast!!, HashMap())
     assertEquals( 0, typeChecker.typeMismatches.size)
+  }
+
+  @Test
+  fun testLitTypeChecking(){
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+
+    typeChecker.checkStatementListTypes(parser.parse("val l : integer list := [1,2,3,4]")!!, HashMap())
+    assertEquals(0, typeChecker.typeMismatches.size)
+
+    typeChecker.checkStatementListTypes(parser.parse("val l : integer list := [1,2, true, 4]")!!, HashMap())
+    assertEquals(1, typeChecker.typeMismatches.size)
+  }
+
+  @Test
+  fun testUnaryOperatorChecking(){
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+    val ast = parser.parse("val b : boolean := !(1=1)")!!
+
+    typeChecker.checkStatementListTypes(ast, HashMap())
+    assertEquals(0, typeChecker.typeMismatches.size)
+
+    typeChecker.checkStatementListTypes(parser.parse("val b : boolean := !1")!!, HashMap())
+    assertEquals(1, typeChecker.typeMismatches.size)
+
+    typeChecker.checkStatementListTypes(parser.parse("val b : boolean := -true")!!, HashMap())
+    assertEquals(2, typeChecker.typeMismatches.size)
+  }
+
+  @Test
+  fun badReturnType(){
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+    val ast = parser.parse("function add(a: integer, b: integer) : integer do return true end")!!
+
+    typeChecker.checkStatementListTypes(ast, HashMap())
+    assertEquals(1, typeChecker.typeMismatches.size)
+  }
+
+  @Test
+  fun undeclaredIdentifier() {
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+    val ast = parser.parse("val a: integer := b")!!
+
+    typeChecker.checkStatementListTypes(ast, HashMap())
+    assertEquals(1, typeChecker.typeMismatches.size)
+  }
+
+  @Test
+  fun testInput(){
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+    val ast = parser.parse("input b val a: text := b")!!
+
+    typeChecker.checkStatementListTypes(ast, HashMap())
+    assertEquals(0, typeChecker.typeMismatches.size)
+
+    typeChecker.checkStatementListTypes(parser.parse("input b val a: integer := b")!!, HashMap())
+    assertEquals(1, typeChecker.typeMismatches.size)
   }
 }

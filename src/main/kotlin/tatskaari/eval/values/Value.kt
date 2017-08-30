@@ -5,6 +5,8 @@ import tatskaari.parsing.Expression
 import tatskaari.parsing.Statement
 
 sealed class Value(var value: Any) {
+  object Unit : Value(kotlin.Unit)
+
   interface Addable {
     infix fun plus(value: Addable): Value
   }

@@ -84,27 +84,6 @@ object EvalTest {
   }
 
   @Test
-  fun testNumInput() {
-    val env = MutEnv()
-    Eval(StringInputProvider("1234"), SystemOutputProvider).eval(Parser().parse("input a")!!, env)
-    assertEquals(1234, env.getValue("a").intVal())
-  }
-
-  @Test
-  fun testTrueInput() {
-    val env = MutEnv()
-    Eval(StringInputProvider("true"), SystemOutputProvider).eval(Parser().parse("input a")!!, env)
-    assertEquals(true, env.getValue("a").boolVal())
-  }
-
-  @Test
-  fun testFalseInput() {
-    val env = MutEnv()
-    Eval(StringInputProvider("false"), SystemOutputProvider).eval(Parser().parse("input a")!!, env)
-    assertEquals(false, env.getValue("a").boolVal())
-  }
-
-  @Test
   fun testNullInput() {
     assertFailsWith<Eval.InvalidUserInput> {
       val env = MutEnv()
@@ -130,15 +109,11 @@ object EvalTest {
   fun ifElseTest() {
     val program = TestUtil.loadProgram("IfElse")
 
-    var env = MutEnv()
-    Eval(StringInputProvider("10"), SystemOutputProvider).eval(Parser().parse(program)!!, env)
+    val env = MutEnv()
+    Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
 
     assertEquals(1, env.getValue("someVar").intVal())
 
-    env = MutEnv()
-    Eval(StringInputProvider("11"), SystemOutputProvider).eval(Parser().parse(program)!!, env)
-
-    assertEquals(2, env.getValue("someVar").intVal())
   }
 
   @Test
@@ -339,13 +314,6 @@ object EvalTest {
     }
   }
 
-  @Test
-  fun missingReturnFromFunc(){
-    val program = Parser().parse("function add(a: integer, b: integer) : integer do end val c: integer := add(1, 2)")!!
-    assertFailsWith<Eval.FunctionExitedWithoutReturn> {
-      Eval(StdinInputProvider, SystemOutputProvider).eval(program, MutEnv())
-    }
-  }
 
   @Test
   fun callingInt(){
@@ -425,14 +393,6 @@ object EvalTest {
   }
 
   @Test
-  fun sumListFromInput(){
-    val program = TestUtil.loadProgram("SumListInput")
-    val env = MutEnv()
-    Eval(StringInputProvider("1\n12\n123\n-1\n"), SystemOutputProvider).eval(Parser().parse(program)!!, env)
-    assertEquals(136, env.getValue("out").intVal())
-  }
-
-  @Test
   fun testText(){
     val program = "val a: integer := \"asdf\""
     val env = MutEnv()
@@ -501,21 +461,6 @@ object EvalTest {
   }
 
   @Test
-  fun testMoreInput(){
-    val program = "input out input outout input outoutout input realoutout input realrealoutout"
-    val env = MutEnv()
-    val parser = Parser()
-    val ast = parser.parse(program)
-    val input = StringInputProvider("1.0\nasdf\ntrue\nfalse\n10")
-    Eval(input, SystemOutputProvider).eval(ast!!, env)
-    assertEquals(1.0, env.getValue("out").numVal())
-    assertEquals("asdf", env.getValue("outout").textVal())
-    assertEquals(true, env.getValue("outoutout").boolVal())
-    assertEquals(false, env.getValue("realoutout").boolVal())
-    assertEquals(10, env.getValue("realrealoutout").intVal())
-  }
-
-  @Test
   fun numberComparison(){
     val intNum: Number = 10
     val doubleNum: Number = 10.0
@@ -537,5 +482,14 @@ object EvalTest {
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program!!, env)
     assertEquals(21, env.getValue("out").intVal())
+  }
+
+  @Test
+  fun testInput(){
+    val parser = Parser()
+    val program = parser.parse("input a")
+    val env = MutEnv()
+    Eval(StringInputProvider("Hello, world!"), SystemOutputProvider).eval(program!!, env)
+    assertEquals("Hello, world!", env.getValue("a").textVal())
   }
 }

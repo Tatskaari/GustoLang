@@ -149,6 +149,7 @@ class Parser {
         TokenType.Boolean -> PrimitiveType.Boolean
         TokenType.Integer -> PrimitiveType.Integer
         TokenType.Text -> PrimitiveType.Text
+        TokenType.Unit -> PrimitiveType.Unit
         TokenType.OpenParen -> {
           val params = ArrayList<GustoType>()
           while(!tokens.match(TokenType.CloseParen)){

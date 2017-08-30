@@ -1,11 +1,9 @@
 output "Please enter numbers, enter -1 to stop"
 val inputList : integer list := []
-val nextVal : integer := 0
 val n : integer := 0
 
-while nextVal != -1 do
-    input nextVal
-    inputList[n] := nextVal
+while n < 20 do
+    inputList[n] := n
     n := n + 1
 end
 
