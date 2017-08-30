@@ -196,6 +196,7 @@ class TypeChecker {
         }
         is Statement.Input -> {
           env.put(statement.identifier.name, PrimitiveType.Text)
+          return PrimitiveType.Unit
         }
         is Statement.FunctionDeclaration -> {
           val functionEnv = HashMap(env)

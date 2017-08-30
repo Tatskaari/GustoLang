@@ -551,6 +551,5 @@ object EvalTest {
     assertEquals(123, evalEnv.getValue("int").intVal())
     assertEquals(123.123, evalEnv.getValue("num").numVal())
     assertEquals(true, evalEnv.getValue("bool").boolVal())
-
   }
 }
