@@ -9,7 +9,7 @@ enum class PrimitiveType : GustoType {
 data class ListType(val type: GustoType?): GustoType {
   override fun equals(other: Any?): Boolean {
     if (other is ListType) {
-      if (other.type == type || type == null){
+      if (other.type == type || type == null || other.type == null){
         return true
       }
     }

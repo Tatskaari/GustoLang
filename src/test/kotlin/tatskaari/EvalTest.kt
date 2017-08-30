@@ -2,7 +2,9 @@ package tatskaari
 
 import org.testng.annotations.Test
 import tatskaari.eval.*
+import tatskaari.eval.values.Value
 import tatskaari.parsing.Parser
+import tatskaari.parsing.TypeChecker
 import tatskaari.tokenising.Lexer
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -501,5 +503,35 @@ object EvalTest {
     val env = MutEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program!!, env)
     assertEquals(Unit, env.getValue("a").value)
+  }
+
+  @Test
+  fun testBIF(){
+    val parser = Parser()
+    val program = parser.parse("val a : integer list := [1,2,3] val out : integer := size(a)")
+    val typeChecker = TypeChecker()
+    typeChecker.checkStatementListTypes(program!!, hashMapOf(Pair("size", BuiltInFunction.SizeOfList.type)))
+    val env: MutEnv = hashMapOf(Pair("size", Value.BifVal(BuiltInFunction.SizeOfList)))
+    Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
+    assertEquals(3, env.getValue("out").intVal())
+    assertEquals(0, typeChecker.typeMismatches.size)
+  }
+
+  @Test
+  fun testBIFBadArg(){
+    val parser = Parser()
+    val program = parser.parse(" val out : integer := size(12)")
+    val typeChecker = TypeChecker()
+    typeChecker.checkStatementListTypes(program!!, hashMapOf(Pair("size", BuiltInFunction.SizeOfList.type)))
+    assertEquals(1, typeChecker.typeMismatches.size)
+  }
+
+  @Test
+  fun testAnyListType(){
+    val parser = Parser()
+    val program = parser.parse(" val out : list := [1,2] out := [true, false]")
+    val typeChecker = TypeChecker()
+    typeChecker.checkStatementListTypes(program!!, hashMapOf(Pair("size", BuiltInFunction.SizeOfList.type)))
+    assertEquals(0, typeChecker.typeMismatches.size)
   }
 }

@@ -38,6 +38,12 @@ class TypeChecker {
       is Expression.FunctionCall -> {
         val functionType = getExpressionType(expression.functionExpression, env)
         if (functionType is FunctionType){
+          expression.params.zip(functionType.params).forEach { (expr, type) ->
+            val exprType = getExpressionType(expr, env)
+            if (exprType != type){
+              throw TypeMismatch(type, exprType, expr.startToken, expr.endToken)
+            }
+          }
           functionType.returnType
         } else {
           throw FunctionCalledOnUncalleble(functionType, expression.startToken, expression.endToken)

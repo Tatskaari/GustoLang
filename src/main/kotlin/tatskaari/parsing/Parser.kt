@@ -143,28 +143,30 @@ class Parser {
 
   // typeNotation => (("number" | integer | boolean | text ) (list)?) | ("(" (typeNotation)? ",typeNotation"* ")" ("->" typeNotation)?)
   private fun typeNotation(tokens: TokenList): GustoType {
-      val token = tokens.consumeToken()
-      val type = when(token.tokenType) {
-        TokenType.Number -> PrimitiveType.Number
-        TokenType.Boolean -> PrimitiveType.Boolean
-        TokenType.Integer -> PrimitiveType.Integer
-        TokenType.Text -> PrimitiveType.Text
-        TokenType.Unit -> PrimitiveType.Unit
-        TokenType.OpenParen -> {
-          val params = ArrayList<GustoType>()
-          while(!tokens.match(TokenType.CloseParen)){
-            params.add(typeNotation(tokens))
-            if (tokens.match(TokenType.Comma)){
-              tokens.consumeToken()
-            }
+    //TODO implement list of any type and list of lists
+    val token = tokens.consumeToken()
+    val type = when(token.tokenType) {
+      TokenType.Number -> PrimitiveType.Number
+      TokenType.Boolean -> PrimitiveType.Boolean
+      TokenType.Integer -> PrimitiveType.Integer
+      TokenType.Text -> PrimitiveType.Text
+      TokenType.Unit -> PrimitiveType.Unit
+      TokenType.List -> ListType(null)
+      TokenType.OpenParen -> {
+        val params = ArrayList<GustoType>()
+        while(!tokens.match(TokenType.CloseParen)){
+          params.add(typeNotation(tokens))
+          if (tokens.match(TokenType.Comma)){
+            tokens.consumeToken()
           }
-          tokens.consumeToken()
-          tokens.getNextToken(TokenType.RightArrow)
-          val returnType = typeNotation(tokens)
-          FunctionType(params, returnType)
         }
-        else -> throw UnexpectedToken(token, listOf(TokenType.Text, TokenType.Integer, TokenType.Boolean, TokenType.Number, TokenType.List))
+        tokens.consumeToken()
+        tokens.getNextToken(TokenType.RightArrow)
+        val returnType = typeNotation(tokens)
+        FunctionType(params, returnType)
       }
+      else -> throw UnexpectedToken(token, listOf(TokenType.Text, TokenType.Integer, TokenType.Boolean, TokenType.Number, TokenType.List))
+    }
 
     return if (tokens.match(TokenType.List)){
       tokens.consumeToken()

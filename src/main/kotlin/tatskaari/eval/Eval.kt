@@ -1,6 +1,5 @@
 package tatskaari.eval
 
-import tatskaari.FunctionType
 import tatskaari.eval.values.Value
 import tatskaari.parsing.*
 
@@ -15,7 +14,6 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
   data class UndefinedIdentifier(override val message: String) : RuntimeException("Undeclared identifier '$message'")
   data class VariableAlreadyDefined(val identifier: String) : RuntimeException("Identifier aready declared '$identifier'")
   object InvalidUserInput : RuntimeException("Please enter a number, some text or the value 'true' or 'false'")
-  //TODO better error message
 
 
   fun eval(statements: List<Statement>, env: MutEnv) : Value?  {
@@ -40,7 +38,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         if (env.containsKey(identifierName)){
           throw VariableAlreadyDefined(identifierName)
         } else {
-          env[identifierName] = eval(statement.expression, env)
+          env[identifierName] = eval(statement.expression, env).copyLiteralOrReferenceList()
         }
         return null
       }
@@ -57,7 +55,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       }
       is Statement.Assignment -> {
         val identifier = statement.identifier.name
-        val value = eval(statement.expression, env)
+        val value = eval(statement.expression, env).copyLiteralOrReferenceList()
         if (env.containsKey(identifier)) {
           val existingValue = env.getValue(identifier)
           if (existingValue::class != value::class) {
@@ -164,22 +162,28 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
 
 
   private fun callFunction(functionCall: Expression.FunctionCall, env: Env) : Value{
-    val functionVal = getFunction(functionCall, env)
-    val funEnv = getFunctionRunEnv(functionVal.functionVal(), functionCall, functionVal.env, env)
+    val functionVal = eval(functionCall.functionExpression, env)
 
-    return evalFunction(functionVal.functionVal().body.statementList, funEnv)
-  }
-
-  private fun getFunction(functionCall: Expression.FunctionCall, env: Env): Value.FunctionVal {
-
-    val function = eval(functionCall.functionExpression, env)
-
-    if (function !is Value.FunctionVal){
-      throw TypeMismatch("$function is not callable")
+    when (functionVal) {
+      is Value.FunctionVal -> {
+        val funEnv = getFunctionRunEnv(functionVal.functionVal(), functionCall, functionVal.env, env)
+        return evalFunction(functionVal.functionVal().body.statementList, funEnv)
+      }
+      is Value.BifVal -> {
+        val funEnv = MutEnv()
+        functionVal.bif.params
+          .zip(functionCall.params)
+          .forEach { (name, expr) ->
+            funEnv.put(name, eval(expr, env))
+          }
+        return functionVal.bif.function(funEnv)
+      }
+      else -> throw TypeMismatch("$functionVal is not callable")
     }
 
-    return function
   }
+
+
 
   private fun getFunctionRunEnv(function : Expression.Function, functionCall: Expression.FunctionCall, functionDefEnv: Env, functionCallEnv: Env) : MutEnv {
     if (functionCall.params.size != function.params.size){

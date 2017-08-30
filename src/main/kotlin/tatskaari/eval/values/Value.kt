@@ -1,5 +1,6 @@
 package tatskaari.eval.values
 
+import tatskaari.BuiltInFunction
 import tatskaari.eval.Eval
 import tatskaari.parsing.Expression
 import tatskaari.parsing.Statement
@@ -118,6 +119,7 @@ sealed class Value(var value: Any) {
   class BoolVal(boolVal: Boolean) : Value(boolVal), Stringable
 
   class FunctionVal(functionVal: Expression.Function, val env : MutableMap<String, Value>) : Value(functionVal)
+  class BifVal(val bif: BuiltInFunction): Value(bif)
 
   class ListVal(listVal: HashMap<Int, Value>): Value(listVal)
 

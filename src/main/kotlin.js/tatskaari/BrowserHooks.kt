@@ -1,6 +1,7 @@
 package tatskaari
 
 import tatskaari.eval.*
+import tatskaari.eval.values.Value
 import tatskaari.parsing.Parser
 import tatskaari.parsing.TypeChecker
 import kotlin.browser.window
@@ -15,10 +16,16 @@ object BrowserHooks {
       val ast = parser.parse(program)
       val typeChecker = TypeChecker()
 
+      val typeEnv: HashMap<String, GustoType> = HashMap()
+      typeEnv.putAll(BuiltInFunction.values().map{Pair(it.funName, it.type)})
+
+      val evalEnv: MutEnv = MutEnv()
+      evalEnv.putAll(BuiltInFunction.values().map{ Pair(it.funName, Value.BifVal(it))})
+
       if (ast != null){
-        typeChecker.checkStatementListTypes(ast, HashMap())
+        typeChecker.checkStatementListTypes(ast, typeEnv)
         if (typeChecker.typeMismatches.isEmpty()){
-          eval.eval(ast, MutEnv())?.value.toString()
+          eval.eval(ast, evalEnv)
         } else {
           typeChecker.typeMismatches.forEach{
             error(it.message!!)
