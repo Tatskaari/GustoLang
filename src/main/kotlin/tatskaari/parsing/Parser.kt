@@ -88,7 +88,7 @@ class Parser {
 
   // if => "if" expression codeBlock ("else" codeBlock)?
   private fun iff(tokens: TokenList): Statement {
-    tokens.getNextToken(TokenType.If)
+    val startToken = tokens.getNextToken(TokenType.If)
     val condition = expression(tokens)
     tokens.getNextToken(TokenType.Then)
     val trueBody = ArrayList<Statement>()
@@ -101,36 +101,36 @@ class Parser {
       while (!tokens.matchAny(TokenType.CloseBlock, TokenType.Else)){
         elseBody.add(statement(tokens))
       }
-      tokens.getNextToken(TokenType.CloseBlock)
-      Statement.IfElse(condition, trueBody, elseBody)
+      val lastToken = tokens.getNextToken(TokenType.CloseBlock)
+      Statement.IfElse(condition, trueBody, elseBody, startToken, lastToken)
     } else {
-      tokens.getNextToken(TokenType.CloseBlock)
-      Statement.If(condition, trueBody)
+      val lastToken = tokens.getNextToken(TokenType.CloseBlock)
+      Statement.If(condition, trueBody, startToken, lastToken)
     }
   }
 
   // while => "while" "(" expression ")" codeBlock
   private fun whilee(tokens: TokenList): Statement.While {
-    tokens.getNextToken(TokenType.While)
+    val startToken = tokens.getNextToken(TokenType.While)
     val condition = expression(tokens)
     val body = codeBlock(tokens)
-    return Statement.While(condition, body)
+    return Statement.While(condition, body, startToken, body.endToken)
   }
 
   // codeBlock => "{" (statement)* "}"
   private fun codeBlock(tokens: TokenList): Statement.CodeBlock {
-    tokens.getNextToken(TokenType.OpenBlock)
+    val startToken = tokens.getNextToken(TokenType.OpenBlock)
     val body = ArrayList<Statement>()
     while(!tokens.match(TokenType.CloseBlock)){
       body.add(statement(tokens))
     }
-    tokens.getNextToken(TokenType.CloseBlock)
-    return Statement.CodeBlock(body)
+    val endToken = tokens.getNextToken(TokenType.CloseBlock)
+    return Statement.CodeBlock(body, startToken, endToken)
   }
 
   // function => STRING "(" (STRING(",")?)*  ")" codeBlock
   fun function(tokens: TokenList): Statement.Function {
-    tokens.getNextToken(TokenType.Function)
+    val startToken = tokens.getNextToken(TokenType.Function)
     val name = tokens.getIdentifier()
     tokens.getNextToken(TokenType.OpenParen)
     val paramTypes = HashMap<Token.Identifier, GustoType>()
@@ -159,7 +159,7 @@ class Parser {
 
     val body = codeBlock(tokens)
 
-    return Statement.Function(name, returnType, params, paramTypes, body)
+    return Statement.Function(name, returnType, params, paramTypes, body, startToken, body.endToken)
   }
   // typeNotation => (("number" | integer | boolean | text ) (list)?) | ("(" (typeNotation)? ",typeNotation"* ")" ("->" typeNotation)?)
   private fun typeNotation(tokens: TokenList): GustoType {
@@ -195,51 +195,55 @@ class Parser {
 
   // return => "return" expression
   private fun returnn(tokens: TokenList): Statement.Return {
-    tokens.getNextToken(TokenType.Return)
+    val startToken = tokens.getNextToken(TokenType.Return)
     val expression = expression(tokens)
-    return Statement.Return(expression)
+    return Statement.Return(expression, startToken, expression.endToken)
   }
 
   // valueDeclaration => "var" STRING : typeNotation ":=" expression
   private fun valueDeclaration(tokens: TokenList): Statement {
-    tokens.getNextToken(TokenType.Value)
+    val startToken = tokens.getNextToken(TokenType.Value)
     val identifier = tokens.getIdentifier()
     tokens.getNextToken(TokenType.Colon)
     val valType = typeNotation(tokens)
     tokens.getNextToken(TokenType.AssignOp)
     val expression = expression(tokens)
-    return Statement.ValDeclaration(identifier, expression, valType)
+    return Statement.ValDeclaration(identifier, expression, valType, startToken, expression.endToken)
   }
 
   // assignment => STRING ":=" expression | STRING "[" expression "]" ":=" expression
   private fun assignment(tokens: TokenList): Statement {
     val identifier = tokens.getIdentifier()
-    return if (tokens.match(TokenType.AssignOp)){
-      tokens.getNextToken(TokenType.AssignOp)
-      val expression = expression(tokens)
-      Statement.Assignment(identifier, expression)
-    } else {
-      tokens.getNextToken(TokenType.ListStart)
-      val indexExpression = expression(tokens)
-      tokens.getNextToken(TokenType.ListEnd)
-      tokens.getNextToken(TokenType.AssignOp)
-      val expression = expression(tokens)
-      Statement.ListAssignment(identifier, indexExpression, expression)
+    return when {
+      tokens.match(TokenType.AssignOp) -> {
+        tokens.getNextToken(TokenType.AssignOp)
+        val expression = expression(tokens)
+        Statement.Assignment(identifier, expression, identifier, expression.endToken)
+      }
+      tokens.match(TokenType.ListStart) -> {
+        tokens.getNextToken(TokenType.ListStart)
+        val indexExpression = expression(tokens)
+        tokens.getNextToken(TokenType.ListEnd)
+        tokens.getNextToken(TokenType.AssignOp)
+        val expression = expression(tokens)
+        Statement.ListAssignment(identifier, indexExpression, expression, identifier, expression.endToken)
+      }
+      else -> throw UnexpectedToken(tokens.lookAhead(), listOf(TokenType.AssignOp, TokenType.ListStart))
     }
   }
 
   // input => "input" STRING
   fun input(tokens: TokenList): Statement.Input {
-    tokens.getNextToken(TokenType.Input)
+    val startToken = tokens.getNextToken(TokenType.Input)
     val identifier = tokens.getIdentifier()
-    return Statement.Input(identifier)
+    return Statement.Input(identifier,startToken, identifier)
   }
 
   // output => "output" expression
   fun output(tokens: TokenList): Statement.Output {
-    tokens.getNextToken(TokenType.Output)
+    val startToken = tokens.getNextToken(TokenType.Output)
     val expression = expression(tokens)
-    return Statement.Output(expression)
+    return Statement.Output(expression, startToken, expression.endToken)
   }
 
   // expression => logical
@@ -253,7 +257,7 @@ class Parser {
     while(tokens.matchAny(TokenType.Or, TokenType.And)){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = equality(tokens)
-      expr = Expression.BinaryOperator(operator, expr, rhs)
+      expr = Expression.BinaryOperator(operator, expr, rhs, expr.startToken, rhs.endToken)
     }
     return expr
   }
@@ -264,7 +268,7 @@ class Parser {
     while(tokens.matchAny(TokenType.Equality, TokenType.NotEquality)){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = comparison(tokens)
-      expr = Expression.BinaryOperator(operator, expr, rhs)
+      expr = Expression.BinaryOperator(operator, expr, rhs, expr.startToken, rhs.endToken)
     }
     return expr
   }
@@ -275,7 +279,7 @@ class Parser {
     while(tokens.matchAny(TokenType.GreaterThan, TokenType.GreaterThanEq, TokenType.LessThan, TokenType.LessThanEq)){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = addition(tokens)
-      expr = Expression.BinaryOperator(operator, expr, rhs)
+      expr = Expression.BinaryOperator(operator, expr, rhs, expr.startToken, rhs.endToken)
     }
     return expr
   }
@@ -286,7 +290,7 @@ class Parser {
     while(tokens.matchAny(TokenType.Add, TokenType.Sub)){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = multiplication(tokens)
-      expr = Expression.BinaryOperator(operator, expr, rhs)
+      expr = Expression.BinaryOperator(operator, expr, rhs, expr.startToken, rhs.endToken)
     }
     return expr
   }
@@ -297,7 +301,7 @@ class Parser {
     while(tokens.matchAny(TokenType.Mul, TokenType.Div)){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = unary(tokens)
-      expr = Expression.BinaryOperator(operator, expr, rhs)
+      expr = Expression.BinaryOperator(operator, expr, rhs, expr.startToken, rhs.endToken)
     }
     return expr
   }
@@ -307,7 +311,7 @@ class Parser {
     if (tokens.matchAny(TokenType.Not, TokenType.Sub)) {
       val operator = tokens.removeFirst()
       val right = unary(tokens)
-      return Expression.UnaryOperator(UnaryOperators.getOperator(operator), right)
+      return Expression.UnaryOperator(UnaryOperators.getOperator(operator), right, operator, right.endToken)
     }
 
     var expr = primary(tokens)
@@ -316,13 +320,13 @@ class Parser {
       if(tokens.match(TokenType.OpenParen)){
         tokens.getNextToken(TokenType.OpenParen)
         val params = expressionList(tokens, TokenType.CloseParen)
-        tokens.getNextToken(TokenType.CloseParen)
-        expr = Expression.FunctionCall(expr, params)
+        val endToken = tokens.getNextToken(TokenType.CloseParen)
+        expr = Expression.FunctionCall(expr, params, expr.startToken, endToken)
       } else if(tokens.match(TokenType.ListStart)){
         tokens.getNextToken(TokenType.ListStart)
         val indexExpression = expression(tokens)
-        tokens.getNextToken(TokenType.ListEnd)
-        expr = Expression.ListAccess(expr, indexExpression)
+        val endToken = tokens.getNextToken(TokenType.ListEnd)
+        expr = Expression.ListAccess(expr, indexExpression, expr.startToken, endToken)
       }
     }
 
@@ -347,11 +351,11 @@ class Parser {
 
     val token = tokens.consumeToken()
     when (token.tokenType) {
-      TokenType.IntLiteral -> return Expression.IntLiteral((token as Token.IntLiteral).value)
-      TokenType.NumLiteral -> return Expression.NumLiteral((token as Token.NumLiteral).value)
-      TokenType.True -> return Expression.BooleanLiteral(true)
-      TokenType.False -> return Expression.BooleanLiteral(false)
-      TokenType.TextLiteral -> return Expression.TextLiteral((token as Token.TextLiteral).text)
+      TokenType.IntLiteral -> return Expression.IntLiteral((token as Token.IntLiteral).value, token, token)
+      TokenType.NumLiteral -> return Expression.NumLiteral((token as Token.NumLiteral).value, token, token)
+      TokenType.True -> return Expression.BooleanLiteral(true, token, token)
+      TokenType.False -> return Expression.BooleanLiteral(false, token, token)
+      TokenType.TextLiteral -> return Expression.TextLiteral((token as Token.TextLiteral).text, token, token)
       TokenType.OpenParen -> {
         val expr = expression(tokens)
         tokens.getNextToken(TokenType.CloseParen)
@@ -361,7 +365,7 @@ class Parser {
         tokens.addFirst(token)
         return listDeclaration(tokens)
       }
-      TokenType.Identifier -> return Expression.Identifier(token.tokenText)
+      TokenType.Identifier -> return Expression.Identifier(token.tokenText, token, token)
       else -> throw UnexpectedToken(token, expectedTokens)
     }
 
@@ -369,10 +373,9 @@ class Parser {
 
   // listDeclaration = "[" (expression (",")*)* "]"
   private fun listDeclaration(tokens: TokenList): Expression.ListDeclaration {
-    tokens.getNextToken(TokenType.ListStart)
+    val startToken = tokens.getNextToken(TokenType.ListStart)
     val listItems = expressionList(tokens, TokenType.ListEnd)
-    tokens.getNextToken(TokenType.ListEnd)
-
-    return Expression.ListDeclaration(listItems)
+    val endToken = tokens.getNextToken(TokenType.ListEnd)
+    return Expression.ListDeclaration(listItems, startToken, endToken)
   }
 }

@@ -4,18 +4,21 @@ import tatskaari.FunctionType
 import tatskaari.GustoType
 import tatskaari.ListType
 import tatskaari.PrimitiveType
+import tatskaari.tokenising.Token
 
 class TypeChecker {
-  open class TypeMismatch : Exception {
-    constructor(expectedType: GustoType?, actualType: GustoType?) : super("Unexpected type $actualType, expected $expectedType")
-    constructor(expectedTypes: List<GustoType>, actualType: GustoType) : super("Unexpected type $actualType, expected one of $expectedTypes")
-    constructor(operator: BinaryOperators, lhsType: GustoType, rhsType: GustoType) : super("Operator $operator cannot be applied between $lhsType and $rhsType")
-    constructor(reason: String) : super(reason)
+  open class TypeCheckerException(reason: String, startToken: Token, endToken: Token): Exception(reason + " at " + startToken.lineNumber + ":" + startToken.columnNumber)
+
+  class TypeMismatch : TypeCheckerException {
+    constructor(expectedType: GustoType?, actualType: GustoType?, startToken: Token, endToken: Token) : super("Unexpected type $actualType, expected $expectedType", startToken, endToken)
+    constructor(expectedTypes: List<GustoType>, actualType: GustoType, startToken: Token, endToken: Token) : super("Unexpected type $actualType, expected one of $expectedTypes", startToken, endToken)
+    constructor(operator: BinaryOperators, lhsType: GustoType, rhsType: GustoType, startToken: Token, endToken: Token) : super("Operator $operator cannot be applied between $lhsType and $rhsType", startToken, endToken)
   }
 
-  class FunctionCalledOnUncalleble(calledType: GustoType): TypeMismatch("$calledType cannot be called as a function")
+  class FunctionCalledOnUncalleble(calledType: GustoType, startToken: Token, endToken: Token): TypeCheckerException("$calledType cannot be called as a function", startToken, endToken)
+  class UndeclaredIdentifier(identifier: String, startToken: Token, endToken: Token): TypeCheckerException("$identifier has not been defined yet", startToken, endToken)
 
-  var typeMismatches = ArrayList<TypeMismatch>()
+  var typeMismatches = ArrayList<TypeCheckerException>()
 
   fun getExpressionType(expression: Expression, env: HashMap<String, GustoType>): GustoType {
     return when(expression) {
@@ -23,7 +26,13 @@ class TypeChecker {
       is Expression.IntLiteral -> PrimitiveType.Integer
       is Expression.TextLiteral -> PrimitiveType.Text
       is Expression.BooleanLiteral -> PrimitiveType.Boolean
-      is Expression.Identifier -> env.getValue(expression.name)
+      is Expression.Identifier -> {
+        if (env.containsKey(expression.name)){
+          env.getValue(expression.name)
+        } else {
+          throw UndeclaredIdentifier(expression.name, expression.startToken, expression.endToken)
+        }
+      }
       is Expression.UnaryOperator -> getUnaryOperatorType(expression, env)
       is Expression.BinaryOperator -> getBinaryOperatorType(expression, env)
       is Expression.FunctionCall -> {
@@ -31,7 +40,7 @@ class TypeChecker {
         if (functionType is FunctionType){
           functionType.returnType
         } else {
-          throw FunctionCalledOnUncalleble(functionType)
+          throw FunctionCalledOnUncalleble(functionType, expression.startToken, expression.endToken)
         }
       }
       is Expression.ListAccess -> {
@@ -39,7 +48,7 @@ class TypeChecker {
         if (listType is ListType && listType.type != null){
           listType.type
         } else {
-          throw TypeMismatch(ListType(null), listType)
+          throw TypeMismatch(ListType(null), listType, expression.startToken, expression.endToken)
         }
       }
       is Expression.ListDeclaration -> getListType(expression, env)
@@ -54,7 +63,7 @@ class TypeChecker {
       listDeclaration.items.forEach {
         val expressionType = getExpressionType(it, env)
         if (expressionType != type){
-          throw TypeMismatch(type, expressionType)
+          throw TypeMismatch(type, expressionType, listDeclaration.startToken, listDeclaration.endToken)
         }
       }
       ListType(type)
@@ -68,7 +77,7 @@ class TypeChecker {
         if (expressionType == PrimitiveType.Integer || expressionType == PrimitiveType.Number){
           expressionType
         } else {
-          throw TypeMismatch(listOf(PrimitiveType.Number, PrimitiveType.Integer), expressionType)
+          throw TypeMismatch(listOf(PrimitiveType.Number, PrimitiveType.Integer), expressionType, unaryOp.startToken, unaryOp.endToken)
         }
       }
       UnaryOperators.Not -> {
@@ -76,7 +85,7 @@ class TypeChecker {
         if (expressionType == PrimitiveType.Boolean) {
           PrimitiveType.Boolean
         } else {
-          throw TypeMismatch(PrimitiveType.Boolean, expressionType)
+          throw TypeMismatch(PrimitiveType.Boolean, expressionType, unaryOp.startToken, unaryOp.endToken)
         }
       }
 
@@ -97,14 +106,14 @@ class TypeChecker {
         } else if (lhsType == PrimitiveType.Integer && rhsType == PrimitiveType.Integer) {
           PrimitiveType.Integer
         } else {
-          throw TypeMismatch(binOp.operator, lhsType, rhsType)
+          throw TypeMismatch(binOp.operator, lhsType, rhsType, binOp.startToken, binOp.endToken)
         }
       }
       BinaryOperators.And, BinaryOperators.Or -> {
         if (lhsType == PrimitiveType.Boolean && rhsType == PrimitiveType.Boolean){
           PrimitiveType.Boolean
         } else {
-          throw TypeMismatch(binOp.operator, lhsType, rhsType)
+          throw TypeMismatch(binOp.operator, lhsType, rhsType, binOp.startToken, binOp.endToken)
         }
       }
       BinaryOperators.Equality, BinaryOperators.NotEquality -> PrimitiveType.Boolean
@@ -112,7 +121,7 @@ class TypeChecker {
         if ((lhsType == PrimitiveType.Number || lhsType == PrimitiveType.Integer) && (rhsType == PrimitiveType.Number || rhsType == PrimitiveType.Integer)) {
           PrimitiveType.Boolean
         } else {
-          throw TypeMismatch(binOp.operator, lhsType, rhsType)
+          throw TypeMismatch(binOp.operator, lhsType, rhsType, binOp.startToken, binOp.endToken)
         }
       }
     }
@@ -124,7 +133,7 @@ class TypeChecker {
       if (type == PrimitiveType.Unit) {
         type = statementType
       } else if(statementType != PrimitiveType.Unit && statementType != type){
-        throw TypeMismatch(statementType, type)
+        throw TypeMismatch(statementType, type, it.startTok, it.endTok)
       }
     }
     return type
@@ -137,7 +146,7 @@ class TypeChecker {
           val expressionVal = getExpressionType(statement.expression, env)
           val expectedVal = env.getValue(statement.identifier.name)
           if (expressionVal != expectedVal) {
-            typeMismatches.add(TypeMismatch(expectedVal, expressionVal))
+            typeMismatches.add(TypeMismatch(expectedVal, expressionVal, statement.startToken, statement.endToken))
           }
           return PrimitiveType.Unit
         }
@@ -148,7 +157,7 @@ class TypeChecker {
         is Statement.While -> {
           val expressionType = getExpressionType(statement.condition, env)
           if (expressionType != PrimitiveType.Boolean) {
-            typeMismatches.add(TypeMismatch(PrimitiveType.Boolean, expressionType))
+            typeMismatches.add(TypeMismatch(PrimitiveType.Boolean, expressionType, statement.startToken, statement.endToken))
           }
           return checkStatmentType(statement.body, env)
         }
@@ -156,25 +165,32 @@ class TypeChecker {
         is Statement.If -> {
           val expressionType = getExpressionType(statement.condition, env)
           if (expressionType != PrimitiveType.Boolean) {
-            typeMismatches.add(TypeMismatch(PrimitiveType.Boolean, expressionType))
+            typeMismatches.add(TypeMismatch(PrimitiveType.Boolean, expressionType, statement.startToken, statement.endToken))
           }
           return checkStatementListTypes(statement.body, env)
         }
         is Statement.IfElse -> {
           val expressionType = getExpressionType(statement.condition, env)
           if (expressionType != PrimitiveType.Boolean) {
-            typeMismatches.add(TypeMismatch(PrimitiveType.Boolean, expressionType))
+            typeMismatches.add(TypeMismatch(PrimitiveType.Boolean, expressionType, statement.startToken, statement.endToken))
           }
           val ifType = checkStatementListTypes(statement.ifBody, env)
           val elseType = checkStatementListTypes(statement.elseBody, env)
           if (ifType == elseType) {
             return ifType
           } else {
-            typeMismatches.add(TypeMismatch(ifType, elseType))
+            typeMismatches.add(TypeMismatch(ifType, elseType, statement.startToken, statement.endToken))
           }
         }
         is Statement.Return -> return getExpressionType(statement.expression, env)
-        is Statement.Input, is Statement.Output -> return PrimitiveType.Unit
+        is Statement.Output -> {
+          getExpressionType(statement.expression, env)
+          return PrimitiveType.Unit
+        }
+        is Statement.Input -> {
+          //TODO make this input text and supply conversion methods
+          env.put(statement.identifier.name, PrimitiveType.Integer)
+        }
         is Statement.Function -> {
           val functionEnv = HashMap(env)
           functionEnv.putAll(statement.paramTypes.mapKeys { it.key.name })
@@ -183,12 +199,15 @@ class TypeChecker {
 
           functionEnv.put(statement.identifier.name, functionType)
           val bodyReturnType = checkStatementListTypes(statement.body.statementList, functionEnv)
-          if (bodyReturnType == statement.returnType) {
-            env.put(statement.identifier.name, functionType)
-          } else if(bodyReturnType != null){
+
+          env.put(statement.identifier.name, functionType)
+
+          if(bodyReturnType != null && bodyReturnType != functionType.returnType){
             // if the return type of the body was null, this means that there was already a type missmatch in one of the
             // expressions so we shouldn't add this as a type missmatch
-            typeMismatches.add(TypeMismatch(functionType.returnType, bodyReturnType))
+            val functionName = statement.identifier.name
+            val returnType = statement.returnType
+            typeMismatches.add(TypeCheckerException("The return type of $functionName is $returnType however the body of the function returns $bodyReturnType", statement.startToken, statement.endToken))
           }
           return PrimitiveType.Unit
         }
@@ -198,17 +217,17 @@ class TypeChecker {
             val expressionType = getExpressionType(statement.expression, env)
             val indexType = getExpressionType(statement.indexExpression, env)
             if (expressionType != listType.type){
-              typeMismatches.add(TypeMismatch(listType.type, expressionType))
+              typeMismatches.add(TypeMismatch(listType.type, expressionType, statement.startToken, statement.endToken))
             }
             if (indexType != PrimitiveType.Integer){
-              typeMismatches.add(TypeMismatch(PrimitiveType.Number, indexType))
+              typeMismatches.add(TypeMismatch(PrimitiveType.Number, indexType, statement.startToken, statement.endToken))
             }
           } else {
-            typeMismatches.add(TypeMismatch(ListType(null), listType))
+            typeMismatches.add(TypeMismatch(ListType(null), listType, statement.startToken, statement.endToken))
           }
         }
       }
-    } catch (typeMismatch: TypeMismatch){
+    } catch (typeMismatch: TypeCheckerException){
       typeMismatches.add(typeMismatch)
     }
     return null
@@ -217,7 +236,7 @@ class TypeChecker {
   fun checkDeclarationType(declaration: Statement.ValDeclaration, type: GustoType, env: HashMap<String, GustoType>){
     val expressionType = getExpressionType(declaration.expression, env)
     if (expressionType != type){
-      typeMismatches.add(TypeMismatch(type, expressionType))
+      typeMismatches.add(TypeMismatch(type, expressionType, declaration.startToken, declaration.endToken))
     }
     env.put(declaration.identifier.name, type)
   }
