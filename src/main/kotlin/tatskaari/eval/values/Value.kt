@@ -3,7 +3,6 @@ package tatskaari.eval.values
 import tatskaari.BuiltInFunction
 import tatskaari.eval.Eval
 import tatskaari.parsing.Expression
-import tatskaari.parsing.Statement
 
 sealed class Value(var value: Any) {
   object Unit : Value(kotlin.Unit)

@@ -1,6 +1,8 @@
 package tatskaari
 
 import tatskaari.parsing.Statement
+import java.io.File
+import java.io.FileOutputStream
 import kotlin.test.assertEquals
 
 object TestUtil {
@@ -17,6 +19,12 @@ object TestUtil {
     expected.zip(actual).map { (expectedVal, actualVal) ->
       assertEquals(expectedVal, actualVal)
     }
+  }
+
+  fun saveClassToFile(clazz: ByteArray, fileName: String){
+    val fos = FileOutputStream("target${File.pathSeparator}$fileName")
+    fos.write(clazz)
+    fos.close()
   }
 }
 
