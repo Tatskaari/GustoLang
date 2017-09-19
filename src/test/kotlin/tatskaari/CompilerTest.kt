@@ -49,7 +49,7 @@ object CompilerTest {
   @Test
   fun testOutputString(){
     val parser = Parser()
-    val classBytes = Compiler.compileProgram(parser.parse("""output "test" + " " + "text"  """)!!)
+    val classBytes = Compiler.compileProgram(parser.parse("""output "2 * " + 6 + " is " + 12.0 """)!!)
 
     val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())
     val clazz = classLoader.defineClass("GustoMain", classBytes)!!
@@ -62,6 +62,6 @@ object CompilerTest {
     System.setOut(out)
     val content = String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8)
 
-    assertEquals("test text", content.replace("\r\n", "\n").trim())
+    assertEquals("2 * 6 is 12.0", content.replace("\r\n", "\n").trim())
   }
 }

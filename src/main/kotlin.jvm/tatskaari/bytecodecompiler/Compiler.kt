@@ -9,6 +9,7 @@ import tatskaari.parsing.BinaryOperators
 import tatskaari.parsing.Expression
 import tatskaari.parsing.Statement
 import tatskaari.parsing.TypeChecker
+import tatskaari.parsing.TypeChecker.TypedExpression
 
 object Compiler {
   fun compileProgram(statements: List<Statement>): ByteArray {
@@ -32,27 +33,28 @@ object Compiler {
       is Statement.Output -> {
         // put System.out on the operand stack
         methodVisitor.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;")
-        compileExpression(statement.expression, methodVisitor)
-        val type = TypeChecker().getExpressionType(statement.expression, HashMap())
+        val typeChecker = TypeChecker()
+        compileExpression(typeChecker.getExpressionType(statement.expression, HashMap()), methodVisitor)
+        val type = TypeChecker().getExpressionType(statement.expression, HashMap()).gustoType
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(${type.getJvmTypeDesc()})V", false)
       }
     }
   }
 
-  private fun compileExpression(expression: Expression, methodVisitor: MethodVisitor){
+  private fun compileExpression(expression: TypedExpression, methodVisitor: MethodVisitor){
     when (expression) {
-      is Expression.IntLiteral -> methodVisitor.visitIntInsn(Opcodes.BIPUSH, expression.value)
-      is Expression.NumLiteral -> methodVisitor.visitLdcInsn(expression.value)
-      is Expression.TextLiteral -> methodVisitor.visitLdcInsn(expression.value)
-      is Expression.BinaryOperator -> compileBinaryOperator(expression, methodVisitor)
+      is TypedExpression.IntLiteral -> methodVisitor.visitIntInsn(Opcodes.BIPUSH, expression.expr.value)
+      is TypedExpression.NumLiteral -> methodVisitor.visitLdcInsn(expression.expr.value)
+      is TypedExpression.TextLiteral -> methodVisitor.visitLdcInsn(expression.expr.value)
+      is TypedExpression.BinaryOperator -> compileBinaryOperator(expression, methodVisitor)
     }
   }
 
-  private fun compileBinaryOperator(binaryOperator: Expression.BinaryOperator, methodVisitor: MethodVisitor){
-    val lhsType = TypeChecker().getExpressionType(binaryOperator.lhs, HashMap())
-    val rhsType = TypeChecker().getExpressionType(binaryOperator.rhs, HashMap())
+  private fun compileBinaryOperator(binaryOperator: TypedExpression.BinaryOperator, methodVisitor: MethodVisitor){
+    val lhsType = binaryOperator.lhs.gustoType
+    val rhsType = binaryOperator.rhs.gustoType
 
-    if(binaryOperator.operator == BinaryOperators.Add && (lhsType == PrimitiveType.Text || rhsType == PrimitiveType.Text)){
+    if(binaryOperator.expr.operator == BinaryOperators.Add && (lhsType == PrimitiveType.Text || rhsType == PrimitiveType.Text)){
       methodVisitor.visitTypeInsn(NEW, "java/lang/StringBuilder")
       methodVisitor.visitInsn(DUP)
       methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V", false)
@@ -73,7 +75,7 @@ object Compiler {
         methodVisitor.visitInsn(I2D)
       }
 
-      when(binaryOperator.operator){
+      when(binaryOperator.expr.operator){
         BinaryOperators.Add -> methodVisitor.visitInsn(if (integerArithmetic) IADD else DADD)
         BinaryOperators.Sub -> methodVisitor.visitInsn(if (integerArithmetic) ISUB else DSUB)
         BinaryOperators.Mul -> methodVisitor.visitInsn(if (integerArithmetic) IMUL else DMUL)

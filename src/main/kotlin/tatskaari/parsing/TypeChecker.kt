@@ -7,6 +7,21 @@ import tatskaari.PrimitiveType
 import tatskaari.tokenising.Token
 
 class TypeChecker {
+  sealed class TypedExpression(val expression: Expression, val gustoType: GustoType) {
+    class NumLiteral(val expr: Expression.NumLiteral): TypedExpression(expr, PrimitiveType.Number)
+    class IntLiteral(val expr: Expression.IntLiteral): TypedExpression(expr, PrimitiveType.Integer)
+    class TextLiteral(val expr: Expression.TextLiteral): TypedExpression(expr, PrimitiveType.Text)
+    class BooleanLiteral(val expr: Expression.BooleanLiteral): TypedExpression(expr, PrimitiveType.Boolean)
+    class Identifier(val expr: Expression.Identifier, type: GustoType): TypedExpression(expr, type)
+    class UnaryOperator(val expr: Expression.UnaryOperator, val rhs: TypedExpression, type: GustoType): TypedExpression(expr, type)
+    class BinaryOperator(val expr: Expression.BinaryOperator, val lhs: TypedExpression, val rhs: TypedExpression, type: GustoType): TypedExpression(expr, type)
+    class FunctionCall(val expr: Expression.FunctionCall, val functionExpression: TypedExpression, val paramExprs: List<TypedExpression>, type: GustoType): TypedExpression(expr, type)
+    class ListAccess(val expr: Expression.ListAccess, type: GustoType, val listExpression: TypedExpression, val indexExpr: TypedExpression): TypedExpression(expr, type)
+    class ListDeclaration(val expr: Expression.ListDeclaration, type: GustoType, val listItemExpr: List<TypedExpression>) : TypedExpression(expr, type)
+    //TODO include the type of the body
+    class Function(val expr: Expression.Function, type: GustoType): TypedExpression(expr, type)
+  }
+
   open class TypeCheckerException(reason: String, startToken: Token, endToken: Token): Exception(reason + " at " + startToken.lineNumber + ":" + startToken.columnNumber)
 
   class TypeMismatch : TypeCheckerException {
@@ -20,15 +35,15 @@ class TypeChecker {
 
   var typeMismatches = ArrayList<TypeCheckerException>()
 
-  fun getExpressionType(expression: Expression, env: HashMap<String, GustoType>): GustoType {
+  fun getExpressionType(expression: Expression, env: HashMap<String, GustoType>): TypedExpression {
     return when(expression) {
-      is Expression.NumLiteral -> PrimitiveType.Number
-      is Expression.IntLiteral -> PrimitiveType.Integer
-      is Expression.TextLiteral -> PrimitiveType.Text
-      is Expression.BooleanLiteral -> PrimitiveType.Boolean
+      is Expression.NumLiteral -> TypedExpression.NumLiteral(expression)
+      is Expression.IntLiteral -> TypedExpression.IntLiteral(expression)
+      is Expression.TextLiteral -> TypedExpression.TextLiteral(expression)
+      is Expression.BooleanLiteral -> TypedExpression.BooleanLiteral(expression)
       is Expression.Identifier -> {
         if (env.containsKey(expression.name)){
-          env.getValue(expression.name)
+          TypedExpression.Identifier(expression, env.getValue(expression.name))
         } else {
           throw UndeclaredIdentifier(expression.name, expression.startToken, expression.endToken)
         }
@@ -36,73 +51,82 @@ class TypeChecker {
       is Expression.UnaryOperator -> getUnaryOperatorType(expression, env)
       is Expression.BinaryOperator -> getBinaryOperatorType(expression, env)
       is Expression.FunctionCall -> {
-        val functionType = getExpressionType(expression.functionExpression, env)
+        val functionExpr = getExpressionType(expression.functionExpression, env)
+        val functionType = functionExpr.gustoType
         if (functionType is FunctionType){
+          val params = ArrayList<TypedExpression>()
           expression.params.zip(functionType.params).forEach { (expr, type) ->
             val exprType = getExpressionType(expr, env)
-            if (exprType != type){
-              throw TypeMismatch(type, exprType, expr.startToken, expr.endToken)
+            params.add(exprType)
+            if (exprType.gustoType != type){
+              throw TypeMismatch(type, exprType.gustoType, expr.startToken, expr.endToken)
             }
           }
-          functionType.returnType
+          TypedExpression.FunctionCall(expression, functionExpr, params, functionType.returnType)
         } else {
           throw FunctionCalledOnUncalleble(functionType, expression.startToken, expression.endToken)
         }
       }
       is Expression.ListAccess -> {
-        val listType = getExpressionType(expression.listExpression, env)
-        if (listType is ListType && listType.type != null){
-          listType.type
+        val listExpr = getExpressionType(expression.listExpression, env)
+        val indexExpr = getExpressionType(expression.indexExpression, env)
+        if (listExpr.gustoType is ListType && listExpr.gustoType.type != null){
+          TypedExpression.ListAccess(expression, listExpr.gustoType.type, listExpr, indexExpr)
         } else {
-          throw TypeMismatch(ListType(null), listType, expression.startToken, expression.endToken)
+          throw TypeMismatch(ListType(null), listExpr.gustoType, expression.startToken, expression.endToken)
         }
       }
       is Expression.ListDeclaration -> getListType(expression, env)
-      is Expression.Function -> FunctionType(expression.params.map { expression.paramTypes.getValue(it) }, expression.returnType)
+      is Expression.Function -> TypedExpression.Function(expression, FunctionType(expression.params.map { expression.paramTypes.getValue(it) }, expression.returnType))
     }
   }
 
-  fun getListType(listDeclaration: Expression.ListDeclaration, env: HashMap<String, GustoType>): GustoType {
+  fun getListType(listDeclaration: Expression.ListDeclaration, env: HashMap<String, GustoType>): TypedExpression.ListDeclaration {
     return if (listDeclaration.items.isEmpty()){
-      ListType(null)
+      TypedExpression.ListDeclaration(listDeclaration, ListType(null), listOf())
     } else {
-      val type = getExpressionType(listDeclaration.items[0], env)
+      val typedExpressions = ArrayList<TypedExpression>()
+      val typedExpression = getExpressionType(listDeclaration.items[0], env)
       listDeclaration.items.forEach {
         val expressionType = getExpressionType(it, env)
-        if (expressionType != type){
-          throw TypeMismatch(type, expressionType, listDeclaration.startToken, listDeclaration.endToken)
+        typedExpressions.add(expressionType)
+        if (expressionType.gustoType != typedExpression.gustoType){
+          throw TypeMismatch(typedExpression.gustoType, expressionType.gustoType, listDeclaration.startToken, listDeclaration.endToken)
         }
       }
-      ListType(type)
+      TypedExpression.ListDeclaration(listDeclaration, ListType(typedExpression.gustoType), typedExpressions)
     }
   }
 
-  fun getUnaryOperatorType(unaryOp: Expression.UnaryOperator, env: HashMap<String, GustoType>): GustoType {
-    return when(unaryOp.operator){
+  fun getUnaryOperatorType(unaryOp: Expression.UnaryOperator, env: HashMap<String, GustoType>): TypedExpression.UnaryOperator {
+    val expressionType = getExpressionType(unaryOp.expression, env)
+
+    when(unaryOp.operator){
       UnaryOperators.Negative -> {
-        val expressionType = getExpressionType(unaryOp.expression, env)
-        if (expressionType == PrimitiveType.Integer || expressionType == PrimitiveType.Number){
-          expressionType
+        if (expressionType.gustoType == PrimitiveType.Integer || expressionType.gustoType == PrimitiveType.Number){
         } else {
-          throw TypeMismatch(listOf(PrimitiveType.Number, PrimitiveType.Integer), expressionType, unaryOp.startToken, unaryOp.endToken)
+          throw TypeMismatch(listOf(PrimitiveType.Number, PrimitiveType.Integer), expressionType.gustoType, unaryOp.startToken, unaryOp.endToken)
         }
       }
       UnaryOperators.Not -> {
-        val expressionType = getExpressionType(unaryOp.expression, env)
-        if (expressionType == PrimitiveType.Boolean) {
-          PrimitiveType.Boolean
+        if (expressionType.gustoType == PrimitiveType.Boolean) {
         } else {
-          throw TypeMismatch(PrimitiveType.Boolean, expressionType, unaryOp.startToken, unaryOp.endToken)
+          throw TypeMismatch(PrimitiveType.Boolean, expressionType.gustoType, unaryOp.startToken, unaryOp.endToken)
         }
       }
-
     }
+
+    return TypedExpression.UnaryOperator(unaryOp, expressionType, expressionType.gustoType);
   }
 
-  fun getBinaryOperatorType(binOp: Expression.BinaryOperator, env: HashMap<String, GustoType>): GustoType {
-    val lhsType = getExpressionType(binOp.lhs, env)
-    val rhsType = getExpressionType(binOp.rhs, env)
-    return when(binOp.operator) {
+  fun getBinaryOperatorType(binOp: Expression.BinaryOperator, env: HashMap<String, GustoType>): TypedExpression.BinaryOperator {
+    val lhs = getExpressionType(binOp.lhs, env)
+    val rhs = getExpressionType(binOp.rhs, env)
+
+    val lhsType = lhs.gustoType
+    val rhsType = rhs.gustoType
+
+    val type: GustoType = when(binOp.operator) {
       BinaryOperators.Add, BinaryOperators.Mul, BinaryOperators.Sub, BinaryOperators.Div -> {
         if (lhsType == PrimitiveType.Text || rhsType == PrimitiveType.Text) {
           PrimitiveType.Text
@@ -132,6 +156,8 @@ class TypeChecker {
         }
       }
     }
+
+    return TypedExpression.BinaryOperator(binOp, lhs, rhs, type)
   }
   fun checkStatementListTypes(statements: List<Statement>, env: HashMap<String, GustoType>): GustoType?{
     var type: GustoType? = PrimitiveType.Unit
@@ -150,7 +176,7 @@ class TypeChecker {
     try {
       when (statement) {
         is Statement.Assignment -> {
-          val expressionVal = getExpressionType(statement.expression, env)
+          val expressionVal = getExpressionType(statement.expression, env).gustoType
           val expectedVal = env.getValue(statement.identifier.name)
           if (expressionVal != expectedVal) {
             typeMismatches.add(TypeMismatch(expectedVal, expressionVal, statement.startToken, statement.endToken))
@@ -162,7 +188,7 @@ class TypeChecker {
           return PrimitiveType.Unit
         }
         is Statement.While -> {
-          val expressionType = getExpressionType(statement.condition, env)
+          val expressionType = getExpressionType(statement.condition, env).gustoType
           if (expressionType != PrimitiveType.Boolean) {
             typeMismatches.add(TypeMismatch(PrimitiveType.Boolean, expressionType, statement.startToken, statement.endToken))
           }
@@ -170,14 +196,14 @@ class TypeChecker {
         }
         is Statement.CodeBlock -> return checkStatementListTypes(statement.statementList, HashMap(env))
         is Statement.If -> {
-          val expressionType = getExpressionType(statement.condition, env)
+          val expressionType = getExpressionType(statement.condition, env).gustoType
           if (expressionType != PrimitiveType.Boolean) {
             typeMismatches.add(TypeMismatch(PrimitiveType.Boolean, expressionType, statement.startToken, statement.endToken))
           }
           return checkStatementListTypes(statement.body, env)
         }
         is Statement.IfElse -> {
-          val expressionType = getExpressionType(statement.condition, env)
+          val expressionType = getExpressionType(statement.condition, env).gustoType
           if (expressionType != PrimitiveType.Boolean) {
             typeMismatches.add(TypeMismatch(PrimitiveType.Boolean, expressionType, statement.startToken, statement.endToken))
           }
@@ -189,7 +215,7 @@ class TypeChecker {
             typeMismatches.add(TypeMismatch(ifType, elseType, statement.startToken, statement.endToken))
           }
         }
-        is Statement.Return -> return getExpressionType(statement.expression, env)
+        is Statement.Return -> return getExpressionType(statement.expression, env).gustoType
         is Statement.Output -> {
           getExpressionType(statement.expression, env)
           return PrimitiveType.Unit
@@ -221,8 +247,8 @@ class TypeChecker {
         is Statement.ListAssignment -> {
           val listType = env.getValue(statement.identifier.name)
           if (listType is ListType){
-            val expressionType = getExpressionType(statement.expression, env)
-            val indexType = getExpressionType(statement.indexExpression, env)
+            val expressionType = getExpressionType(statement.expression, env).gustoType
+            val indexType = getExpressionType(statement.indexExpression, env).gustoType
             if (expressionType != listType.type){
               typeMismatches.add(TypeMismatch(listType.type, expressionType, statement.startToken, statement.endToken))
             }
@@ -241,7 +267,7 @@ class TypeChecker {
   }
 
   fun checkDeclarationType(declaration: Statement.ValDeclaration, type: GustoType, env: HashMap<String, GustoType>){
-    val expressionType = getExpressionType(declaration.expression, env)
+    val expressionType = getExpressionType(declaration.expression, env).gustoType
     if (expressionType != type){
       typeMismatches.add(TypeMismatch(type, expressionType, declaration.startToken, declaration.endToken))
     }
