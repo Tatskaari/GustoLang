@@ -4,6 +4,15 @@ interface GustoType {
   fun getJvmTypeDesc():String
 }
 
+object UnknownType: GustoType {
+  override fun getJvmTypeDesc(): String {
+    throw Exception("Attempted to get JVM type for an unknown type")
+  }
+  override fun equals(other: Any?): Boolean {
+    return other is GustoType
+  }
+}
+
 enum class PrimitiveType(val jvmTypeDef: String) : GustoType {
   Number("D"), Integer("I"), Text("Ljava/lang/String;"), Boolean("I"), Unit("V");
 

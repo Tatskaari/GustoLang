@@ -6,13 +6,11 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.*
 import tatskaari.PrimitiveType
 import tatskaari.parsing.BinaryOperators
-import tatskaari.parsing.Expression
-import tatskaari.parsing.Statement
-import tatskaari.parsing.TypeChecker
 import tatskaari.parsing.TypeChecker.TypedExpression
+import tatskaari.parsing.TypeChecker.TypedStatement
 
 object Compiler {
-  fun compileProgram(statements: List<Statement>): ByteArray {
+  fun compileProgram(statements: List<TypedStatement>): ByteArray {
     val classWriter = ClassWriter(org.objectweb.asm.ClassWriter.COMPUTE_MAXS or org.objectweb.asm.ClassWriter.COMPUTE_FRAMES)
     classWriter.visit(52,ACC_PUBLIC or ACC_SUPER,"GustoMain",null,"java/lang/Object", null)
     val methodVisitor = classWriter.visitMethod(ACC_PUBLIC + ACC_STATIC, "main", "([Ljava/lang/String;)V", null, null)
@@ -28,14 +26,13 @@ object Compiler {
     return classWriter.toByteArray()
   }
 
-  private fun compileStatement(statement: Statement, methodVisitor: MethodVisitor){
+  private fun compileStatement(statement: TypedStatement, methodVisitor: MethodVisitor){
     when(statement){
-      is Statement.Output -> {
+      is TypedStatement.Output -> {
         // put System.out on the operand stack
         methodVisitor.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;")
-        val typeChecker = TypeChecker()
-        compileExpression(typeChecker.getExpressionType(statement.expression, HashMap()), methodVisitor)
-        val type = TypeChecker().getExpressionType(statement.expression, HashMap()).gustoType
+        compileExpression(statement.expression, methodVisitor)
+        val type = statement.expression.gustoType
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(${type.getJvmTypeDesc()})V", false)
       }
     }

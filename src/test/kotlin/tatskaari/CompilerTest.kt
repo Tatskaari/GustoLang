@@ -3,6 +3,7 @@ package tatskaari
 import org.testng.annotations.Test
 import tatskaari.bytecodecompiler.Compiler
 import tatskaari.parsing.Parser
+import tatskaari.parsing.TypeChecker
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.charset.StandardCharsets
@@ -12,7 +13,10 @@ object CompilerTest {
   @Test
   fun testIMul(){
     val parser = Parser()
-    val classBytes = Compiler.compileProgram(parser.parse("output 12 * 12")!!)
+    val program = parser.parse("output 12 * 12")!!
+    val typeChecker = TypeChecker()
+    val (typedProgram, _) = typeChecker.checkStatementListTypes(program, HashMap())
+    val classBytes = Compiler.compileProgram(typedProgram)
 
     val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())
     val clazz = classLoader.defineClass("GustoMain", classBytes)!!
@@ -30,7 +34,10 @@ object CompilerTest {
   @Test
   fun testDADD(){
     val parser = Parser()
-    val classBytes = Compiler.compileProgram(parser.parse("output 10.0 + 12.0")!!)
+    val program = parser.parse("output 10.0 + 12.0")!!
+    val typeChecker = TypeChecker()
+    val (typedProgram, _) = typeChecker.checkStatementListTypes(program, HashMap())
+    val classBytes = Compiler.compileProgram(typedProgram)
 
     val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())
     val clazz = classLoader.defineClass("GustoMain", classBytes)!!
@@ -49,7 +56,10 @@ object CompilerTest {
   @Test
   fun testOutputString(){
     val parser = Parser()
-    val classBytes = Compiler.compileProgram(parser.parse("""output "2 * " + 6 + " is " + 12.0 """)!!)
+    val program = parser.parse("""output "2 * " + 6 + " is " + 12.0 """)!!
+    val typeChecker = TypeChecker()
+    val (typedProgram, _) = typeChecker.checkStatementListTypes(program, HashMap())
+    val classBytes = Compiler.compileProgram(typedProgram)
 
     val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())
     val clazz = classLoader.defineClass("GustoMain", classBytes)!!

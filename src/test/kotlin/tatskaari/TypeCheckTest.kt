@@ -11,7 +11,7 @@ object TypeCheckTest {
   @Test
   fun testIfStatementType(){
     val ast = Parser().parse("val a : integer := 1 if a = 1 then return true else return false end")
-    val type = TypeChecker().checkStatementListTypes(ast!!, HashMap())
+    val (_, type) = TypeChecker().checkStatementListTypes(ast!!, HashMap())
     assertEquals(PrimitiveType.Boolean, type)
   }
 
@@ -48,17 +48,20 @@ object TypeCheckTest {
   @Test
   fun testUnaryOperatorChecking(){
     val parser = Parser()
-    val typeChecker = TypeChecker()
     val ast = parser.parse("val b : boolean := !(1=1)")!!
 
+
+    var typeChecker = TypeChecker()
     typeChecker.checkStatementListTypes(ast, HashMap())
     assertEquals(0, typeChecker.typeMismatches.size)
 
+    typeChecker = TypeChecker()
     typeChecker.checkStatementListTypes(parser.parse("val b : boolean := !1")!!, HashMap())
     assertEquals(1, typeChecker.typeMismatches.size)
 
+    typeChecker = TypeChecker()
     typeChecker.checkStatementListTypes(parser.parse("val b : boolean := -true")!!, HashMap())
-    assertEquals(2, typeChecker.typeMismatches.size)
+    assertEquals(1, typeChecker.typeMismatches.size)
   }
 
   @Test
