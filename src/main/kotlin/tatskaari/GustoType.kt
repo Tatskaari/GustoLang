@@ -14,7 +14,7 @@ object UnknownType: GustoType {
 }
 
 enum class PrimitiveType(val jvmTypeDef: String) : GustoType {
-  Number("D"), Integer("I"), Text("Ljava/lang/String;"), Boolean("I"), Unit("V");
+  Number("D"), Integer("I"), Text("Ljava/lang/String;"), Boolean("Z"), Unit("V");
 
   override fun getJvmTypeDesc(): String {
     return jvmTypeDef

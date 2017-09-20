@@ -74,4 +74,26 @@ object CompilerTest {
 
     assertEquals("2 * 6 is 12.0", content.replace("\r\n", "\n").trim())
   }
+
+  @Test
+  fun testOutputBoolean(){
+    val parser = Parser()
+    val program = parser.parse("output true")!!
+    val typeChecker = TypeChecker()
+    val (typedProgram, _) = typeChecker.checkStatementListTypes(program, HashMap())
+    val classBytes = Compiler.compileProgram(typedProgram)
+
+    val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())
+    val clazz = classLoader.defineClass("GustoMain", classBytes)!!
+    val byteArrayOutputStream = ByteArrayOutputStream()
+    val printStream = PrintStream(byteArrayOutputStream)
+    val out = System.out
+
+    System.setOut(printStream)
+    clazz.getMethod("main", Array<String>::class.java).invoke(null, null)
+    System.setOut(out)
+    val content = String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8)
+
+    assertEquals("true", content.replace("\r\n", "\n").trim())
+  }
 }

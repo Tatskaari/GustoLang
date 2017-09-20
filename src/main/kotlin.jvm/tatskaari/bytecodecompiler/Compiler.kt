@@ -42,6 +42,13 @@ object Compiler {
     when (expression) {
       is TypedExpression.IntLiteral -> methodVisitor.visitIntInsn(Opcodes.BIPUSH, expression.expr.value)
       is TypedExpression.NumLiteral -> methodVisitor.visitLdcInsn(expression.expr.value)
+      is TypedExpression.BooleanLiteral -> {
+        if (expression.expr.value){
+          methodVisitor.visitInsn(ICONST_1)
+        } else {
+          methodVisitor.visitInsn(ICONST_0)
+        }
+      }
       is TypedExpression.TextLiteral -> methodVisitor.visitLdcInsn(expression.expr.value)
       is TypedExpression.BinaryOperator -> compileBinaryOperator(expression, methodVisitor)
     }
