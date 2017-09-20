@@ -1,5 +1,6 @@
 package tatskaari
 
+import tatskaari.compatibility.random
 import tatskaari.eval.*
 import tatskaari.eval.values.Value
 
@@ -34,6 +35,12 @@ enum class BuiltInFunction(val funName: String, val params: List<String>, val ty
         else -> throw Eval.InvalidUserInput
       }
     }
+  ),
+  Random(
+    "random",
+    listOf(),
+    FunctionType(listOf(), PrimitiveType.Number),
+    { Value.NumVal(random()) }
   );
 
   companion object {

@@ -8,6 +8,7 @@ import tatskaari.parsing.TypeChecker
 import tatskaari.tokenising.Lexer
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 
 object EvalTest {
   @Test
@@ -551,5 +552,20 @@ object EvalTest {
     assertEquals(123, evalEnv.getValue("int").intVal())
     assertEquals(123.123, evalEnv.getValue("num").numVal())
     assertEquals(true, evalEnv.getValue("bool").boolVal())
+  }
+
+  @Test
+  fun testRandom(){
+    val parser = Parser()
+    val program = parser.parse("val a: number := 0.0 a := random() ")
+    val typeChecker = TypeChecker()
+    val typeEnv = BuiltInFunction.getTypeEnv()
+    typeChecker.checkStatementListTypes(program!!, typeEnv)
+    assertEquals(0, typeChecker.typeMismatches.size)
+
+    val evalEnv = BuiltInFunction.getEvalEnv()
+    Eval(StdinInputProvider, SystemOutputProvider).eval(program, evalEnv)
+
+    assertNotEquals(0.0, evalEnv.getValue("a").numVal())
   }
 }
