@@ -23,6 +23,16 @@ sealed class PrimitiveType(val jvmTypeDef: String) : GustoType {
   override fun getJvmTypeDesc(): String {
     return jvmTypeDef
   }
+
+  override fun toString(): String {
+    return when(this){
+      PrimitiveType.Number -> "number"
+      PrimitiveType.Integer -> "integer"
+      PrimitiveType.Text -> "text"
+      PrimitiveType.Boolean -> "boolean"
+      PrimitiveType.Unit -> "unit"
+    }
+  }
 }
 
 data class ListType(val type: GustoType): GustoType {
@@ -43,5 +53,9 @@ data class FunctionType(val params: List<GustoType>, val returnType: GustoType):
   override fun getJvmTypeDesc(): String {
     //TODO make this return a class that implements this function
     return params.joinToString (separator = ";", transform = { it.getJvmTypeDesc() }, prefix = "(", postfix = ")${returnType.getJvmTypeDesc()}")
+  }
+
+  override fun toString(): String {
+    return params.joinToString (separator = ", ", transform = { it.toString() }, prefix = "(", postfix = ") ${if (returnType == PrimitiveType.Unit) "" else "-> $returnType"}")
   }
 }

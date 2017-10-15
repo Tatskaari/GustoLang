@@ -31,7 +31,17 @@ sealed class TypedExpression(val gustoType: GustoType) {
       visitor.visit(this)
     }
   }
-  class UnaryOperator(val expr: Expression.UnaryOperator, val rhs: TypedExpression, type: GustoType): TypedExpression(type){
+  class NegateInt(val expr: Expression.UnaryOperator, val rhs: TypedExpression): TypedExpression(PrimitiveType.Integer){
+    override fun accept(visitor: ITypedExpressionVisitor) {
+      visitor.visit(this)
+    }
+  }
+  class NegateNum(val expr: Expression.UnaryOperator, val rhs: TypedExpression): TypedExpression(PrimitiveType.Number){
+    override fun accept(visitor: ITypedExpressionVisitor) {
+      visitor.visit(this)
+    }
+  }
+  class Not(val expr: Expression.UnaryOperator, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }

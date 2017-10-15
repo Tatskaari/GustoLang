@@ -75,20 +75,22 @@ class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors) : IExpr
 
     when(expr.operator){
       UnaryOperators.Negative -> {
-        if (!(expressionType.gustoType == PrimitiveType.Integer || expressionType.gustoType == PrimitiveType.Number)){
-          typeErrors.addUnaryOperatorTypeError(expr, expr.operator, expressionType.gustoType)
-          return TypedExpression.UnaryOperator(expr, expressionType, UnknownType)
+        return when {
+          expressionType.gustoType == PrimitiveType.Integer -> TypedExpression.NegateInt(expr, expressionType)
+          expressionType.gustoType == PrimitiveType.Number -> TypedExpression.NegateNum(expr, expressionType)
+          else -> {
+            typeErrors.addUnaryOperatorTypeError(expr, expr.operator, expressionType.gustoType)
+            TypedExpression.NegateNum(expr, expressionType)
+          }
         }
       }
       UnaryOperators.Not -> {
         if (expressionType.gustoType != PrimitiveType.Boolean) {
           typeErrors.addUnaryOperatorTypeError(expr, expr.operator, expressionType.gustoType)
-          return TypedExpression.UnaryOperator(expr, expressionType, UnknownType)
         }
+        return TypedExpression.Not(expr, expressionType)
       }
     }
-
-    return TypedExpression.UnaryOperator(expr, expressionType, expressionType.gustoType)
   }
 
   override fun visit(expr: Expression.FunctionCall): TypedExpression {
