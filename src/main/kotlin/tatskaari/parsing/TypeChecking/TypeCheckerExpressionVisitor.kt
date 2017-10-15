@@ -37,41 +37,37 @@ class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors) : IExpr
     val lhsType = lhs.gustoType
     val rhsType = rhs.gustoType
 
-    val type: GustoType = when(expr.operator) {
+    return when(expr.operator) {
       BinaryOperators.Add, BinaryOperators.Mul, BinaryOperators.Sub, BinaryOperators.Div -> {
         if (lhsType == PrimitiveType.Text || rhsType == PrimitiveType.Text) {
-          PrimitiveType.Text
-        } else if (lhsType == PrimitiveType.Number && (rhsType == PrimitiveType.Number || rhsType == PrimitiveType.Integer)) {
-          PrimitiveType.Number
-        } else if (rhsType == PrimitiveType.Number && (lhsType == PrimitiveType.Number || lhsType == PrimitiveType.Integer)) {
-          PrimitiveType.Number
+          TypedExpression.Concatenation(expr, lhs, rhs)
         } else if (lhsType == PrimitiveType.Integer && rhsType == PrimitiveType.Integer) {
-          PrimitiveType.Integer
+          TypedExpression.IntArithmeticOperation(expr, ArithmeticOperator.valueOf(expr.operator.name), lhs, rhs)
+        } else if ((lhsType == PrimitiveType.Number || lhsType == PrimitiveType.Integer) && (rhsType == PrimitiveType.Number || rhsType == PrimitiveType.Integer)) {
+          TypedExpression.NumArithmeticOperation(expr, ArithmeticOperator.valueOf(expr.operator.name), lhs, rhs)
         } else {
           typeErrors.addBinaryOperatorTypeError(expr, expr.operator, lhsType, rhsType)
-          UnknownType
+          TypedExpression.NumArithmeticOperation(expr, ArithmeticOperator.valueOf(expr.operator.name), lhs, rhs)
         }
       }
       BinaryOperators.And, BinaryOperators.Or -> {
         if (lhsType == PrimitiveType.Boolean && rhsType == PrimitiveType.Boolean) {
-          PrimitiveType.Boolean
+          TypedExpression.LogicalOperation(expr, LogicalOperator.valueOf(expr.operator.name), lhs, rhs)
         } else {
           typeErrors.addBinaryOperatorTypeError(expr, expr.operator, lhsType, rhsType)
-          UnknownType
+          TypedExpression.LogicalOperation(expr, LogicalOperator.valueOf(expr.operator.name), lhs, rhs)
         }
       }
-      BinaryOperators.Equality, BinaryOperators.NotEquality -> PrimitiveType.Boolean
+      BinaryOperators.Equality, BinaryOperators.NotEquality -> TypedExpression.LogicalOperation(expr, LogicalOperator.valueOf(expr.operator.name), lhs, rhs)
       BinaryOperators.GreaterThan, BinaryOperators.GreaterThanEq, BinaryOperators.LessThan, BinaryOperators.LessThanEq -> {
         if ((lhsType == PrimitiveType.Number || lhsType == PrimitiveType.Integer) && (rhsType == PrimitiveType.Number || rhsType == PrimitiveType.Integer)) {
-          PrimitiveType.Boolean
+          TypedExpression.LogicalOperation(expr, LogicalOperator.valueOf(expr.operator.name), lhs, rhs)
         } else {
           typeErrors.addBinaryOperatorTypeError(expr, expr.operator, lhsType, rhsType)
-          UnknownType
+          TypedExpression.LogicalOperation(expr, LogicalOperator.valueOf(expr.operator.name), lhs, rhs)
         }
       }
     }
-
-    return TypedExpression.BinaryOperator(expr, lhs, rhs, type)
   }
 
   override fun visit(expr: Expression.UnaryOperator): TypedExpression {
