@@ -12,4 +12,5 @@ interface IStatementVisitor <NewNodeType>{
   fun visit(statement: Statement.While): NewNodeType
   fun visit(statement: Statement.FunctionDeclaration): NewNodeType
   fun visit(statement: Statement.Return): NewNodeType
+  fun visit(statement: Statement.ExpressionStatement): NewNodeType
 }

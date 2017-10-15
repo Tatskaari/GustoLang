@@ -51,10 +51,20 @@ class Parser {
         TokenType.Value -> valueDeclaration(tokens)
         TokenType.Input -> input(tokens)
         TokenType.Output -> output(tokens)
-        TokenType.Identifier -> assignment(tokens)
+        TokenType.Identifier, TokenType.NumLiteral, TokenType.IntLiteral, TokenType.TextLiteral, TokenType.True, TokenType.False, TokenType.Sub, TokenType.Not -> {
+          val token = tokens.consumeToken()
+          if (tokens.matchAny(TokenType.AssignOp, TokenType.ListStart)) {
+            tokens.addFirst(token)
+            assignment(tokens)
+          } else {
+            tokens.addFirst(token)
+            expressionStatement(tokens)
+          }
+        }
         else -> throw UnexpectedToken(token, listOf(TokenType.If, TokenType.While, TokenType.OpenBlock, TokenType.Function,
           TokenType.Return, TokenType.Number, TokenType.Integer, TokenType.Boolean, TokenType.List, TokenType.Text,
-          TokenType.Input, TokenType.Output, TokenType.Identifier))
+          TokenType.Input, TokenType.Output, TokenType.Identifier, TokenType.NumLiteral, TokenType.IntLiteral, TokenType.TextLiteral,
+          TokenType.True, TokenType.False, TokenType.Sub, TokenType.Not))
       }
     } catch (rootException: ParserException){
       // Attempt to parse the next tokens as a statement until it works then parse the rest of the program to get any further errors
@@ -82,6 +92,11 @@ class Parser {
     }
 
     throw ParsingFailedException
+  }
+
+  private fun expressionStatement(tokens: TokenList): Statement {
+    val expr = expression(tokens)
+    return Statement.ExpressionStatement(expr, expr.startToken, expr.endToken)
   }
 
   // if => "if" expression codeBlock ("else" codeBlock)?

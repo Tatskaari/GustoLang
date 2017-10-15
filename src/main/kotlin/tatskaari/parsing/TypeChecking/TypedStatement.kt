@@ -17,4 +17,5 @@ sealed class TypedStatement(val returnType: GustoType){
   class Input(val statement: Statement.Input): TypedStatement(PrimitiveType.Unit)
   class FunctionDeclaration(val statement: Statement.FunctionDeclaration, val body: CodeBlock, val functionType: FunctionType): TypedStatement(PrimitiveType.Unit)
   class ListAssignment(val statement: Statement.ListAssignment, val indexExpression: TypedExpression, val listExpression: TypedExpression): TypedStatement(PrimitiveType.Unit)
+  class ExpressionStatement(val statement: Statement.ExpressionStatement, val expression: TypedExpression): TypedStatement(PrimitiveType.Unit)
 }

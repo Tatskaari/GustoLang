@@ -100,6 +100,10 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       is Statement.Return -> {
         return eval(statement.expression, env)
       }
+      is Statement.ExpressionStatement -> {
+        eval(statement.expression, env)
+        return null
+      }
     }
   }
 

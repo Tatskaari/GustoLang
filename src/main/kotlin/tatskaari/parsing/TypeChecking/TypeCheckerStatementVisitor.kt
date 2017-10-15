@@ -8,8 +8,14 @@ import tatskaari.parsing.IStatementVisitor
 import tatskaari.parsing.Statement
 
 class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors) : IStatementVisitor<TypedStatement> {
+
+
   private val exprVisitor = TypeCheckerExpressionVisitor(env, typeErrors)
 
+  override fun visit(statement: Statement.ExpressionStatement): TypedStatement {
+    val expr = statement.expression.accept(exprVisitor)
+    return TypedStatement.ExpressionStatement(statement, expr)
+  }
 
   override fun visit(statement: Statement.ValDeclaration): TypedStatement {
     val expression = statement.expression.accept(exprVisitor)

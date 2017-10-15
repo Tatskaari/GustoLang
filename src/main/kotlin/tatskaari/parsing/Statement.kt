@@ -61,5 +61,11 @@ sealed class Statement(startToken: Token, endToken: Token): ASTNode(startToken, 
     }
   }
 
+  class ExpressionStatement(val expression: Expression, startToken: Token, endToken: Token): Statement(startToken, endToken){
+    override fun <NewNodeType> accept(visitor: IStatementVisitor<NewNodeType>): NewNodeType {
+      return visitor.visit(this)
+    }
+  }
+
   abstract fun <NewNodeType> accept(visitor: IStatementVisitor<NewNodeType>): NewNodeType
 }
