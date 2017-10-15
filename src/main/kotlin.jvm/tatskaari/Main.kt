@@ -4,7 +4,7 @@ import tatskaari.eval.Eval
 import tatskaari.eval.StdinInputProvider
 import tatskaari.eval.SystemOutputProvider
 import tatskaari.parsing.Parser
-import tatskaari.parsing.TypeChecker
+import tatskaari.parsing.TypeChecking.TypeChecker
 import java.io.BufferedReader
 import java.io.File
 
@@ -22,7 +22,7 @@ object Main {
         Eval(StdinInputProvider, SystemOutputProvider).eval(program, HashMap())
       } else {
         typeChecker.typeMismatches.forEach{
-          println(it.message)
+          println(it.value)
         }
       }
     } else {

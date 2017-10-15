@@ -4,7 +4,7 @@ import org.testng.annotations.Test
 import tatskaari.eval.*
 import tatskaari.eval.values.Value
 import tatskaari.parsing.Parser
-import tatskaari.parsing.TypeChecker
+import tatskaari.parsing.TypeChecking.TypeChecker
 import tatskaari.tokenising.Lexer
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

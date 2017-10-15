@@ -21,10 +21,10 @@ enum class PrimitiveType(val jvmTypeDef: String) : GustoType {
   }
 }
 
-data class ListType(val type: GustoType?): GustoType {
+data class ListType(val type: GustoType): GustoType {
   override fun equals(other: Any?): Boolean {
     if (other is ListType) {
-      if (other.type == type || type == null || other.type == null){
+      if (other.type == type || type == UnknownType || other.type == UnknownType){
         return true
       }
     }
@@ -32,7 +32,7 @@ data class ListType(val type: GustoType?): GustoType {
   }
 
   override fun getJvmTypeDesc(): String {
-    return "[${type!!.getJvmTypeDesc()}"
+    return "[${type.getJvmTypeDesc()}"
   }
 }
 data class FunctionType(val params: List<GustoType>, val returnType: GustoType): GustoType {

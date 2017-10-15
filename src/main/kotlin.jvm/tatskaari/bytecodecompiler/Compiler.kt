@@ -1,13 +1,16 @@
 package tatskaari.bytecodecompiler
 
 import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.*
+import tatskaari.GustoType
 import tatskaari.PrimitiveType
 import tatskaari.parsing.BinaryOperators
-import tatskaari.parsing.TypeChecker.TypedExpression
-import tatskaari.parsing.TypeChecker.TypedStatement
+import tatskaari.parsing.TypeChecking.TypedExpression
+import tatskaari.parsing.TypeChecking.TypedStatement
+
 
 object Compiler {
   fun compileProgram(statements: List<TypedStatement>): ByteArray {
@@ -36,6 +39,10 @@ object Compiler {
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(${type.getJvmTypeDesc()})V", false)
       }
     }
+  }
+
+  private fun GustoType.isNumeric(): Boolean {
+    return this == PrimitiveType.Integer || this == PrimitiveType.Number
   }
 
   private fun compileExpression(expression: TypedExpression, methodVisitor: MethodVisitor){
@@ -68,25 +75,45 @@ object Compiler {
       methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(${rhsType.getJvmTypeDesc()})Ljava/lang/StringBuilder;", false)
       methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;", false)
     } else {
-      val integerArithmetic = lhsType == rhsType && rhsType == PrimitiveType.Integer
+      val integerOperands = lhsType == PrimitiveType.Integer && rhsType == PrimitiveType.Integer
+      val numericOperands = lhsType.isNumeric() && rhsType.isNumeric()
 
       compileExpression(binaryOperator.lhs, methodVisitor)
-      if (lhsType == PrimitiveType.Integer && !integerArithmetic){
+      if (lhsType == PrimitiveType.Integer && !integerOperands){
         methodVisitor.visitInsn(I2D)
       }
       compileExpression(binaryOperator.rhs, methodVisitor)
-      if (rhsType == PrimitiveType.Integer && !integerArithmetic){
+      if (rhsType == PrimitiveType.Integer && !integerOperands){
         methodVisitor.visitInsn(I2D)
       }
 
-      when(binaryOperator.expr.operator){
-        BinaryOperators.Add -> methodVisitor.visitInsn(if (integerArithmetic) IADD else DADD)
-        BinaryOperators.Sub -> methodVisitor.visitInsn(if (integerArithmetic) ISUB else DSUB)
-        BinaryOperators.Mul -> methodVisitor.visitInsn(if (integerArithmetic) IMUL else DMUL)
-        BinaryOperators.Div -> methodVisitor.visitInsn(if (integerArithmetic) IDIV else DDIV)
-        else -> { throw Exception("Unimplemented")}
+      if (binaryOperator.expr.operator == BinaryOperators.Equality){
+        if (integerOperands){
+
+        } else {
+
+        }
+      } else {
+        when(binaryOperator.expr.operator){
+          BinaryOperators.Add -> methodVisitor.visitInsn(if (integerOperands) IADD else DADD)
+          BinaryOperators.Sub -> methodVisitor.visitInsn(if (integerOperands) ISUB else DSUB)
+          BinaryOperators.Mul -> methodVisitor.visitInsn(if (integerOperands) IMUL else DMUL)
+          BinaryOperators.Div -> methodVisitor.visitInsn(if (integerOperands) IDIV else DDIV)
+          else -> { throw Exception("Unimplemented")}
+        }
       }
     }
+  }
+
+  fun compileBooleanOperator(operatorCode: Int, methodVisitor: MethodVisitor){
+    val afterLabel = Label()
+    val trueLabel = Label()
+    methodVisitor.visitJumpInsn(operatorCode, trueLabel)
+    methodVisitor.visitInsn(ICONST_0)
+    methodVisitor.visitJumpInsn(GOTO, afterLabel)
+    methodVisitor.visitLabel(trueLabel)
+    methodVisitor.visitInsn(ICONST_1)
+    methodVisitor.visitLabel(afterLabel)
   }
 
 }

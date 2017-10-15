@@ -8,7 +8,7 @@ enum class BuiltInFunction(val funName: String, val params: List<String>, val ty
   SizeOfList(
     "size",
     listOf("list"),
-    FunctionType(listOf(ListType(null)), PrimitiveType.Integer),
+    FunctionType(listOf(ListType(UnknownType)), PrimitiveType.Integer),
     { params -> Value.IntVal(params.getValue("list").listVal().entries.size) }
   ),
   ToInt(

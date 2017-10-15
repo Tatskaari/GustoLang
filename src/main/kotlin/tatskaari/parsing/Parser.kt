@@ -1,9 +1,6 @@
 package tatskaari.parsing
 
-import tatskaari.FunctionType
-import tatskaari.GustoType
-import tatskaari.ListType
-import tatskaari.PrimitiveType
+import tatskaari.*
 import tatskaari.compatibility.*
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
@@ -91,22 +88,24 @@ class Parser {
   private fun iff(tokens: TokenList): Statement {
     val startToken = tokens.getNextToken(TokenType.If)
     val condition = expression(tokens)
-    tokens.getNextToken(TokenType.Then)
-    val trueBody = ArrayList<Statement>()
+    val trueBodyStart = tokens.getNextToken(TokenType.Then)
+    val trueStatements = ArrayList<Statement>()
     while (!tokens.matchAny(TokenType.CloseBlock, TokenType.Else)){
-      trueBody.add(statement(tokens))
+      trueStatements.add(statement(tokens))
     }
     return if (tokens.match(TokenType.Else)){
-      tokens.consumeToken()
-      val elseBody = ArrayList<Statement>()
+      val elseToken = tokens.consumeToken()
+      val elseStatements = ArrayList<Statement>()
       while (!tokens.matchAny(TokenType.CloseBlock, TokenType.Else)){
-        elseBody.add(statement(tokens))
+        elseStatements.add(statement(tokens))
       }
       val lastToken = tokens.getNextToken(TokenType.CloseBlock)
+      val trueBody = Statement.CodeBlock(trueStatements, trueBodyStart, elseToken)
+      val elseBody = Statement.CodeBlock(elseStatements, elseToken, lastToken)
       Statement.IfElse(condition, trueBody, elseBody, startToken, lastToken)
     } else {
       val lastToken = tokens.getNextToken(TokenType.CloseBlock)
-      Statement.If(condition, trueBody, startToken, lastToken)
+      Statement.If(condition, Statement.CodeBlock(trueStatements, trueBodyStart, lastToken), startToken, lastToken)
     }
   }
 
@@ -143,7 +142,6 @@ class Parser {
 
   // typeNotation => (("number" | integer | boolean | text ) (list)?) | ("(" (typeNotation)? ",typeNotation"* ")" ("->" typeNotation)?)
   private fun typeNotation(tokens: TokenList): GustoType {
-    //TODO implement list of any type and list of lists
     val token = tokens.consumeToken()
     val type = when(token.tokenType) {
       TokenType.Number -> PrimitiveType.Number
@@ -151,7 +149,7 @@ class Parser {
       TokenType.Integer -> PrimitiveType.Integer
       TokenType.Text -> PrimitiveType.Text
       TokenType.Unit -> PrimitiveType.Unit
-      TokenType.List -> ListType(null)
+      TokenType.List -> ListType(UnknownType)
       TokenType.OpenParen -> {
         val params = ArrayList<GustoType>()
         while(!tokens.match(TokenType.CloseParen)){
@@ -364,7 +362,7 @@ class Parser {
     val (params, paramTypes) = functionParams(tokens)
     val returnType = functionReturnType(tokens)
     val body = codeBlock(tokens)
-    return Expression.Function(returnType, params, paramTypes, body, firstToken, body.endTok)
+    return Expression.Function(returnType, params, paramTypes, body, firstToken, body.endToken)
   }
 
   private fun functionParams(tokens: TokenList): Pair<List<Token.Identifier>, Map<Token.Identifier, GustoType>> {

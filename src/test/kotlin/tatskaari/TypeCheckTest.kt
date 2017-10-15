@@ -2,9 +2,10 @@ package tatskaari
 
 import org.testng.annotations.Test
 import tatskaari.parsing.*
-import tatskaari.parsing.TypeChecker
+import tatskaari.parsing.TypeChecking.TypeChecker
+import tatskaari.parsing.TypeChecking.TypeCheckerExpressionVisitor
+import tatskaari.tokenising.Lexer
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
 object TypeCheckTest {
 
@@ -34,7 +35,7 @@ object TypeCheckTest {
   }
 
   @Test
-  fun testLitTypeChecking(){
+  fun testListTypeChecking(){
     val parser = Parser()
     val typeChecker = TypeChecker()
 
@@ -96,4 +97,6 @@ object TypeCheckTest {
     typeChecker.checkStatementListTypes(parser.parse("input b val a: integer := b")!!, HashMap())
     assertEquals(1, typeChecker.typeMismatches.size)
   }
+
+
 }

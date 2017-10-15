@@ -3,7 +3,7 @@ package tatskaari
 import org.testng.annotations.Test
 import tatskaari.bytecodecompiler.Compiler
 import tatskaari.parsing.Parser
-import tatskaari.parsing.TypeChecker
+import tatskaari.parsing.TypeChecking.TypeChecker
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.nio.charset.StandardCharsets
