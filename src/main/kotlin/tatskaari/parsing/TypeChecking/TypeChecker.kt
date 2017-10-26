@@ -29,13 +29,9 @@ fun Errors.addUnaryOperatorTypeError(astNode: ASTNode, operator: UnaryOperators,
 class TypeChecker {
   val typeMismatches: Errors = Errors()
 
-  fun checkStatementListTypes(statements: List<Statement>, env: Env): Pair<List<TypedStatement>, GustoType>{
+  fun checkStatementListTypes(statements: List<Statement>, env: Env): List<TypedStatement>{
     val statementVisitor = TypeCheckerStatementVisitor(env, typeMismatches)
-
-    val body = Statement.CodeBlock(statements, statements.first().startToken, statements.last().endToken)
-      .accept(statementVisitor) as TypedStatement.CodeBlock
-
-    return Pair(body.body, body.returnType)
+    return statements.map{it.accept(statementVisitor)}
   }
 
 

@@ -2,8 +2,10 @@ package tatskaari
 
 import org.testng.annotations.Test
 import tatskaari.parsing.*
+import tatskaari.parsing.TypeChecking.Env
 import tatskaari.parsing.TypeChecking.TypeChecker
 import tatskaari.parsing.TypeChecking.TypeCheckerExpressionVisitor
+import tatskaari.parsing.TypeChecking.TypedStatement
 import tatskaari.tokenising.Lexer
 import kotlin.test.assertEquals
 
@@ -11,9 +13,11 @@ object TypeCheckTest {
 
   @Test
   fun testIfStatementType(){
-    val ast = Parser().parse("val a : integer := 1 if a = 1 then return true else return false end")
-    val (_, type) = TypeChecker().checkStatementListTypes(ast!!, HashMap())
-    assertEquals(PrimitiveType.Boolean, type)
+    val ast = Parser().parse("do val a : integer := 1 if a = 1 then return true else return false end end")
+    val codeblock = TypeChecker().checkStatementListTypes(ast!!, HashMap())[0]
+    if (codeblock is TypedStatement.CodeBlock){
+      assertEquals(PrimitiveType.Boolean, codeblock.returnType)
+    }
   }
 
 
@@ -106,5 +110,42 @@ object TypeCheckTest {
     typeChecker.checkStatementListTypes(ast!!, HashMap())
     assertEquals(0, typeChecker.typeMismatches.size)
   }
+
+  @Test
+  fun testAnonymousFunctionAssignmentInference() {
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+    val ast = parser.parse("val a := function(a: integer, b: integer) : integer do return 10 end")
+    val env = Env()
+    typeChecker.checkStatementListTypes(ast!!, env)
+
+    assertEquals(FunctionType(listOf(PrimitiveType.Integer, PrimitiveType.Integer), PrimitiveType.Integer), env.getValue("a"))
+
+  }
+
+  @Test
+  fun testAnonymousFunctionAssignmentInferenceBad() {
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+    val ast = parser.parse("val a := function(p1: integer, p2: integer) : integer do return 1.0 end")
+    val env = Env()
+    typeChecker.checkStatementListTypes(ast!!, env)
+
+    assertEquals(FunctionType(listOf(PrimitiveType.Integer, PrimitiveType.Integer), PrimitiveType.Integer), env.getValue("a"))
+    assertEquals(1, typeChecker.typeMismatches.size)
+
+  }
+
+  @Test
+  fun testTypeInference(){
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+    val ast = parser.parse("val a := 1 a := 10.0")
+    val env = Env()
+    typeChecker.checkStatementListTypes(ast!!, env)
+    assertEquals(PrimitiveType.Integer, env.getValue("a"))
+    assertEquals(1, typeChecker.typeMismatches.size)
+  }
+
 
 }

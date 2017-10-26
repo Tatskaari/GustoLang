@@ -15,7 +15,7 @@ object CompilerTest {
     val parser = Parser()
     val program = parser.parse("output 12 * 12")!!
     val typeChecker = TypeChecker()
-    val (typedProgram, _) = typeChecker.checkStatementListTypes(program, HashMap())
+    val typedProgram = typeChecker.checkStatementListTypes(program, HashMap())
     val classBytes = Compiler.compileProgram(typedProgram)
 
     val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())
@@ -36,7 +36,7 @@ object CompilerTest {
     val parser = Parser()
     val program = parser.parse("output 10.0 + 12.0")!!
     val typeChecker = TypeChecker()
-    val (typedProgram, _) = typeChecker.checkStatementListTypes(program, HashMap())
+    val typedProgram = typeChecker.checkStatementListTypes(program, HashMap())
     val classBytes = Compiler.compileProgram(typedProgram)
 
     val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())
@@ -58,7 +58,7 @@ object CompilerTest {
     val parser = Parser()
     val program = parser.parse("""output "2 * " + 6 + " is " + 12.0 """)!!
     val typeChecker = TypeChecker()
-    val (typedProgram, _) = typeChecker.checkStatementListTypes(program, HashMap())
+    val typedProgram = typeChecker.checkStatementListTypes(program, HashMap())
     val classBytes = Compiler.compileProgram(typedProgram)
 
     val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())
@@ -80,7 +80,7 @@ object CompilerTest {
     val parser = Parser()
     val program = parser.parse("output true")!!
     val typeChecker = TypeChecker()
-    val (typedProgram, _) = typeChecker.checkStatementListTypes(program, HashMap())
+    val typedProgram = typeChecker.checkStatementListTypes(program, HashMap())
     val classBytes = Compiler.compileProgram(typedProgram)
 
     val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())

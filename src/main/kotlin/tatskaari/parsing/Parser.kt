@@ -29,7 +29,7 @@ class Parser {
   }
 
   // program => (statement)*
-  fun program(tokens: TokenList) : List<Statement> {
+  private fun program(tokens: TokenList) : List<Statement> {
     val statements = ArrayList<Statement>()
     while(tokens.isNotEmpty()){
       statements.add(statement(tokens))
@@ -51,13 +51,14 @@ class Parser {
         TokenType.Value -> valueDeclaration(tokens)
         TokenType.Input -> input(tokens)
         TokenType.Output -> output(tokens)
+        // the statement is either as assignment or an expression statement
         TokenType.Identifier, TokenType.NumLiteral, TokenType.IntLiteral, TokenType.TextLiteral, TokenType.True, TokenType.False, TokenType.Sub, TokenType.Not -> {
-          val token = tokens.consumeToken()
+          val expressionToken = tokens.consumeToken()
           if (tokens.matchAny(TokenType.AssignOp, TokenType.ListStart)) {
-            tokens.addFirst(token)
+            tokens.addFirst(expressionToken)
             assignment(tokens)
           } else {
-            tokens.addFirst(token)
+            tokens.addFirst(expressionToken)
             expressionStatement(tokens)
           }
         }
@@ -224,8 +225,13 @@ class Parser {
   private fun valueDeclaration(tokens: TokenList): Statement {
     val startToken = tokens.getNextToken(TokenType.Value)
     val identifier = tokens.getIdentifier()
-    tokens.getNextToken(TokenType.Colon)
-    val valType = typeNotation(tokens)
+
+    val valType = if (tokens.match(TokenType.Colon)){
+      tokens.getNextToken(TokenType.Colon)
+      typeNotation(tokens)
+    } else {
+      UnknownType
+    }
     tokens.getNextToken(TokenType.AssignOp)
     val expression = expression(tokens)
     return Statement.ValDeclaration(identifier, expression, valType, startToken, expression.endToken)

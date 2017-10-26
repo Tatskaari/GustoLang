@@ -3,7 +3,7 @@ package tatskaari.parsing.TypeChecking
 import tatskaari.*
 import tatskaari.parsing.*
 
-class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors) : IExpressionVisitor<TypedExpression> {
+class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors, val statementVisitor: IStatementVisitor<TypedStatement>) : IExpressionVisitor<TypedExpression> {
 
   override fun visit(expr: Expression.IntLiteral): TypedExpression {
     return TypedExpression.IntLiteral(expr)
@@ -148,6 +148,12 @@ class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors) : IExpr
 
   override fun visit(expr: Expression.Function): TypedExpression {
     val paramTypes = expr.params.map { expr.paramTypes.getValue(it) }
+    val body = expr.body.accept(statementVisitor) as TypedStatement.CodeBlock
+
+    if (body.returnType != expr.returnType){
+      typeErrors.add(expr, "Unexpected return type. Expected ${expr.returnType}, got ${body.returnType}.")
+    }
+
     return TypedExpression.Function(expr, FunctionType(paramTypes, expr.returnType))
   }
 

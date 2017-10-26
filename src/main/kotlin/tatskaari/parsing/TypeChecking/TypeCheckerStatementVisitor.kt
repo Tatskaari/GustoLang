@@ -1,16 +1,13 @@
 package tatskaari.parsing.TypeChecking
 
-import tatskaari.FunctionType
-import tatskaari.GustoType
-import tatskaari.ListType
-import tatskaari.PrimitiveType
+import tatskaari.*
 import tatskaari.parsing.IStatementVisitor
 import tatskaari.parsing.Statement
 
 class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors) : IStatementVisitor<TypedStatement> {
 
 
-  private val exprVisitor = TypeCheckerExpressionVisitor(env, typeErrors)
+  private val exprVisitor = TypeCheckerExpressionVisitor(env, typeErrors, this)
 
   override fun visit(statement: Statement.ExpressionStatement): TypedStatement {
     val expr = statement.expression.accept(exprVisitor)
@@ -20,10 +17,15 @@ class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors) : IState
   override fun visit(statement: Statement.ValDeclaration): TypedStatement {
     val expression = statement.expression.accept(exprVisitor)
     val expressionType = expression.gustoType
-    if (expressionType != statement.type){
-      typeErrors.addTypeMissmatch(statement, expressionType, statement.type)
+    if (expressionType != UnknownType){
+      when(statement.type){
+        expressionType -> env.put(statement.identifier.name, statement.type)
+        UnknownType -> env.put(statement.identifier.name, expressionType)
+        else -> typeErrors.addTypeMissmatch(statement, expressionType, statement.type)
+      }
     }
-    env.put(statement.identifier.name, statement.type)
+
+
     return TypedStatement.ValDeclaration(statement, expression)
   }
 

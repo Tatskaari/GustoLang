@@ -8,9 +8,6 @@ object UnknownType: GustoType {
   override fun getJvmTypeDesc(): String {
     throw Exception("Attempted to get JVM type for an unknown type")
   }
-  override fun equals(other: Any?): Boolean {
-    return other is GustoType
-  }
 }
 
 sealed class PrimitiveType(val jvmTypeDef: String) : GustoType {
