@@ -25,7 +25,7 @@ class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors) : IExpr
     return if (env.containsKey(expr.name)){
       TypedExpression.Identifier(expr, env.getValue(expr.name))
     } else {
-      typeErrors.add(expr , "Identifier hasn't been declared yet")
+      typeErrors.add(expr , "Identifier ${expr.name} hasn't been declared yet")
       TypedExpression.Identifier(expr, UnknownType)
     }
   }
