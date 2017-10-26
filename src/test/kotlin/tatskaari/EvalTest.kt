@@ -568,4 +568,15 @@ object EvalTest {
 
     assertNotEquals(0.0, evalEnv.getValue("a").numVal())
   }
+
+  @Test
+  fun testStatementExpressions(){
+    val parser = Parser()
+    val ast = parser.parse("val out: integer := 0 function print() do out := 5 end print()")
+    val env = MutEnv()
+    Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
+
+    assertEquals(5, env.getValue("out").intVal())
+
+  }
 }

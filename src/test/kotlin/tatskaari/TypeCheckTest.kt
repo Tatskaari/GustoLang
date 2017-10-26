@@ -98,5 +98,13 @@ object TypeCheckTest {
     assertEquals(1, typeChecker.typeMismatches.size)
   }
 
+  @Test
+  fun testUnitFunction(){
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+    val ast = parser.parse("function print() do output \"asdf\" end print()")
+    typeChecker.checkStatementListTypes(ast!!, HashMap())
+    assertEquals(0, typeChecker.typeMismatches.size)
+  }
 
 }

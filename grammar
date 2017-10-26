@@ -1,13 +1,17 @@
 program => (statement)*
 
-statement => if | while | codeBlock | function | return | valueDeclaration | input | output | assignment
+statement => if | while | codeBlock | function | return | valueDeclaration | input | output | assignment | expression
 
 if => "if" expression "then" (statement)* ("else" (statement)*)? "end"
-while => "while" expression "do" (statement)* "end"
+while => "while" expression codeBlock
 codeBlock => "do" program "end"
-function => STRING "(" (STRING (",")*)* ")" codeBlock
+function => STRING "(" (STRING (",")*)* ")" functionReturnType codeBlock
+functionType => ("(" (typeNotation)? ",typeNotation"* ")" ("->" typeNotation)?)
+functionReturnType => NOTHING | ":" typeNotation
+typeNotation => primitiveType
+primitiveType => "unit" | "list" | (("number" | "integer" | "boolean" | "text") ("list")?) | functionType
 return => "return" expression
-valueDeclaration => "val" STRING ":=" expression
+valueDeclaration => "val" STRING ":" typeNotation "":=" expression
 assignment => STRING ":=" expression
 input => "input" STRING
 output => "output" expression
@@ -26,3 +30,4 @@ addition => multiplication ( ( "-" | "+" ) multiplication )*
 multiplication => unary ( ( "/" | "*" ) unary )*
 unary => ( "!" | "-" ) unary | primary ("[" expressionList "]" | "(" expressionList ")")*
 primary => NUMBER | STRING | "false" | "true" | "(" expression ")" | listDeclaration
+anonymousFunction => "function" "(" (STRING typeNotation(",")?)*  ")" functionReturnType codeBlock

@@ -155,16 +155,20 @@ class Parser {
     return Statement.FunctionDeclaration(name, function, startToken, body.endToken)
   }
 
-  // typeNotation => (("number" | integer | boolean | text ) (list)?) | ("(" (typeNotation)? ",typeNotation"* ")" ("->" typeNotation)?)
-  private fun typeNotation(tokens: TokenList): GustoType {
+  private fun listType(type: PrimitiveType, tokens: TokenList): GustoType{
+    return if (tokens.match(TokenType.List)){
+      tokens.consumeToken()
+      ListType(type)
+    } else {
+      return type
+    }
+  }
+
+  // ("(" (typeNotation)? ",typeNotation"* ")" ("->" typeNotation)?)
+  private fun functionType(tokens: TokenList): GustoType{
     val token = tokens.consumeToken()
-    val type = when(token.tokenType) {
-      TokenType.Number -> PrimitiveType.Number
-      TokenType.Boolean -> PrimitiveType.Boolean
-      TokenType.Integer -> PrimitiveType.Integer
-      TokenType.Text -> PrimitiveType.Text
-      TokenType.Unit -> PrimitiveType.Unit
-      TokenType.List -> ListType(UnknownType)
+
+    return when(token.tokenType){
       TokenType.OpenParen -> {
         val params = ArrayList<GustoType>()
         while(!tokens.match(TokenType.CloseParen)){
@@ -174,19 +178,39 @@ class Parser {
           }
         }
         tokens.consumeToken()
-        tokens.getNextToken(TokenType.RightArrow)
-        val returnType = typeNotation(tokens)
+
+        val returnType = if (tokens.match(TokenType.RightArrow)) {
+          tokens.getNextToken(TokenType.RightArrow)
+          typeNotation(tokens)
+        } else {
+          PrimitiveType.Unit
+        }
+
         FunctionType(params, returnType)
       }
       else -> throw UnexpectedToken(token, listOf(TokenType.Text, TokenType.Integer, TokenType.Boolean, TokenType.Number, TokenType.List))
     }
-
-    return if (tokens.match(TokenType.List)){
-      tokens.consumeToken()
-      if(type is PrimitiveType) ListType(type) else throw ParserException("You cannot create a list of the type $type")
-    } else {
-      type
+  }
+  // primitiveType => "unit" | "list" | ("number" | "integer" | "boolean" | "text") ("list")? | functionType
+  private fun primitiveType(tokens: TokenList): GustoType {
+    val token = tokens.consumeToken()
+    return when(token.tokenType){
+      TokenType.Number -> listType(PrimitiveType.Number, tokens)
+      TokenType.Boolean -> listType(PrimitiveType.Boolean, tokens)
+      TokenType.Integer -> listType(PrimitiveType.Integer, tokens)
+      TokenType.Text -> listType(PrimitiveType.Text, tokens)
+      TokenType.List -> ListType(UnknownType)
+      TokenType.Unit -> PrimitiveType.Unit
+      else -> {
+        tokens.addFirst(token)
+        functionType(tokens)
+      }
     }
+  }
+
+  // typeNotation => ( primitiveType (list)?) | functionType
+  private fun typeNotation(tokens: TokenList): GustoType {
+    return primitiveType(tokens)
   }
 
   // return => "return" expression
@@ -401,6 +425,7 @@ class Parser {
     return Pair(params, paramTypes)
   }
 
+  // functionReturnType => NOTHING | ":" typeNotation
   private fun functionReturnType(tokens: TokenList): GustoType {
     return if (tokens.match(TokenType.Colon)) {
       tokens.consumeToken()
