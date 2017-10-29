@@ -6,20 +6,137 @@ import tatskaari.parsing.TypeChecking.ArithmeticOperator
 import tatskaari.parsing.TypeChecking.TypedExpression
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.commons.InstructionAdapter
+import tatskaari.parsing.TypeChecking.BooleanLogicalOperator
+import tatskaari.parsing.TypeChecking.NumericLogicalOperator
 
 
-class JVMTypedExpressionVisitor (private val methodVisitor: org.objectweb.asm.MethodVisitor): ITypedExpressionVisitor {
+class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter): ITypedExpressionVisitor {
+  override fun visit(expr: TypedExpression.BooleanLogicalOperation) {
+    val trueLabel = Label()
+    val falseLabel = Label()
+    val endLabel = Label()
+    when(expr.operator){
+      BooleanLogicalOperator.And -> {
+        expr.lhs.accept(this)
+        methodVisitor.ifeq(falseLabel)
+        expr.rhs.accept(this)
+        methodVisitor.ifeq(falseLabel)
+        methodVisitor.goTo(trueLabel)
+      }
+      BooleanLogicalOperator.Or -> {
+        expr.lhs.accept(this)
+        methodVisitor.ifne(trueLabel)
+        expr.rhs.accept(this)
+        methodVisitor.ifne(trueLabel)
+        methodVisitor.goTo(falseLabel)
+      }
+    }
+    methodVisitor.visitLabel(trueLabel)
+    methodVisitor.iconst(1)
+    methodVisitor.goTo(endLabel)
+    methodVisitor.visitLabel(falseLabel)
+    methodVisitor.iconst(0)
+    methodVisitor.visitLabel(endLabel)
+
+  }
+
+  override fun visit(expr: TypedExpression.IntLogicalOperation) {
+    val trueLabel = Label()
+    val falseLabel = Label()
+    val endLabel = Label()
+    expr.lhs.accept(this)
+    expr.rhs.accept(this)
+
+    when(expr.operator){
+      NumericLogicalOperator.GreaterThan -> {
+        methodVisitor.ificmpgt(trueLabel)
+        methodVisitor.goTo(falseLabel)
+      }
+      NumericLogicalOperator.LessThan -> {
+        methodVisitor.ificmplt(trueLabel)
+        methodVisitor.goTo(falseLabel)
+      }
+      NumericLogicalOperator.GreaterThanEq -> {
+        methodVisitor.ificmpge(trueLabel)
+        methodVisitor.goTo(falseLabel)
+      }
+      NumericLogicalOperator.LessThanEq -> {
+        methodVisitor.ificmple(trueLabel)
+        methodVisitor.goTo(falseLabel)
+      }
+    }
+    methodVisitor.visitLabel(trueLabel)
+    methodVisitor.iconst(1)
+    methodVisitor.goTo(endLabel)
+    methodVisitor.visitLabel(falseLabel)
+    methodVisitor.iconst(0)
+    methodVisitor.visitLabel(endLabel)
+  }
+
+  override fun visit(expr: TypedExpression.NumLogicalOperation) {
+    val trueLabel = Label()
+    val falseLabel = Label()
+    val endLabel = Label()
+
+    expr.lhs.accept(this)
+    if (expr.lhs.gustoType == PrimitiveType.Integer){
+      methodVisitor.visitInsn(I2D)
+    }
+
+    expr.rhs.accept(this)
+    if (expr.rhs.gustoType == PrimitiveType.Integer){
+      methodVisitor.visitInsn(I2D)
+    }
+
+    when(expr.operator){
+      NumericLogicalOperator.LessThan -> {
+        methodVisitor.visitInsn(DCMPL)
+        methodVisitor.iflt(trueLabel)
+        methodVisitor.goTo(falseLabel)
+      }
+      NumericLogicalOperator.GreaterThan -> {
+        methodVisitor.visitInsn(DCMPG)
+        methodVisitor.ifgt(trueLabel)
+        methodVisitor.goTo(falseLabel)
+      }
+      NumericLogicalOperator.LessThanEq -> {
+        methodVisitor.visitInsn(DCMPL)
+        methodVisitor.ifle(trueLabel)
+        methodVisitor.goTo(falseLabel)
+      }
+      NumericLogicalOperator.GreaterThanEq -> {
+        methodVisitor.visitInsn(DCMPG)
+        methodVisitor.ifge(trueLabel)
+        methodVisitor.goTo(falseLabel)
+      }
+    }
+    methodVisitor.visitLabel(trueLabel)
+    methodVisitor.iconst(1)
+    methodVisitor.goTo(endLabel)
+    methodVisitor.visitLabel(falseLabel)
+    methodVisitor.iconst(0)
+    methodVisitor.visitLabel(endLabel)
+  }
+
+  override fun visit(expr: TypedExpression.Equals) {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
+
+  override fun visit(expr: TypedExpression.NotEquals) {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+  }
 
 
   override fun visit(expr: TypedExpression.NumLiteral) {
-    methodVisitor.visitLdcInsn(expr.expr.value)
+    methodVisitor.dconst(expr.expr.value)
   }
   override fun visit(expr: TypedExpression.IntLiteral) {
-    methodVisitor.visitIntInsn(BIPUSH, expr.expr.value)
+    methodVisitor.iconst(expr.expr.value)
   }
 
   override fun visit(expr: TypedExpression.TextLiteral) {
-    methodVisitor.visitLdcInsn(expr.expr.value)
+    methodVisitor.aconst(expr.expr.value)
   }
 
   override fun visit(expr: TypedExpression.BooleanLiteral) {
@@ -98,10 +215,6 @@ class JVMTypedExpressionVisitor (private val methodVisitor: org.objectweb.asm.Me
     expr.rhs.accept(this)
     methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(${rhsType.getJvmTypeDesc()})Ljava/lang/StringBuilder;", false)
     methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;", false)
-  }
-
-  override fun visit(expr: TypedExpression.LogicalOperation) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 
   override fun visit(expr: TypedExpression.FunctionCall) {

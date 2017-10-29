@@ -61,16 +61,37 @@ sealed class TypedExpression(val gustoType: GustoType) {
       visitor.visit(this)
     }
   }
-  class LogicalOperation(val expr: Expression.BinaryOperator, val operator: LogicalOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean){
+  class NumLogicalOperation(val expr: Expression.BinaryOperator, val operator: NumericLogicalOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }
   }
-  class FunctionCall(val expr: Expression.FunctionCall, val functionExpression: TypedExpression, val paramExprs: List<TypedExpression>, type: GustoType): TypedExpression(type){
+  class IntLogicalOperation(val expr: Expression.BinaryOperator, val operator: NumericLogicalOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }
   }
+  class Equals(val expr: Expression.BinaryOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean){
+    override fun accept(visitor: ITypedExpressionVisitor) {
+      visitor.visit(this)
+    }
+  }
+  class NotEquals(val expr: Expression.BinaryOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean){
+    override fun accept(visitor: ITypedExpressionVisitor) {
+      visitor.visit(this)
+    }
+  }
+  class BooleanLogicalOperation(val expr: Expression.BinaryOperator, val operator: BooleanLogicalOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean){
+    override fun accept(visitor: ITypedExpressionVisitor) {
+      visitor.visit(this)
+    }
+  }
+  class FunctionCall(val expr: Expression.FunctionCall, val functionExpression: TypedExpression, val paramExprs: List<TypedExpression>, type: GustoType): TypedExpression(type) {
+    override fun accept(visitor: ITypedExpressionVisitor) {
+      return visitor.visit(this)
+    }
+  }
+
   class ListAccess(val expr: Expression.ListAccess, type: GustoType, val listExpression: TypedExpression, val indexExpr: TypedExpression): TypedExpression(type){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)

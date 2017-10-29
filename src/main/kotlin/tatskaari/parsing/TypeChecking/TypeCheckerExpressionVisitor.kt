@@ -52,19 +52,24 @@ class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors) : IExpr
       }
       BinaryOperators.And, BinaryOperators.Or -> {
         if (lhsType == PrimitiveType.Boolean && rhsType == PrimitiveType.Boolean) {
-          TypedExpression.LogicalOperation(expr, LogicalOperator.valueOf(expr.operator.name), lhs, rhs)
+          TypedExpression.BooleanLogicalOperation(expr, BooleanLogicalOperator.valueOf(expr.operator.name), lhs, rhs)
         } else {
           typeErrors.addBinaryOperatorTypeError(expr, expr.operator, lhsType, rhsType)
-          TypedExpression.LogicalOperation(expr, LogicalOperator.valueOf(expr.operator.name), lhs, rhs)
+          TypedExpression.BooleanLogicalOperation(expr, BooleanLogicalOperator.valueOf(expr.operator.name), lhs, rhs)
         }
       }
-      BinaryOperators.Equality, BinaryOperators.NotEquality -> TypedExpression.LogicalOperation(expr, LogicalOperator.valueOf(expr.operator.name), lhs, rhs)
+      BinaryOperators.Equality -> TypedExpression.Equals(expr, lhs, rhs)
+      BinaryOperators.NotEquality -> TypedExpression.NotEquals(expr, lhs, rhs)
       BinaryOperators.GreaterThan, BinaryOperators.GreaterThanEq, BinaryOperators.LessThan, BinaryOperators.LessThanEq -> {
         if ((lhsType == PrimitiveType.Number || lhsType == PrimitiveType.Integer) && (rhsType == PrimitiveType.Number || rhsType == PrimitiveType.Integer)) {
-          TypedExpression.LogicalOperation(expr, LogicalOperator.valueOf(expr.operator.name), lhs, rhs)
+          if (lhs.gustoType == PrimitiveType.Number || rhs.gustoType == PrimitiveType.Number){
+            TypedExpression.NumLogicalOperation(expr, NumericLogicalOperator.valueOf(expr.operator.name), lhs, rhs)
+          } else {
+            TypedExpression.IntLogicalOperation(expr, NumericLogicalOperator.valueOf(expr.operator.name), lhs, rhs)
+          }
         } else {
           typeErrors.addBinaryOperatorTypeError(expr, expr.operator, lhsType, rhsType)
-          TypedExpression.LogicalOperation(expr, LogicalOperator.valueOf(expr.operator.name), lhs, rhs)
+          TypedExpression.NumLogicalOperation(expr, NumericLogicalOperator.valueOf(expr.operator.name), lhs, rhs)
         }
       }
     }
