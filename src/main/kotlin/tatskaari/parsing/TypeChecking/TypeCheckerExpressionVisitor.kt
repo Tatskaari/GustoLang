@@ -39,7 +39,7 @@ class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors) : IExpr
 
     return when(expr.operator) {
       BinaryOperators.Add, BinaryOperators.Mul, BinaryOperators.Sub, BinaryOperators.Div -> {
-        if (lhsType == PrimitiveType.Text || rhsType == PrimitiveType.Text) {
+        if ((lhsType == PrimitiveType.Text || rhsType == PrimitiveType.Text) && expr.operator == BinaryOperators.Add) {
           TypedExpression.Concatenation(expr, lhs, rhs)
         } else if (lhsType == PrimitiveType.Integer && rhsType == PrimitiveType.Integer) {
           TypedExpression.IntArithmeticOperation(expr, ArithmeticOperator.valueOf(expr.operator.name), lhs, rhs)

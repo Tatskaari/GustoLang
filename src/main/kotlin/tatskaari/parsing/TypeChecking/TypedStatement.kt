@@ -6,13 +6,13 @@ import tatskaari.PrimitiveType
 import tatskaari.parsing.Statement
 
 sealed class TypedStatement(val returnType: GustoType){
-  class Assignment(val statement: Statement.Assignment, expression: TypedExpression): TypedStatement(PrimitiveType.Unit) {
+  class Assignment(val statement: Statement.Assignment, val expression: TypedExpression): TypedStatement(PrimitiveType.Unit) {
     override fun accept(visitor: ITypedStatementVisitor) {
       visitor.accept(this)
     }
   }
 
-  class ValDeclaration(val statement: Statement.ValDeclaration, expression: TypedExpression): TypedStatement(PrimitiveType.Unit){
+  class ValDeclaration(val statement: Statement.ValDeclaration, val expression: TypedExpression): TypedStatement(PrimitiveType.Unit){
     override fun accept(visitor: ITypedStatementVisitor) {
       visitor.accept(this)
     }

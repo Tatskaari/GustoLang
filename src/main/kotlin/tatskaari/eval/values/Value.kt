@@ -70,7 +70,7 @@ sealed class Value(var value: Any) {
     override fun equals(other: Any?): Boolean {
       if (other is Value) {
         // integers and doubles should be considered equal in gusto if they contain the same value (unlike Kotlin)
-        return this.intVal().toDouble() == other.value || this.intVal() == other.value
+        return this.intVal() == other.value
       }
       return false
     }

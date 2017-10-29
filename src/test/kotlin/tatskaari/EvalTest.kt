@@ -453,14 +453,15 @@ object EvalTest {
 
   @Test
   fun testComparisons(){
-    val program = "val out: number := 1.0 <= 1 val outt: text := \"1\" = \"1\" val outtt: boolean := 10 = 10.0"
+    val program = "val out := 1.0 <= 1 val outt := \"1\" = \"1\" val outtt := 10 = 10.0 val outttt := 10.0 = 10"
     val env = MutEnv()
     val parser = Parser()
     val ast = parser.parse(program)
     Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
     assertEquals(true, env.getValue("out").boolVal())
     assertEquals(true, env.getValue("outt").boolVal())
-    assertEquals(true, env.getValue("outtt").boolVal())
+    assertEquals(false, env.getValue("outtt").boolVal())
+    assertEquals(false, env.getValue("outttt").boolVal())
   }
 
   @Test

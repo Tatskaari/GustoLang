@@ -1,13 +1,9 @@
 package tatskaari.parsing.TypeChecking
 
 enum class NumericLogicalOperator {
-  LessThan,
-  GreaterThan,
-  LessThanEq,
-  GreaterThanEq,
+  LessThan, GreaterThan, LessThanEq, GreaterThanEq
 }
 
 enum class BooleanLogicalOperator {
-  And,
-  Or;
+  And, Or
 }

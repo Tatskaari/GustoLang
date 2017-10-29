@@ -7,11 +7,12 @@ import tatskaari.parsing.TypeChecking.TypedExpression
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.commons.InstructionAdapter
+import tatskaari.GustoType
 import tatskaari.parsing.TypeChecking.BooleanLogicalOperator
 import tatskaari.parsing.TypeChecking.NumericLogicalOperator
 
 
-class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter): ITypedExpressionVisitor {
+class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, private val localVars: Env): ITypedExpressionVisitor {
   override fun visit(expr: TypedExpression.BooleanLogicalOperation) {
     val trueLabel = Label()
     val falseLabel = Label()
@@ -120,11 +121,28 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter):
   }
 
   override fun visit(expr: TypedExpression.Equals) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    expr.lhs.accept(this)
+    box(expr.lhs.gustoType)
+    expr.rhs.accept(this)
+    box(expr.rhs.gustoType)
+    methodVisitor.invokevirtual("java/lang/Object", "equals", "(Ljava/lang/Object;)Z", false)
+  }
+
+  private fun box(type: GustoType){
+    when(type){
+      PrimitiveType.Integer -> methodVisitor.invokestatic("java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false)
+      PrimitiveType.Number -> methodVisitor.invokestatic("java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false)
+      PrimitiveType.Boolean -> methodVisitor.invokestatic("java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false)
+    }
   }
 
   override fun visit(expr: TypedExpression.NotEquals) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    expr.lhs.accept(this)
+    box(expr.lhs.gustoType)
+    expr.rhs.accept(this)
+    box(expr.rhs.gustoType)
+    methodVisitor.invokevirtual("java/lang/Object", "equals", "(Ljava/lang/Object;)Z", false)
+    not()
   }
 
 
@@ -148,7 +166,12 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter):
   }
 
   override fun visit(expr: TypedExpression.Identifier) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    if (localVars.containsKey(expr.expr.name)){
+      val (index, type) = localVars.getValue(expr.expr.name)
+      methodVisitor.load(index, type)
+    } else {
+      throw Exception("Use of local variable that didn't exist at compilation time: ${expr.expr.name}")
+    }
   }
 
   override fun visit(expr: TypedExpression.NegateNum) {
@@ -158,6 +181,10 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter):
 
   override fun visit(expr: TypedExpression.Not) {
     expr.rhs.accept(this)
+    not()
+  }
+
+  private fun not(){
     val l1 = Label()
     methodVisitor.visitJumpInsn(IFNE, l1)
     methodVisitor.visitInsn(ICONST_1)

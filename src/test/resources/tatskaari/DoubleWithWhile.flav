@@ -1,0 +1,9 @@
+val i := 0
+val out := 0
+
+while i < 10 do
+    out := out + 2
+    i := i + 1
+end
+
+output out
