@@ -1,5 +1,6 @@
 package tatskaari.parsing.TypeChecking
 
+import tatskaari.FunctionType
 import tatskaari.GustoType
 import tatskaari.PrimitiveType
 import tatskaari.bytecodecompiler.ITypedExpressionVisitor
@@ -86,7 +87,7 @@ sealed class TypedExpression(val gustoType: GustoType) {
       visitor.visit(this)
     }
   }
-  class FunctionCall(val expr: Expression.FunctionCall, val functionExpression: TypedExpression, val paramExprs: List<TypedExpression>, type: GustoType): TypedExpression(type) {
+  class FunctionCall(val expr: Expression.FunctionCall, val functionExpression: TypedExpression, val paramExprs: List<TypedExpression>, val functionType: FunctionType): TypedExpression(functionType.returnType) {
     override fun accept(visitor: ITypedExpressionVisitor) {
       return visitor.visit(this)
     }

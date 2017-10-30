@@ -111,11 +111,11 @@ class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors) : IExpr
           typeErrors.addTypeMissmatch(expr, type, exprType.gustoType)
         }
       }
-      TypedExpression.FunctionCall(expr, functionExpr, params, functionType.returnType)
+      TypedExpression.FunctionCall(expr, functionExpr, params, functionType)
     } else {
       // TODO improve this error message
       typeErrors.add(expr, "Expected function, found $functionType")
-      TypedExpression.FunctionCall(expr, functionExpr, params, UnknownType)
+      TypedExpression.FunctionCall(expr, functionExpr, params, FunctionType(listOf(), UnknownType))
     }
   }
 

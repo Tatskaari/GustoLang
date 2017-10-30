@@ -5,6 +5,7 @@ import tatskaari.bytecodecompiler.Compiler
 import tatskaari.parsing.Parser
 import tatskaari.parsing.TypeChecking.TypeChecker
 import java.io.ByteArrayOutputStream
+import java.io.FileOutputStream
 import java.io.PrintStream
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
@@ -19,8 +20,12 @@ object CompilerTest {
     val typedProgram = typeChecker.checkStatementListTypes(ast, HashMap())
     val classBytes = Compiler.compileProgram(typedProgram)
 
+    // Save to file to aid debugging by viewing the GustoMail.class decompiled into java
+    // FileOutputStream("GustoMain.class").write(classBytes)
+
     val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())
     val clazz = classLoader.defineClass("GustoMain", classBytes)!!
+
 
     val main = clazz.getMethod("main",  Array<String>::class.java)
 
@@ -225,5 +230,35 @@ object CompilerTest {
       val content = compileAndGetMain("output \"test\" = \"test\"")
       assertEquals("true", content.replace("\r\n", "\n").trim())
     }
+  }
+
+  @Test
+  fun testIntegerFunction(){
+    val content = compileAndGetMain("function addOne(a: integer): integer do return a + 1 end output addOne(10)")
+    assertEquals("11",  content.replace("\r\n", "\n").trim())
+  }
+
+  @Test
+  fun testNumberFunction(){
+    val content = compileAndGetMain("function addOne(a: number): number do return a + 1.0 end output addOne(10.0)")
+    assertEquals("11.0",  content.replace("\r\n", "\n").trim())
+  }
+
+  @Test
+  fun testNumberBiFunction(){
+    val content = compileAndGetMain("function add(a: number, b: number): number do return a + b end output add(10.0, 11.0)")
+    assertEquals("21.0",  content.replace("\r\n", "\n").trim())
+  }
+
+  @Test
+  fun testIntegerBiFunction(){
+    val content = compileAndGetMain("function add(a: integer, b: integer): integer do return a + b end output add(10, 11)")
+    assertEquals("21",  content.replace("\r\n", "\n").trim())
+  }
+
+  @Test
+  fun testBooleanFunction(){
+    val content = compileAndGetMain("function getTrue(returnThis: boolean): boolean do return returnThis end output getTrue(true)")
+    assertEquals("true",  content.replace("\r\n", "\n").trim())
   }
 }

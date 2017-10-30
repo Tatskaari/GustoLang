@@ -6,8 +6,8 @@ import tatskaari.parsing.TypeChecking.ArithmeticOperator
 import tatskaari.parsing.TypeChecking.TypedExpression
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.Type
 import org.objectweb.asm.commons.InstructionAdapter
-import tatskaari.GustoType
 import tatskaari.parsing.TypeChecking.BooleanLogicalOperator
 import tatskaari.parsing.TypeChecking.NumericLogicalOperator
 
@@ -122,25 +122,17 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
 
   override fun visit(expr: TypedExpression.Equals) {
     expr.lhs.accept(this)
-    box(expr.lhs.gustoType)
+    box(expr.lhs.gustoType, methodVisitor)
     expr.rhs.accept(this)
-    box(expr.rhs.gustoType)
+    box(expr.rhs.gustoType, methodVisitor)
     methodVisitor.invokevirtual("java/lang/Object", "equals", "(Ljava/lang/Object;)Z", false)
-  }
-
-  private fun box(type: GustoType){
-    when(type){
-      PrimitiveType.Integer -> methodVisitor.invokestatic("java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false)
-      PrimitiveType.Number -> methodVisitor.invokestatic("java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false)
-      PrimitiveType.Boolean -> methodVisitor.invokestatic("java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false)
-    }
   }
 
   override fun visit(expr: TypedExpression.NotEquals) {
     expr.lhs.accept(this)
-    box(expr.lhs.gustoType)
+    box(expr.lhs.gustoType, methodVisitor)
     expr.rhs.accept(this)
-    box(expr.rhs.gustoType)
+    box(expr.rhs.gustoType, methodVisitor)
     methodVisitor.invokevirtual("java/lang/Object", "equals", "(Ljava/lang/Object;)Z", false)
     not()
   }
@@ -245,7 +237,19 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
   }
 
   override fun visit(expr: TypedExpression.FunctionCall) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
+    expr.functionExpression.accept(this)
+    expr.paramExprs.forEach {
+      it.accept(this)
+      box(it.gustoType, methodVisitor)
+    }
+    val interfaceType = FunctionalInterfaceProvider.getInterfaceType(expr.functionType)
+    val interfaceMethod = FunctionalInterfaceProvider.getInterfaceMethod(expr.functionType)
+    val callsiteLambdaType = FunctionalInterfaceProvider.getCallsiteLambdaType(expr.functionType)
+
+    methodVisitor.invokeinterface(interfaceType.internalName, interfaceMethod, callsiteLambdaType.descriptor)
+    methodVisitor.checkcast(Type.getType(expr.gustoType.getBoxedJvmTypeDesc()))
+    unBox(expr.gustoType, methodVisitor)
   }
 
   override fun visit(expr: TypedExpression.ListDeclaration) {
