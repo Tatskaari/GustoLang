@@ -106,7 +106,7 @@ class JVMTypedStatementVisitor(
 
     //Generate the synthetic function
     val lambdaMethodVisitor = InstructionAdapter(classWriter.visitMethod(ACC_PRIVATE + ACC_STATIC + ACC_SYNTHETIC, "lambda$$functionName", lambdaType.descriptor, null, null))
-    val lambdaVariableSorter = LocalVariablesSorter(ACC_PRIVATE + ACC_STATIC + ACC_SYNTHETIC, stmt.functionType.getBoxedJvmTypeDesc(), lambdaMethodVisitor)
+    val lambdaVariableSorter = LocalVariablesSorter(ACC_PRIVATE + ACC_STATIC + ACC_SYNTHETIC, lambdaType.descriptor, lambdaMethodVisitor)
 
     val lambdaEnv = Env()
 

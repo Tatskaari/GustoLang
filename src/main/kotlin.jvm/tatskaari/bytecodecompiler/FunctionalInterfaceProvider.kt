@@ -2,6 +2,7 @@ package tatskaari.bytecodecompiler
 
 import org.objectweb.asm.Type
 import tatskaari.FunctionType
+import tatskaari.GustoType
 import tatskaari.PrimitiveType
 import java.util.function.Function
 import java.util.function.*
@@ -38,16 +39,22 @@ object FunctionalInterfaceProvider {
     return Type.getType(typeDesc.toString())
   }
 
+  fun getTypeDesc(gustoType: GustoType): String{
+    return if(gustoType is FunctionType){
+      getInterfaceType(gustoType).descriptor
+    } else {
+      gustoType.getBoxedJvmTypeDesc()
+    }
+  }
+
   fun getLambdaType(functionType: FunctionType): Type{
     val typeDesc = StringBuilder("(")
-    functionType.params.forEach {
-      typeDesc.append(it.getBoxedJvmTypeDesc())
-    }
+    functionType.params.forEach {typeDesc.append(getTypeDesc(it))}
     typeDesc.append(")")
     if (functionType.returnType == PrimitiveType.Unit){
       typeDesc.append("V")
     } else {
-      typeDesc.append(functionType.returnType.getBoxedJvmTypeDesc())
+      typeDesc.append(getTypeDesc(functionType.returnType))
     }
     return Type.getType(typeDesc.toString())
   }

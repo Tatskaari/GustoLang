@@ -261,4 +261,20 @@ object CompilerTest {
     val content = compileAndGetMain("function getTrue(returnThis: boolean): boolean do return returnThis end output getTrue(true)")
     assertEquals("true",  content.replace("\r\n", "\n").trim())
   }
+
+  @Test
+  fun testHigherOrderFunctions(){
+    val content = compileAndGetMain("""
+function test(a : integer) : integer do
+    return a + 10
+end
+
+function doTest(testFun : (integer) -> integer) : integer do
+    return testFun(10)
+end
+
+output doTest(test)"""
+    )
+    assertEquals("20",  content.replace("\r\n", "\n").trim())
+  }
 }
