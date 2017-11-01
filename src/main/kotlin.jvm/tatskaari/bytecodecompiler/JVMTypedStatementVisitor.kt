@@ -114,18 +114,8 @@ class JVMTypedStatementVisitor(
     stmt.functionType.params
       .zip(stmt.statement.function.params)
       .forEachIndexed{ idx, (gustoType, identifier) ->
-        val paramIdx = idx + localVars.size
         val paramType = Type.getType(JVMTypeHelper.getTypeDesc(gustoType, true))
-        if (JVMTypeHelper.isBoxable(gustoType)){
-          val newParamType = Type.getType(JVMTypeHelper.getTypeDesc(gustoType, false))
-
-          lambdaMethodVisitor.load(paramIdx, paramType)
-          unBox(gustoType, lambdaMethodVisitor)
-          lambdaMethodVisitor.store(paramIdx, newParamType)
-          lambdaEnv.put(identifier.name, Variable(paramIdx, newParamType))
-        } else {
-          lambdaEnv.put(identifier.name, Variable(paramIdx, paramType))
-        }
+        lambdaEnv.put(identifier.name, Variable(idx + localVars.size, paramType))
       }
     val lambdaStatementVisitor = JVMTypedStatementVisitor(lambdaMethodVisitor, classWriter, lambdaEnv, lambdaVariableSorter)
     stmt.body.accept(lambdaStatementVisitor)

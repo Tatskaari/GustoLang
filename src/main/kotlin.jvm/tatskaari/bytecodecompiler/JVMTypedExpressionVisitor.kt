@@ -161,6 +161,9 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
     if (localVars.containsKey(expr.expr.name)){
       val (index, type) = localVars.getValue(expr.expr.name)
       methodVisitor.load(index, type)
+      if(type.descriptor == JVMTypeHelper.getTypeDesc(expr.gustoType, true)){
+        unBox(expr.gustoType, methodVisitor)
+      }
     } else {
       throw Exception("Use of local variable that didn't exist at compilation time: ${expr.expr.name}")
     }
