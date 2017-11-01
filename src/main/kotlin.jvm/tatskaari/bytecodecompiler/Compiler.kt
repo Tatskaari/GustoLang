@@ -6,7 +6,7 @@ import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.InstructionAdapter
 import tatskaari.GustoType
-import tatskaari.PrimitiveType
+import tatskaari.GustoType.*
 import tatskaari.parsing.TypeChecking.TypedStatement
 
 data class Variable(val index: Int, val type: Type)
@@ -34,8 +34,9 @@ object Compiler {
     val classWriter = ClassWriter(ClassWriter.COMPUTE_MAXS or ClassWriter.COMPUTE_FRAMES)
     classWriter.visit(52,ACC_PUBLIC or ACC_SUPER,"GustoMain",null,"java/lang/Object", null)
     val methodVisitor = InstructionAdapter(classWriter.visitMethod(ACC_PUBLIC + ACC_STATIC, "main", "([Ljava/lang/String;)V", null, null))
-
-    val statementVisitor = JVMTypedStatementVisitor(methodVisitor, classWriter)
+    val env = Env()
+    env.put("args", Variable(0, Type.getType("[Ljava/lang/String;")))
+    val statementVisitor = JVMTypedStatementVisitor(methodVisitor, classWriter, env)
 
 
     statements.forEach({ it.accept(statementVisitor) })

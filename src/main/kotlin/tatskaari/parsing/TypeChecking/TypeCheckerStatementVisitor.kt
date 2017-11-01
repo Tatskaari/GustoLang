@@ -3,6 +3,7 @@ package tatskaari.parsing.TypeChecking
 import tatskaari.*
 import tatskaari.parsing.IStatementVisitor
 import tatskaari.parsing.Statement
+import tatskaari.GustoType.*
 
 class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors) : IStatementVisitor<TypedStatement> {
 

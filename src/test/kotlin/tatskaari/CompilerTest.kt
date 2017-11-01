@@ -7,7 +7,6 @@ import tatskaari.parsing.TypeChecking.TypeChecker
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
 import java.io.PrintStream
-import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
 import kotlin.test.assertEquals
 
@@ -21,7 +20,7 @@ object CompilerTest {
     val classBytes = Compiler.compileProgram(typedProgram)
 
     // Save to file to aid debugging by viewing the GustoMail.class decompiled into java
-    // FileOutputStream("GustoMain.class").write(classBytes)
+     FileOutputStream("GustoMain.class").write(classBytes)
 
     val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())
     val clazz = classLoader.defineClass("GustoMain", classBytes)!!
@@ -270,11 +269,34 @@ function test(a : integer) : integer do
 end
 
 function doTest(testFun : (integer) -> integer) : integer do
-    return testFun(10)
+    return testFun(10) + testFun(10)
 end
 
 output doTest(test)"""
     )
-    assertEquals("20",  content.replace("\r\n", "\n").trim())
+    assertEquals("40",  content.replace("\r\n", "\n").trim())
+  }
+
+  @Test
+  fun testApplied(){
+    val content = compileAndGetMain("""
+function add(a: integer, b: integer) : integer do
+    return a + b
+end
+
+function apply(fun: (integer, integer) -> integer, first: integer) : (integer) -> integer do
+    function applied (second: integer) : integer do
+        return fun(first, second)
+    end
+    return applied
+end
+
+val increment : (integer) -> integer := apply(add, 1)
+val decrement : (integer) -> integer := apply(add, -1)
+
+output increment(10) + " " + decrement(10)
+    """)
+    assertEquals("11 9",  content.replace("\r\n", "\n").trim())
+
   }
 }

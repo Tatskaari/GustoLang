@@ -19,19 +19,19 @@ enum class BinaryOperators {
 
   companion object {
     fun getOperator(token : Token) : BinaryOperators {
-      when(token.tokenType) {
-        TokenType.Add -> return Add
-        TokenType.Sub -> return Sub
-        TokenType.Mul -> return Mul
-        TokenType.Div -> return Div
-        TokenType.LessThan -> return LessThan
-        TokenType.GreaterThan -> return GreaterThan
-        TokenType.LessThanEq -> return LessThanEq
-        TokenType.GreaterThanEq -> return GreaterThanEq
-        TokenType.And -> return And
-        TokenType.Or -> return Or
-        TokenType.Equality -> return Equality
-        TokenType.NotEquality -> return NotEquality
+      return when(token.tokenType) {
+        TokenType.Add -> Add
+        TokenType.Sub -> Sub
+        TokenType.Mul -> Mul
+        TokenType.Div -> Div
+        TokenType.LessThan -> LessThan
+        TokenType.GreaterThan -> GreaterThan
+        TokenType.LessThanEq -> LessThanEq
+        TokenType.GreaterThanEq -> GreaterThanEq
+        TokenType.And -> And
+        TokenType.Or -> Or
+        TokenType.Equality -> Equality
+        TokenType.NotEquality -> NotEquality
         else -> throw InvalidOperatorToken(token)
       }
     }

@@ -1,6 +1,6 @@
 package tatskaari.parsing.TypeChecking
 
-import tatskaari.*
+import tatskaari.GustoType.*
 import tatskaari.parsing.*
 
 class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors) : IExpressionVisitor<TypedExpression> {

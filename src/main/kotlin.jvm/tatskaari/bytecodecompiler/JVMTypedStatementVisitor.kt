@@ -31,7 +31,7 @@ class JVMTypedStatementVisitor(
   override fun accept(stmt: TypedStatement.ValDeclaration) {
     val identifierName = stmt.statement.identifier.name
 
-    val type = Type.getType(stmt.expression.gustoType.getJvmTypeDesc())
+    val type = Type.getType(JVMTypeHelper.getTypeDesc(stmt.expression.gustoType, false))
     val varIndex = localVariableSetter.newLocal(type)
     localVars.put(identifierName, Variable(varIndex, type))
 
@@ -91,7 +91,7 @@ class JVMTypedStatementVisitor(
     methodVisitor.getstatic("java/lang/System", "out", "Ljava/io/PrintStream;")
     stmt.expression.accept(expressionVisitor)
     val type = stmt.expression.gustoType
-    methodVisitor.invokevirtual("java/io/PrintStream", "println", "(${type.getJvmTypeDesc()})V", false)
+    methodVisitor.invokevirtual("java/io/PrintStream", "println", "(${JVMTypeHelper.getTypeDesc(type, false)})V", false)
   }
 
   override fun accept(stmt: TypedStatement.Input) {
@@ -100,41 +100,50 @@ class JVMTypedStatementVisitor(
   override fun accept(stmt: TypedStatement.FunctionDeclaration) {
     val functionName = stmt.statement.identifier.name
 
-    val lambdaType = FunctionalInterfaceProvider.getLambdaType(stmt.functionType)
-    val callSiteLambdaType = FunctionalInterfaceProvider.getCallsiteLambdaType(stmt.functionType)
-    val functionalInterfaceType = FunctionalInterfaceProvider.getInterfaceType(stmt.functionType)
+    val lambdaType = JVMTypeHelper.getLambdaType(stmt.functionType, localVars)
+    val callSiteLambdaType = JVMTypeHelper.getCallsiteLambdaType(stmt.functionType)
+    val functionalInterfaceType = JVMTypeHelper.getInterfaceType(stmt.functionType)
 
     //Generate the synthetic function
     val lambdaMethodVisitor = InstructionAdapter(classWriter.visitMethod(ACC_PRIVATE + ACC_STATIC + ACC_SYNTHETIC, "lambda$$functionName", lambdaType.descriptor, null, null))
     val lambdaVariableSorter = LocalVariablesSorter(ACC_PRIVATE + ACC_STATIC + ACC_SYNTHETIC, lambdaType.descriptor, lambdaMethodVisitor)
-
-    val lambdaEnv = Env()
-
     lambdaMethodVisitor.visitCode()
+
+    // Add the params to the lambda env including the parent scope
+    val lambdaEnv = Env(localVars)
     stmt.functionType.params
       .zip(stmt.statement.function.params)
       .forEachIndexed{ idx, (gustoType, identifier) ->
-        val paramType = Type.getType(gustoType.getJvmTypeDesc())
-        val paramIdx = lambdaVariableSorter.newLocal(paramType)
+        val paramIdx = idx + localVars.size
+        val paramType = Type.getType(JVMTypeHelper.getTypeDesc(gustoType, true))
+        if (JVMTypeHelper.isBoxable(gustoType)){
+          val newParamType = Type.getType(JVMTypeHelper.getTypeDesc(gustoType, false))
 
-        lambdaMethodVisitor.load(idx, Type.getType(gustoType.getBoxedJvmTypeDesc()))
-        unBox(gustoType, lambdaMethodVisitor)
-        lambdaMethodVisitor.store(paramIdx, paramType)
-        lambdaEnv.put(identifier.name, Variable(paramIdx, paramType))
+          lambdaMethodVisitor.load(paramIdx, paramType)
+          unBox(gustoType, lambdaMethodVisitor)
+          lambdaMethodVisitor.store(paramIdx, newParamType)
+          lambdaEnv.put(identifier.name, Variable(paramIdx, newParamType))
+        } else {
+          lambdaEnv.put(identifier.name, Variable(paramIdx, paramType))
+        }
       }
     val lambdaStatementVisitor = JVMTypedStatementVisitor(lambdaMethodVisitor, classWriter, lambdaEnv, lambdaVariableSorter)
     stmt.body.accept(lambdaStatementVisitor)
     lambdaMethodVisitor.visitMaxs(0, 0)
     lambdaMethodVisitor.visitEnd()
 
-    //Store the method reference
-    val varIdx = localVariableSetter.newLocal(functionalInterfaceType)
-    localVars.put(functionName, Variable(varIdx, functionalInterfaceType))
+
+    // put the local variables onto the stack so they can be passed in to the lambda
+    localVars.forEach { name, variable ->  methodVisitor.load(variable.index, variable.type)}
 
     // Get a handle for the metafactory that will bootstrap an implementation of the interface
     val bootstrapMethodHandle = Handle(Opcodes.H_INVOKESTATIC, "java/lang/invoke/LambdaMetafactory", "metafactory", bootstrapMethodDesc, false)
-    val bootstrapMethodArgs = arrayOf<Any>(callSiteLambdaType, Handle(Opcodes.H_INVOKESTATIC, "GustoMain", "lambda$$functionName", lambdaType.descriptor,false), lambdaType)
-    methodVisitor.invokedynamic("apply", "()${functionalInterfaceType.descriptor}", bootstrapMethodHandle, bootstrapMethodArgs)
+    val bootstrapMethodArgs = arrayOf<Any>(callSiteLambdaType, Handle(Opcodes.H_INVOKESTATIC, "GustoMain", "lambda$$functionName", lambdaType.descriptor,false), JVMTypeHelper.getFunctionMethodDesc(stmt.functionType))
+    methodVisitor.invokedynamic("apply", "(${JVMTypeHelper.getLambdaParentScopeParamString(localVars)})${functionalInterfaceType.descriptor}", bootstrapMethodHandle, bootstrapMethodArgs)
+
+    //Store the method reference
+    val varIdx = localVariableSetter.newLocal(functionalInterfaceType)
+    localVars.put(functionName, Variable(varIdx, functionalInterfaceType))
     methodVisitor.store(varIdx, functionalInterfaceType)
   }
 

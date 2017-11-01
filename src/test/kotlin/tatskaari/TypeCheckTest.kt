@@ -4,9 +4,8 @@ import org.testng.annotations.Test
 import tatskaari.parsing.*
 import tatskaari.parsing.TypeChecking.Env
 import tatskaari.parsing.TypeChecking.TypeChecker
-import tatskaari.parsing.TypeChecking.TypeCheckerExpressionVisitor
 import tatskaari.parsing.TypeChecking.TypedStatement
-import tatskaari.tokenising.Lexer
+import tatskaari.GustoType.*
 import kotlin.test.assertEquals
 
 object TypeCheckTest {

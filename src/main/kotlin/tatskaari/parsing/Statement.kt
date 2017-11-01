@@ -1,7 +1,6 @@
 package tatskaari.parsing
 
 import tatskaari.GustoType
-import tatskaari.PrimitiveType
 import tatskaari.tokenising.Token
 
 sealed class Statement(startToken: Token, endToken: Token): ASTNode(startToken, endToken) {

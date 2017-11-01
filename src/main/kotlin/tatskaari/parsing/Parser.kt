@@ -5,6 +5,7 @@ import tatskaari.compatibility.*
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
 import tatskaari.tokenising.TokenType
+import tatskaari.GustoType.*
 
 class Parser {
   open class ParserException(val reason: String) : Exception()

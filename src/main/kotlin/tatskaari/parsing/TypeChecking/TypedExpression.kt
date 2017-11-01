@@ -1,8 +1,7 @@
 package tatskaari.parsing.TypeChecking
 
-import tatskaari.FunctionType
+import tatskaari.GustoType.*
 import tatskaari.GustoType
-import tatskaari.PrimitiveType
 import tatskaari.bytecodecompiler.ITypedExpressionVisitor
 import tatskaari.parsing.Expression
 

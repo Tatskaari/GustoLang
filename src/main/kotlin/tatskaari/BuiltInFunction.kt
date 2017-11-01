@@ -3,6 +3,7 @@ package tatskaari
 import tatskaari.compatibility.random
 import tatskaari.eval.*
 import tatskaari.eval.values.Value
+import tatskaari.GustoType.*
 
 enum class BuiltInFunction(val funName: String, val params: List<String>, val type: FunctionType, val function: (MutEnv) -> Value) {
   SizeOfList(
