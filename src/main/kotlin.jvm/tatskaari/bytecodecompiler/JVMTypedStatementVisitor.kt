@@ -4,6 +4,7 @@ import jdk.internal.org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.*
 import org.objectweb.asm.commons.InstructionAdapter
 import org.objectweb.asm.commons.LocalVariablesSorter
+import tatskaari.GustoType.*
 import tatskaari.parsing.TypeChecking.ITypedStatementVisitor
 import tatskaari.parsing.TypeChecking.TypedStatement
 
@@ -119,6 +120,9 @@ class JVMTypedStatementVisitor(
       }
     val lambdaStatementVisitor = JVMTypedStatementVisitor(lambdaMethodVisitor, classWriter, lambdaEnv, lambdaVariableSorter)
     stmt.body.accept(lambdaStatementVisitor)
+    if (stmt.functionType.returnType == PrimitiveType.Unit){
+      lambdaMethodVisitor.visitInsn(RETURN)
+    }
     lambdaMethodVisitor.visitMaxs(0, 0)
     lambdaMethodVisitor.visitEnd()
 
@@ -129,7 +133,9 @@ class JVMTypedStatementVisitor(
     // Get a handle for the metafactory that will bootstrap an implementation of the interface
     val bootstrapMethodHandle = Handle(Opcodes.H_INVOKESTATIC, "java/lang/invoke/LambdaMetafactory", "metafactory", bootstrapMethodDesc, false)
     val bootstrapMethodArgs = arrayOf<Any>(callSiteLambdaType, Handle(Opcodes.H_INVOKESTATIC, "GustoMain", "lambda$$functionName", lambdaType.descriptor,false), JVMTypeHelper.getFunctionMethodDesc(stmt.functionType))
-    methodVisitor.invokedynamic("apply", "(${JVMTypeHelper.getLambdaParentScopeParamString(localVars)})${functionalInterfaceType.descriptor}", bootstrapMethodHandle, bootstrapMethodArgs)
+
+    val methodName = JVMTypeHelper.getInterfaceMethod(stmt.functionType)
+    methodVisitor.invokedynamic(methodName, "(${JVMTypeHelper.getLambdaParentScopeParamString(localVars)})${functionalInterfaceType.descriptor}", bootstrapMethodHandle, bootstrapMethodArgs)
 
     //Store the method reference
     val varIdx = localVariableSetter.newLocal(functionalInterfaceType)

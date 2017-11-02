@@ -299,4 +299,40 @@ output increment(10) + " " + decrement(10)
     assertEquals("11 9",  content.replace("\r\n", "\n").trim())
 
   }
+
+  @Test
+  fun testConsumer(){
+    val content = compileAndGetMain("""
+function outputNum(a: integer) do
+  output a
+end
+
+outputNum(1)
+    """)
+    assertEquals("1",  content.replace("\r\n", "\n").trim())
+  }
+
+  @Test
+  fun testBiConsumer(){
+    val content = compileAndGetMain("""
+function outputAdd(a: integer, b: integer) do
+  output a + b
+end
+
+outputAdd(1, 2)
+    """)
+    assertEquals("3",  content.replace("\r\n", "\n").trim())
+  }
+
+  @Test
+  fun testSupplier(){
+    val content = compileAndGetMain("""
+function getNumber() : integer do
+  return 10
+end
+
+output getNumber()
+    """)
+    assertEquals("10",  content.replace("\r\n", "\n").trim())
+  }
 }

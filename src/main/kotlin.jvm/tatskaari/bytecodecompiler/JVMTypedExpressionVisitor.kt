@@ -251,8 +251,10 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
     val callsiteLambdaType = JVMTypeHelper.getCallsiteLambdaType(expr.functionType)
 
     methodVisitor.invokeinterface(interfaceType.internalName, interfaceMethod, callsiteLambdaType.descriptor)
-    methodVisitor.checkcast(Type.getType(JVMTypeHelper.getTypeDesc(expr.gustoType, true)))
-    unBox(expr.gustoType, methodVisitor)
+    if ((expr.functionExpression.gustoType as FunctionType).returnType != PrimitiveType.Unit){
+      methodVisitor.checkcast(Type.getType(JVMTypeHelper.getTypeDesc(expr.gustoType, true)))
+      unBox(expr.gustoType, methodVisitor)
+    }
   }
 
   override fun visit(expr: TypedExpression.ListDeclaration) {
