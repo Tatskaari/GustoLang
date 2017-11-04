@@ -51,15 +51,19 @@ object JVMTypeHelper {
     }
   }
 
-  fun getLambdaParentScopeParamString(parentEnv: Env): String{
+  fun getLambdaParentScopeParamString(parentEnv: Env, undeclaredVariables : List<String>): String{
     val envParamString = StringBuilder()
-    parentEnv.values.forEach{envParamString.append(it.type.descriptor)}
+    // append any variables that are required from the parent env
+    undeclaredVariables.forEach{
+      val variable = parentEnv.getValue(it)
+      envParamString.append(variable.type.descriptor)
+    }
     return envParamString.toString()
   }
 
-  fun getLambdaType(functionType: FunctionType, parentEnv: Env): Type{
+  fun getLambdaType(functionType: FunctionType, parentEnv: Env, undeclaredVariables : List<String>): Type{
     val typeDesc = StringBuilder("(")
-    typeDesc.append(getLambdaParentScopeParamString(parentEnv))
+    typeDesc.append(getLambdaParentScopeParamString(parentEnv, undeclaredVariables))
     functionType.params.forEach {typeDesc.append(getTypeDesc(it, true))}
     typeDesc.append(")")
     if (functionType.returnType == PrimitiveType.Unit){
@@ -71,7 +75,7 @@ object JVMTypeHelper {
   }
 
   fun getFunctionMethodDesc(functionType: FunctionType): Type{
-    return getLambdaType(functionType, Env())
+    return getLambdaType(functionType, Env(), listOf())
   }
 
   fun getInterfaceMethod(functionType: FunctionType): String {
