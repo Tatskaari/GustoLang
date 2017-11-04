@@ -2,11 +2,13 @@ package tatskaari.bytecodecompiler
 
 
 import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.InstructionAdapter
 import tatskaari.GustoType
 import tatskaari.GustoType.*
+import tatskaari.parsing.Statement
 import tatskaari.parsing.TypeChecking.TypedStatement
 
 data class Variable(val index: Int, val type: Type)
@@ -33,18 +35,11 @@ object Compiler {
   fun compileProgram(statements: List<TypedStatement>): ByteArray {
     val classWriter = ClassWriter(ClassWriter.COMPUTE_MAXS or ClassWriter.COMPUTE_FRAMES)
     classWriter.visit(52,ACC_PUBLIC or ACC_SUPER,"GustoMain",null,"java/lang/Object", null)
-    val methodVisitor = InstructionAdapter(classWriter.visitMethod(ACC_PUBLIC + ACC_STATIC, "main", "([Ljava/lang/String;)V", null, null))
-    val env = Env()
-    env.put("args", Variable(0, Type.getType("[Ljava/lang/String;")))
-    val statementVisitor = JVMTypedStatementVisitor(methodVisitor, classWriter, env)
 
-
+    val statementVisitor = JVMTypedStatementVisitor(classWriter, Env(),"main", "([Ljava/lang/String;)V",  Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC)
     statements.forEach({ it.accept(statementVisitor) })
+    statementVisitor.close()
 
-    methodVisitor.visitInsn(RETURN)
-    methodVisitor.visitMaxs(0, 0)
-
-    methodVisitor.visitEnd()
     classWriter.visitEnd()
 
 
