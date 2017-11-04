@@ -1,6 +1,6 @@
 package tatskaari.bytecodecompiler
 
-import jdk.internal.org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.*
 import org.objectweb.asm.commons.InstructionAdapter
 import org.objectweb.asm.commons.LocalVariablesSorter
@@ -10,14 +10,17 @@ import tatskaari.parsing.TypeChecking.TypedStatement
 class JVMTypedStatementVisitor(
   private val classWriter: ClassWriter,
   private val localVars: Env = Env(),
+  private val compiler: Compiler,
   methodName: String,
   methodDesc: String,
+  className: String,
+  fields: Map<String, Type>,
   access: Int
 ) : ITypedStatementVisitor {
   private val bootstrapMethodDesc = "(Ljava/lang/invoke/MethodHandles\$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"
 
   private val methodVisitor: InstructionAdapter = InstructionAdapter(classWriter.visitMethod(access, methodName, methodDesc, null, null))
-  private val expressionVisitor: JVMTypedExpressionVisitor = JVMTypedExpressionVisitor(methodVisitor, localVars)
+  private val expressionVisitor: JVMTypedExpressionVisitor = JVMTypedExpressionVisitor(methodVisitor, localVars, fields, className)
   private val localVariableSetter = LocalVariablesSorter(access, methodDesc, methodVisitor)
 
 
@@ -108,25 +111,21 @@ class JVMTypedStatementVisitor(
   override fun accept(stmt: TypedStatement.FunctionDeclaration) {
     val functionName = stmt.statement.identifier.name
 
-    val callSiteLambdaType = JVMTypeHelper.getCallsiteLambdaType(stmt.functionType)
     val functionalInterfaceType = JVMTypeHelper.getInterfaceType(stmt.functionType)
 
     //Generate the synthetic function
-    val innerClass = LambdaInnerClass(stmt, localVars, classWriter)
+    val innerClass = LambdaInnerClass(stmt, localVars, compiler)
 
+    // Construct the new class
+    methodVisitor.anew(Type.getObjectType(innerClass.className))
+    methodVisitor.dup()
     // put the local variables onto the stack so they can be passed in to the lambda
     innerClass.undeclaredVariables
       .map { localVars.getValue(it) }
       .forEach { variable ->
         methodVisitor.load(variable.index, variable.type)
       }
-
-    // Get a handle for the metafactory that will bootstrap an implementation of the interface
-    val bootstrapMethodHandle = Handle(Opcodes.H_INVOKESTATIC, "java/lang/invoke/LambdaMetafactory", "metafactory", bootstrapMethodDesc, false)
-    val bootstrapMethodArgs = arrayOf<Any>(callSiteLambdaType, Handle(Opcodes.H_INVOKESTATIC, "GustoMain", "lambda$$functionName", innerClass.getJVMType().descriptor,false), JVMTypeHelper.getFunctionMethodDesc(stmt.functionType))
-
-    val methodName = JVMTypeHelper.getInterfaceMethod(stmt.functionType)
-    methodVisitor.invokedynamic(methodName, "(${JVMTypeHelper.getLambdaParentScopeParamString(localVars, innerClass.undeclaredVariables)})${functionalInterfaceType.descriptor}", bootstrapMethodHandle, bootstrapMethodArgs)
+    methodVisitor.invokespecial(innerClass.className, "<init>", innerClass.getConstructorSignature(), false)
 
     //Store the method reference
     val varIdx = localVariableSetter.newLocal(functionalInterfaceType)

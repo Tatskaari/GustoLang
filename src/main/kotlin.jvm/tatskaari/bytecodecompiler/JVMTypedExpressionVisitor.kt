@@ -12,7 +12,7 @@ import tatskaari.parsing.TypeChecking.BooleanLogicalOperator
 import tatskaari.parsing.TypeChecking.NumericLogicalOperator
 
 
-class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, private val localVars: Env): ITypedExpressionVisitor {
+class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, private val localVars: Env, private val fields: Map<String, Type>, private val className: String): ITypedExpressionVisitor {
   override fun visit(expr: TypedExpression.BooleanLogicalOperation) {
     val trueLabel = Label()
     val falseLabel = Label()
@@ -158,14 +158,21 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
   }
 
   override fun visit(expr: TypedExpression.Identifier) {
-    if (localVars.containsKey(expr.expr.name)){
+    val type = if (localVars.containsKey(expr.expr.name)){
       val (index, type) = localVars.getValue(expr.expr.name)
       methodVisitor.load(index, type)
-      if(type.descriptor == JVMTypeHelper.getTypeDesc(expr.gustoType, true)){
-        unBox(expr.gustoType, methodVisitor)
-      }
+      type
+
+    } else if(fields.containsKey(expr.expr.name)){
+      val type = fields.getValue(expr.expr.name)
+      methodVisitor.load(0, Type.getObjectType(className))
+      methodVisitor.getfield(className, expr.expr.name, type.descriptor)
+      type
     } else {
       throw Exception("Use of local variable that didn't exist at compilation time: ${expr.expr.name}")
+    }
+    if(type.descriptor == JVMTypeHelper.getTypeDesc(expr.gustoType, true)){
+      unBox(expr.gustoType, methodVisitor)
     }
   }
 

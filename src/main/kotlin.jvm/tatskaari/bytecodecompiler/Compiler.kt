@@ -1,6 +1,8 @@
 package tatskaari.bytecodecompiler
 
 
+import com.sun.xml.internal.fastinfoset.util.StringArray
+import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.*
@@ -10,6 +12,12 @@ import tatskaari.GustoType
 import tatskaari.GustoType.*
 import tatskaari.parsing.Statement
 import tatskaari.parsing.TypeChecking.TypedStatement
+import java.util.*
+import com.sun.org.apache.bcel.internal.generic.RETURN
+import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL
+import com.sun.org.apache.bcel.internal.generic.ALOAD
+
+
 
 data class Variable(val index: Int, val type: Type)
 
@@ -31,19 +39,29 @@ fun unBox(type: GustoType, methodVisitor: InstructionAdapter){
   }
 }
 
-object Compiler {
-  fun compileProgram(statements: List<TypedStatement>): ByteArray {
-    val classWriter = ClassWriter(ClassWriter.COMPUTE_MAXS or ClassWriter.COMPUTE_FRAMES)
-    classWriter.visit(52,ACC_PUBLIC or ACC_SUPER,"GustoMain",null,"java/lang/Object", null)
+class Compiler {
+  val classes = HashMap<String, ClassWriter>()
+  val mainClass = ClassWriter(ClassWriter.COMPUTE_MAXS or ClassWriter.COMPUTE_FRAMES)
 
-    val statementVisitor = JVMTypedStatementVisitor(classWriter, Env(),"main", "([Ljava/lang/String;)V",  Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC)
+  fun compileProgram(statements: List<TypedStatement>): ByteArray {
+    mainClass.visit(52,ACC_PUBLIC or ACC_SUPER,"GustoMain",null,"java/lang/Object", null)
+
+    val statementVisitor = JVMTypedStatementVisitor(mainClass, Env(), this,"main", "([Ljava/lang/String;)V",  "GustMain", HashMap(), Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC)
     statements.forEach({ it.accept(statementVisitor) })
     statementVisitor.close()
 
-    classWriter.visitEnd()
+    mainClass.visitEnd()
 
 
-    return classWriter.toByteArray()
+    return mainClass.toByteArray()
+  }
+
+  fun registerClass(name: String, interfaceName: String): ClassWriter{
+    val classWriter = ClassWriter(ClassWriter.COMPUTE_MAXS or ClassWriter.COMPUTE_FRAMES)
+    classWriter.visit(52, Opcodes.ACC_PUBLIC or Opcodes.ACC_SUPER,name,null, "java/lang/Object", arrayOf(interfaceName))
+    classes.put(name, classWriter)
+
+    return classWriter
   }
 
 }

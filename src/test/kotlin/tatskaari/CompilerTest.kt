@@ -17,13 +17,21 @@ object CompilerTest {
     val ast = parser.parse(program)!!
     val typeChecker = TypeChecker()
     val typedProgram = typeChecker.checkStatementListTypes(ast, HashMap())
-    val classBytes = Compiler.compileProgram(typedProgram)
+    val compiler = Compiler()
+    val classBytes = compiler.compileProgram(typedProgram)
 
     // Save to file to aid debugging by viewing the GustoMail.class decompiled into java
-     FileOutputStream("GustoMain.class").write(classBytes)
+    FileOutputStream("target/GustoMain.class").write(classBytes)
+    compiler.classes.forEach{FileOutputStream("target/${it.key}.class").write(it.value.toByteArray())}
+
 
     val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())
     val clazz = classLoader.defineClass("GustoMain", classBytes)!!
+
+    compiler.classes.forEach{
+      classLoader.defineClass(it.key, it.value.toByteArray())
+    }
+
 
 
     val main = clazz.getMethod("main",  Array<String>::class.java)
@@ -39,6 +47,7 @@ object CompilerTest {
       .replace("\r\n", "\n")
       .trim()
   }
+
 
   @Test
   fun testIMul(){
@@ -430,5 +439,22 @@ output "The 6th fib number is " + fib(6) + " which is not " + -fib(13)
     """)
 
     assertEquals("The 6th fib number is 13 which is not -377", content)
+  }
+
+  @Test
+  fun testRecursiveFib(){
+    val content = compileAndGetOutput("""
+function fib(n: integer) : integer do
+    if n <= 2 then
+        return 1
+    else
+        return fib(n - 1) + fib(n - 2)
+    end
+end
+
+output fib(13)
+    """)
+
+    assertEquals("233", content)
   }
 }
