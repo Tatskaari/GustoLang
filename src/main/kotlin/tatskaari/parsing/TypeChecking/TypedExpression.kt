@@ -102,8 +102,7 @@ sealed class TypedExpression(val gustoType: GustoType) {
       visitor.visit(this)
     }
   }
-  //TODO include the type of the body
-  class Function(val expr: Expression.Function, type: GustoType): TypedExpression(type){
+  class Function(val expr: Expression.Function, val body: TypedStatement.CodeBlock, val functionType: FunctionType): TypedExpression(functionType){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }

@@ -20,7 +20,7 @@ class JVMTypedStatementVisitor(
   private val bootstrapMethodDesc = "(Ljava/lang/invoke/MethodHandles\$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"
 
   private val methodVisitor: InstructionAdapter = InstructionAdapter(classWriter.visitMethod(access, methodName, methodDesc, null, null))
-  private val expressionVisitor: JVMTypedExpressionVisitor = JVMTypedExpressionVisitor(methodVisitor, localVars, fields, className)
+  private val expressionVisitor: JVMTypedExpressionVisitor = JVMTypedExpressionVisitor(methodVisitor, localVars, fields, className, compiler)
   private val localVariableSetter = LocalVariablesSorter(access, methodDesc, methodVisitor)
 
 
@@ -110,17 +110,17 @@ class JVMTypedStatementVisitor(
 
   override fun accept(stmt: TypedStatement.FunctionDeclaration) {
     val functionName = stmt.statement.identifier.name
-
     val functionalInterfaceType = JVMTypeHelper.getInterfaceType(stmt.functionType)
 
     //Generate the synthetic function
-    val innerClass = LambdaInnerClass(stmt, localVars, compiler)
+    val undeclaredVars = ScopeStatementVisitor().findUndeclaredVars(stmt)
+    val innerClass = LambdaInnerClass(stmt.functionType, functionName, undeclaredVars, localVars, stmt.statement.function.params, stmt.body, compiler)
 
     // Construct the new class
     methodVisitor.anew(Type.getObjectType(innerClass.className))
     methodVisitor.dup()
     // put the local variables onto the stack so they can be passed in to the lambda
-    innerClass.undeclaredVariables
+    undeclaredVars
       .map { localVars.getValue(it) }
       .forEach { variable ->
         methodVisitor.load(variable.index, variable.type)

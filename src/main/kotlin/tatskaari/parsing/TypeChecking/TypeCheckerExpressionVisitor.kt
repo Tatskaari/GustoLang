@@ -164,7 +164,7 @@ class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors) : IExpr
       typeErrors.add(expr, "Unexpected return type. Expected ${expr.returnType}, got ${body.returnType}.")
     }
 
-    return TypedExpression.Function(expr, FunctionType(paramTypes, expr.returnType))
+    return TypedExpression.Function(expr, body, FunctionType(paramTypes, expr.returnType))
   }
 
 }

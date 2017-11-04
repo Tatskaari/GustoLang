@@ -12,7 +12,7 @@ import tatskaari.parsing.TypeChecking.BooleanLogicalOperator
 import tatskaari.parsing.TypeChecking.NumericLogicalOperator
 
 
-class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, private val localVars: Env, private val fields: Map<String, Type>, private val className: String): ITypedExpressionVisitor {
+class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, private val localVars: Env, private val fields: Map<String, Type>, private val className: String, private val compiler: Compiler): ITypedExpressionVisitor {
   override fun visit(expr: TypedExpression.BooleanLogicalOperation) {
     val trueLabel = Label()
     val falseLabel = Label()
@@ -269,7 +269,22 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
   }
 
   override fun visit(expr: TypedExpression.Function) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    val anonymousClassName = compiler.getNextClassName(className)
+
+    //Generate the synthetic function
+    val undeclaredVars = ScopeExpressionVisitor().findUndeclaredVariables(expr)
+    val innerClass = LambdaInnerClass(expr.functionType, anonymousClassName, undeclaredVars, localVars, expr.expr.params, expr.body,  compiler)
+
+    // Construct the new class
+    methodVisitor.anew(Type.getObjectType(innerClass.className))
+    methodVisitor.dup()
+    // put the local variables onto the stack so they can be passed in to the lambda
+    innerClass.undeclaredVariables
+      .map { localVars.getValue(it) }
+      .forEach { variable ->
+        methodVisitor.load(variable.index, variable.type)
+      }
+    methodVisitor.invokespecial(innerClass.className, "<init>", innerClass.getConstructorSignature(), false)
   }
 
   override fun visit(expr: TypedExpression.ListAccess) {

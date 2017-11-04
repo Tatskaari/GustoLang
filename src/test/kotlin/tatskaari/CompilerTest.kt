@@ -63,14 +63,13 @@ object CompilerTest {
 
   @Test
   fun testOutputString(){
-    val content = compileAndGetOutput("""output "2 * " + 6 + " is " + 12.0 """)!!
+    val content = compileAndGetOutput("""output "2 * " + 6 + " is " + 12.0 """)
     assertEquals("2 * 6 is 12.0", content)
   }
 
   @Test
   fun testOutputBoolean(){
-    val content = compileAndGetOutput("output true")!!
-
+    val content = compileAndGetOutput("output true")
     assertEquals("true", content)
   }
 
@@ -296,10 +295,9 @@ function add(a: integer, b: integer) : integer do
 end
 
 function apply(fun: (integer, integer) -> integer, first: integer) : (integer) -> integer do
-    function applied (second: integer) : integer do
+    return function (second: integer) : integer do
         return fun(first, second)
     end
-    return applied
 end
 
 val increment : (integer) -> integer := apply(add, 1)

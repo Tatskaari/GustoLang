@@ -71,4 +71,9 @@ class ScopeStatementVisitor : ITypedStatementVisitor {
     stmt.expression.accept(expressionVisitor)
   }
 
+  fun findUndeclaredVars(stmt: TypedStatement.FunctionDeclaration): List<String> {
+    stmt.accept(this)
+    return undeclaredVariables
+  }
+
 }

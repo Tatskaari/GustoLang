@@ -1,8 +1,5 @@
 package tatskaari.bytecodecompiler
 
-
-import com.sun.xml.internal.fastinfoset.util.StringArray
-import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.*
@@ -10,13 +7,8 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.commons.InstructionAdapter
 import tatskaari.GustoType
 import tatskaari.GustoType.*
-import tatskaari.parsing.Statement
 import tatskaari.parsing.TypeChecking.TypedStatement
 import java.util.*
-import com.sun.org.apache.bcel.internal.generic.RETURN
-import com.sun.org.apache.bcel.internal.generic.INVOKESPECIAL
-import com.sun.org.apache.bcel.internal.generic.ALOAD
-
 
 
 data class Variable(val index: Int, val type: Type)
@@ -41,7 +33,9 @@ fun unBox(type: GustoType, methodVisitor: InstructionAdapter){
 
 class Compiler {
   val classes = HashMap<String, ClassWriter>()
-  val mainClass = ClassWriter(ClassWriter.COMPUTE_MAXS or ClassWriter.COMPUTE_FRAMES)
+  private val mainClass = ClassWriter(ClassWriter.COMPUTE_MAXS or ClassWriter.COMPUTE_FRAMES)
+
+  private var anonymousCount = 0
 
   fun compileProgram(statements: List<TypedStatement>): ByteArray {
     mainClass.visit(52,ACC_PUBLIC or ACC_SUPER,"GustoMain",null,"java/lang/Object", null)
@@ -62,6 +56,10 @@ class Compiler {
     classes.put(name, classWriter)
 
     return classWriter
+  }
+
+  fun getNextClassName(className: String) : String{
+    return className + "$$anonymousCount"
   }
 
 }

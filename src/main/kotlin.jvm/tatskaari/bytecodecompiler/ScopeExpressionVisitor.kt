@@ -3,7 +3,7 @@ package tatskaari.bytecodecompiler
 import tatskaari.parsing.TypeChecking.TypedExpression
 import java.util.*
 
-class ScopeExpressionVisitor(val declaredVariables: LinkedList<String>, val undeclaredVariables: LinkedList<String>) : ITypedExpressionVisitor {
+class ScopeExpressionVisitor(val declaredVariables: LinkedList<String> = LinkedList(), val undeclaredVariables: LinkedList<String> = LinkedList()) : ITypedExpressionVisitor {
   override fun visit(expr: TypedExpression.NumLiteral) {}
 
   override fun visit(expr: TypedExpression.TextLiteral) {}
@@ -67,7 +67,10 @@ class ScopeExpressionVisitor(val declaredVariables: LinkedList<String>, val unde
   }
 
   override fun visit(expr: TypedExpression.Function) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    val subFunctionVisitor = ScopeStatementVisitor()
+    expr.expr.paramTypes.keys.forEach{subFunctionVisitor.declaredVariables.add(it.name)}
+    expr.body.accept(subFunctionVisitor)
+    undeclaredVariables.addAll(subFunctionVisitor.undeclaredVariables.minus(declaredVariables))
   }
 
   override fun visit(expr: TypedExpression.ListAccess) {
@@ -86,4 +89,9 @@ class ScopeExpressionVisitor(val declaredVariables: LinkedList<String>, val unde
   }
 
   override fun visit(expr: TypedExpression.IntLiteral) {}
+
+  fun findUndeclaredVariables(expr: TypedExpression.Function): List<String> {
+    expr.accept(this)
+    return undeclaredVariables
+  }
 }
