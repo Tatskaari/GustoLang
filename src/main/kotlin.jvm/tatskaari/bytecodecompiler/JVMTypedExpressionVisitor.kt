@@ -13,6 +13,7 @@ import tatskaari.parsing.TypeChecking.NumericLogicalOperator
 
 
 class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, private val localVars: Env, private val fields: Map<String, Type>, private val className: String, private val compiler: Compiler): ITypedExpressionVisitor {
+  private val arrayListClassName = "java/util/ArrayList"
   override fun visit(expr: TypedExpression.BooleanLogicalOperation) {
     val trueLabel = Label()
     val falseLabel = Label()
@@ -158,18 +159,19 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
   }
 
   override fun visit(expr: TypedExpression.Identifier) {
-    val type = if (localVars.containsKey(expr.expr.name)){
-      val (index, type) = localVars.getValue(expr.expr.name)
-      methodVisitor.load(index, type)
-      type
-
-    } else if(fields.containsKey(expr.expr.name)){
-      val type = fields.getValue(expr.expr.name)
-      methodVisitor.load(0, Type.getObjectType(className))
-      methodVisitor.getfield(className, expr.expr.name, type.descriptor)
-      type
-    } else {
-      throw Exception("Use of local variable that didn't exist at compilation time: ${expr.expr.name}")
+    val type = when {
+      localVars.containsKey(expr.expr.name) -> {
+        val (index, type) = localVars.getValue(expr.expr.name)
+        methodVisitor.load(index, type)
+        type
+      }
+      fields.containsKey(expr.expr.name) -> {
+        val type = fields.getValue(expr.expr.name)
+        methodVisitor.load(0, Type.getObjectType(className))
+        methodVisitor.getfield(className, expr.expr.name, type.descriptor)
+        type
+      }
+      else -> throw Exception("Use of local variable that didn't exist at compilation time: ${expr.expr.name}")
     }
     if(type.descriptor == JVMTypeHelper.getTypeDesc(expr.gustoType, true)){
       unBox(expr.gustoType, methodVisitor)
@@ -265,7 +267,17 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
   }
 
   override fun visit(expr: TypedExpression.ListDeclaration) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
+    methodVisitor.anew(Type.getObjectType(arrayListClassName))
+    methodVisitor.dup()
+    methodVisitor.invokespecial(arrayListClassName, "<init>", "()V", false)
+    expr.listItemExpr.forEach {
+      methodVisitor.dup()
+      it.accept(this)
+      box(it.gustoType, methodVisitor)
+      methodVisitor.invokevirtual(arrayListClassName,"add", "(Ljava/lang/Object;)Z", false)
+      methodVisitor.pop()
+    }
   }
 
   override fun visit(expr: TypedExpression.Function) {
@@ -288,6 +300,10 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
   }
 
   override fun visit(expr: TypedExpression.ListAccess) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    expr.listExpression.accept(this)
+    expr.indexExpr.accept(this)
+    methodVisitor.invokevirtual(arrayListClassName, "get", "(I)Ljava/lang/Object;", false)
+    methodVisitor.checkcast(Type.getType(JVMTypeHelper.getTypeDesc(expr.gustoType, true)))
+    unBox(expr.gustoType, methodVisitor)
   }
 }

@@ -17,7 +17,6 @@ class JVMTypedStatementVisitor(
   fields: Map<String, Type>,
   access: Int
 ) : ITypedStatementVisitor {
-  private val bootstrapMethodDesc = "(Ljava/lang/invoke/MethodHandles\$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"
 
   private val methodVisitor: InstructionAdapter = InstructionAdapter(classWriter.visitMethod(access, methodName, methodDesc, null, null))
   private val expressionVisitor: JVMTypedExpressionVisitor = JVMTypedExpressionVisitor(methodVisitor, localVars, fields, className, compiler)
@@ -134,7 +133,13 @@ class JVMTypedStatementVisitor(
   }
 
   override fun accept(stmt: TypedStatement.ListAssignment) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    val variable = localVars.getValue(stmt.statement.identifier.name)
+    methodVisitor.load(variable.index, variable.type)
+    stmt.indexExpression.accept(expressionVisitor)
+    stmt.listExpression.accept(expressionVisitor)
+    box(stmt.listExpression.gustoType, methodVisitor)
+    methodVisitor.invokevirtual("java/util/ArrayList", "set", "(ILjava/lang/Object;)Ljava/lang/Object;", false)
+    methodVisitor.pop()
   }
 
   override fun accept(stmt: TypedStatement.ExpressionStatement) {

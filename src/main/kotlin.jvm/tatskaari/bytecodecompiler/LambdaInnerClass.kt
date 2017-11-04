@@ -50,7 +50,21 @@ class LambdaInnerClass(
 
     val interfaceMethodName = JVMTypeHelper.getInterfaceMethod(functionType)
 
-    // create the synthetic bridge method
+    createSyntheticMethod(classWriter, interfaceMethodName)
+
+    // compile the body of the statement into the lambda
+    val lambdaStatementVisitor = JVMTypedStatementVisitor(classWriter, lambdaEnv, compiler, interfaceMethodName, lambdaType.descriptor, className, fields, Opcodes.ACC_PUBLIC)
+    body.accept(lambdaStatementVisitor)
+    lambdaStatementVisitor.close()
+  }
+
+  private fun createSyntheticMethod(classWriter: ClassWriter, interfaceMethodName: String){
+    // if the function has no params or return type then we don't need a bridge method
+    if (functionType.params.isEmpty() && functionType.returnType == GustoType.PrimitiveType.Unit){
+      return
+    }
+
+    // Otherwise create a bridge method to cast the params and return type to the generic types
     val syntheticMethod = InstructionAdapter(classWriter.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, interfaceMethodName, JVMTypeHelper.getCallsiteLambdaType(functionType).descriptor, null, null))
     syntheticMethod.visitCode()
     syntheticMethod.visitVarInsn(ALOAD, 0)
@@ -66,11 +80,6 @@ class LambdaInnerClass(
     }
     syntheticMethod.visitMaxs(0, 0)
     syntheticMethod.visitEnd()
-
-    // compile the body of the statement into the lambda
-    val lambdaStatementVisitor = JVMTypedStatementVisitor(classWriter, lambdaEnv, compiler, interfaceMethodName, lambdaType.descriptor, className, fields, Opcodes.ACC_PUBLIC)
-    body.accept(lambdaStatementVisitor)
-    lambdaStatementVisitor.close()
   }
 
   fun getConstructorSignature(): String{

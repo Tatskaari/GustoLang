@@ -63,7 +63,7 @@ class ScopeExpressionVisitor(val declaredVariables: LinkedList<String> = LinkedL
   }
 
   override fun visit(expr: TypedExpression.ListDeclaration) {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    expr.listItemExpr.forEach{it.accept(this)}
   }
 
   override fun visit(expr: TypedExpression.Function) {

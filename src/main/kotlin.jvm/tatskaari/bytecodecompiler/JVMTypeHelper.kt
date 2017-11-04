@@ -16,7 +16,8 @@ object JVMTypeHelper {
     Pair(InterfaceSignature(1,true), Pair(Type.getType(Function::class.java), "apply")),
     Pair(InterfaceSignature(2,true), Pair(Type.getType(BiFunction::class.java), "apply")),
     Pair(InterfaceSignature(1,false), Pair(Type.getType(Consumer::class.java), "accept")),
-    Pair(InterfaceSignature(2,false), Pair(Type.getType(BiConsumer::class.java), "accept"))
+    Pair(InterfaceSignature(2,false), Pair(Type.getType(BiConsumer::class.java), "accept")),
+    Pair(InterfaceSignature(0, false), Pair(Type.getType(Runnable::class.java), "run"))
   )
 
   fun getInterfaceType(functionType: FunctionType): Type{

@@ -455,4 +455,16 @@ output fib(13)
 
     assertEquals("233", content)
   }
+
+  @Test
+  fun testList(){
+    val content = compileAndGetOutput("function test() do val a := [1,2,3] output a[1] end test()")
+    assertEquals("2", content)
+  }
+
+  @Test
+  fun testListAssignment(){
+    val content = compileAndGetOutput("function test() do val a := [1,2,3] a[1] := 5 output a[1] end test()")
+    assertEquals("5", content)
+  }
 }
