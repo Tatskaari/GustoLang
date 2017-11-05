@@ -23,10 +23,15 @@ object CompilerTest {
     // Save to file to aid debugging by viewing the GustoMail.class decompiled into java
     FileOutputStream("target/GustoMain.class").write(classBytes)
     compiler.classes.forEach{FileOutputStream("target/${it.key}.class").write(it.value.toByteArray())}
+    compiler.interfaceClasses.forEach{FileOutputStream("target/${it.key}.class").write(it.value.toByteArray())}
 
 
     val classLoader = ByteArrayClassLoader(ClassLoader.getSystemClassLoader())
     val clazz = classLoader.defineClass("GustoMain", classBytes)!!
+
+    compiler.interfaceClasses.forEach{
+      classLoader.defineClass(it.key, it.value.toByteArray())
+    }
 
     compiler.classes.forEach{
       classLoader.defineClass(it.key, it.value.toByteArray())
@@ -466,5 +471,23 @@ output fib(13)
   fun testListAssignment(){
     val content = compileAndGetOutput("function test() do val a := [1,2,3] a[1] := 5 output a[1] end test()")
     assertEquals("5", content)
+  }
+
+  @Test
+  fun testThreeParams(){
+    val content = compileAndGetOutput("""
+function add(a: integer, b: integer, c: integer): integer do
+  return a + b + c
+end
+
+function outputAdd(a: integer, b: integer, c: integer) do
+	output add(a, b, c)
+end
+
+outputAdd(10, 20, 30)
+
+    """)
+
+    assertEquals("60", content)
   }
 }

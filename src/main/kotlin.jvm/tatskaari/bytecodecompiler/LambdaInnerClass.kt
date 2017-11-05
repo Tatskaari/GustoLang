@@ -18,13 +18,13 @@ class LambdaInnerClass(
   private val parentScope: Env,
   params: List<Token.Identifier>,
   body: TypedStatement.CodeBlock,
-  compiler: Compiler
+  private val compiler: Compiler
 ){
 
   val lambdaType : Type
   val className : String
   init {
-    val interfaceType = JVMTypeHelper.getInterfaceType(functionType)
+    val interfaceType = compiler.getInterfaceType(functionType)
     className = "lambda$$functionName"
     val classWriter = compiler.registerClass(className, interfaceType.internalName)
 
@@ -32,7 +32,7 @@ class LambdaInnerClass(
 
     val fields = generateConstructorAndGetFields(classWriter)
 
-    lambdaType = JVMTypeHelper.getFunctionMethodDesc(functionType)
+    lambdaType = compiler.getFunctionMethodDesc(functionType)
 
     // construct the lambda local variables
     val lambdaEnv = Env()
@@ -44,11 +44,11 @@ class LambdaInnerClass(
     functionType.params
       .zip(params)
       .forEachIndexed{ idx, (gustoType, identifier) ->
-        val paramType = Type.getType(JVMTypeHelper.getTypeDesc(gustoType, true))
+        val paramType = Type.getType(compiler.getTypeDesc(gustoType, true))
         lambdaEnv.put(identifier.name, Variable(idx + 1, paramType))
       }
 
-    val interfaceMethodName = JVMTypeHelper.getInterfaceMethod(functionType)
+    val interfaceMethodName = compiler.getInterfaceMethod(functionType)
 
     createSyntheticMethod(classWriter, interfaceMethodName)
 
@@ -65,12 +65,12 @@ class LambdaInnerClass(
     }
 
     // Otherwise create a bridge method to cast the params and return type to the generic types
-    val syntheticMethod = InstructionAdapter(classWriter.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, interfaceMethodName, JVMTypeHelper.getCallsiteLambdaType(functionType).descriptor, null, null))
+    val syntheticMethod = InstructionAdapter(classWriter.visitMethod(ACC_PUBLIC + ACC_BRIDGE + ACC_SYNTHETIC, interfaceMethodName, compiler.getCallsiteLambdaType(functionType).descriptor, null, null))
     syntheticMethod.visitCode()
     syntheticMethod.visitVarInsn(ALOAD, 0)
     functionType.params.forEachIndexed{ index, gustoType ->
       syntheticMethod.visitVarInsn(ALOAD, index+1)
-      syntheticMethod.checkcast(Type.getType(JVMTypeHelper.getTypeDesc(gustoType, true)))
+      syntheticMethod.checkcast(Type.getType(compiler.getTypeDesc(gustoType, true)))
     }
     syntheticMethod.visitMethodInsn(INVOKEVIRTUAL, className, interfaceMethodName,  lambdaType.descriptor, false)
     if (functionType.returnType == GustoType.PrimitiveType.Unit){
@@ -112,9 +112,5 @@ class LambdaInnerClass(
     methodVisitor.visitEnd()
 
     return fields
-  }
-
-  fun getJVMType(): Type{
-    return lambdaType
   }
 }

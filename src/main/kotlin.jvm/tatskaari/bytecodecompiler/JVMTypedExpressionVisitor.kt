@@ -173,7 +173,7 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
       }
       else -> throw Exception("Use of local variable that didn't exist at compilation time: ${expr.expr.name}")
     }
-    if(type.descriptor == JVMTypeHelper.getTypeDesc(expr.gustoType, true)){
+    if(type.descriptor == compiler.getTypeDesc(expr.gustoType, true)){
       unBox(expr.gustoType, methodVisitor)
     }
   }
@@ -242,9 +242,9 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
     methodVisitor.visitInsn(DUP)
     methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V", false)
     expr.lhs.accept(this)
-    methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(${JVMTypeHelper.getTypeDesc(lhsType, false)})Ljava/lang/StringBuilder;", false)
+    methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(${compiler.getTypeDesc(lhsType, false)})Ljava/lang/StringBuilder;", false)
     expr.rhs.accept(this)
-    methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(${JVMTypeHelper.getTypeDesc(rhsType, false)})Ljava/lang/StringBuilder;", false)
+    methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(${compiler.getTypeDesc(rhsType, false)})Ljava/lang/StringBuilder;", false)
     methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;", false)
   }
 
@@ -255,13 +255,13 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
       it.accept(this)
       box(it.gustoType, methodVisitor)
     }
-    val interfaceType = JVMTypeHelper.getInterfaceType(expr.functionType)
-    val interfaceMethod = JVMTypeHelper.getInterfaceMethod(expr.functionType)
-    val callsiteLambdaType = JVMTypeHelper.getCallsiteLambdaType(expr.functionType)
+    val interfaceType = compiler.getInterfaceType(expr.functionType)
+    val interfaceMethod = compiler.getInterfaceMethod(expr.functionType)
+    val callsiteLambdaType = compiler.getCallsiteLambdaType(expr.functionType)
 
     methodVisitor.invokeinterface(interfaceType.internalName, interfaceMethod, callsiteLambdaType.descriptor)
     if ((expr.functionExpression.gustoType as FunctionType).returnType != PrimitiveType.Unit){
-      methodVisitor.checkcast(Type.getType(JVMTypeHelper.getTypeDesc(expr.gustoType, true)))
+      methodVisitor.checkcast(Type.getType(compiler.getTypeDesc(expr.gustoType, true)))
       unBox(expr.gustoType, methodVisitor)
     }
   }
@@ -303,7 +303,7 @@ class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, 
     expr.listExpression.accept(this)
     expr.indexExpr.accept(this)
     methodVisitor.invokevirtual(arrayListClassName, "get", "(I)Ljava/lang/Object;", false)
-    methodVisitor.checkcast(Type.getType(JVMTypeHelper.getTypeDesc(expr.gustoType, true)))
+    methodVisitor.checkcast(Type.getType(compiler.getTypeDesc(expr.gustoType, true)))
     unBox(expr.gustoType, methodVisitor)
   }
 }

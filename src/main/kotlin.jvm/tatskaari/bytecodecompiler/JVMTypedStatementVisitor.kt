@@ -29,7 +29,7 @@ class JVMTypedStatementVisitor(
     if (localVars.containsKey(identifierName) ) {
       val (varIndex , varType)= localVars.getValue(identifierName)
       stmt.expression.accept(expressionVisitor)
-      if (varType.descriptor == JVMTypeHelper.getTypeDesc(stmt.expression.gustoType, true)){
+      if (varType.descriptor == compiler.getTypeDesc(stmt.expression.gustoType, true)){
         box(stmt.expression.gustoType, methodVisitor)
       }
       methodVisitor.store(varIndex, varType)
@@ -41,7 +41,7 @@ class JVMTypedStatementVisitor(
   override fun accept(stmt: TypedStatement.ValDeclaration) {
     val identifierName = stmt.statement.identifier.name
 
-    val type = Type.getType(JVMTypeHelper.getTypeDesc(stmt.expression.gustoType, false))
+    val type = Type.getType(compiler.getTypeDesc(stmt.expression.gustoType, false))
     val varIndex = localVariableSetter.newLocal(type)
     localVars.put(identifierName, Variable(varIndex, type))
 
@@ -101,7 +101,7 @@ class JVMTypedStatementVisitor(
     methodVisitor.getstatic("java/lang/System", "out", "Ljava/io/PrintStream;")
     stmt.expression.accept(expressionVisitor)
     val type = stmt.expression.gustoType
-    methodVisitor.invokevirtual("java/io/PrintStream", "println", "(${JVMTypeHelper.getTypeDesc(type, false)})V", false)
+    methodVisitor.invokevirtual("java/io/PrintStream", "println", "(${compiler.getTypeDesc(type, false)})V", false)
   }
 
   override fun accept(stmt: TypedStatement.Input) {
@@ -109,7 +109,7 @@ class JVMTypedStatementVisitor(
 
   override fun accept(stmt: TypedStatement.FunctionDeclaration) {
     val functionName = stmt.statement.identifier.name
-    val functionalInterfaceType = JVMTypeHelper.getInterfaceType(stmt.functionType)
+    val functionalInterfaceType = compiler.getInterfaceType(stmt.functionType)
 
     //Generate the synthetic function
     val undeclaredVars = ScopeStatementVisitor().findUndeclaredVars(stmt)

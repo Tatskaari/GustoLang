@@ -21,10 +21,13 @@ object Main {
       typeChecker.checkStatementListTypes(ast, HashMap())
       if (typeChecker.typeMismatches.isEmpty()){
         val typedProgram = typeChecker.checkStatementListTypes(ast, HashMap())
-        val classBytes = Compiler().compileProgram(typedProgram)
+        val compiler = Compiler()
+        val classBytes = compiler.compileProgram(typedProgram)
 
         // Save to file to aid debugging by viewing the GustoMail.class decompiled into java
         FileOutputStream("GustoMain.class").write(classBytes)
+        compiler.classes.forEach{FileOutputStream("${it.key}.class").write(it.value.toByteArray())}
+        compiler.interfaceClasses.forEach{FileOutputStream("${it.key}.class").write(it.value.toByteArray())}
       } else {
         typeChecker.typeMismatches.forEach{
           error(it.value)
