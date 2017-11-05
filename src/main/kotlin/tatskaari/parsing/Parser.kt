@@ -331,6 +331,7 @@ class Parser {
       val rhs = unary(tokens)
       expr = Expression.BinaryOperator(operator, expr, rhs, expr.startToken, rhs.endToken)
     }
+
     return expr
   }
 
@@ -344,7 +345,17 @@ class Parser {
 
     var expr = primary(tokens)
 
-    while(tokens.matchAny(TokenType.OpenParen, TokenType.ListStart, TokenType.Dot)){
+    while (tokens.match(TokenType.Dot)){
+      tokens.getNextToken(TokenType.Dot)
+      val function = primary(tokens)
+      tokens.getNextToken(TokenType.OpenParen)
+      val params = ArrayList(expressionList(tokens, TokenType.CloseParen))
+      params.add(0, expr)
+      val endToken = tokens.getNextToken(TokenType.CloseParen)
+      expr = Expression.FunctionCall(function, params, expr.startToken, endToken)
+    }
+
+    while(tokens.matchAny(TokenType.OpenParen, TokenType.ListStart)){
       when {
         tokens.match(TokenType.OpenParen) -> {
           tokens.getNextToken(TokenType.OpenParen)
@@ -357,13 +368,6 @@ class Parser {
           val indexExpression = expression(tokens)
           val endToken = tokens.getNextToken(TokenType.ListEnd)
           expr = Expression.ListAccess(expr, indexExpression, expr.startToken, endToken)
-        }
-        tokens.match(TokenType.Dot) -> {
-          tokens.getNextToken(TokenType.Dot)
-          val functionExpr = expression(tokens) as Expression.FunctionCall
-          val params = ArrayList(functionExpr.params)
-          params.add(0, expr)
-          expr = Expression.FunctionCall(functionExpr.functionExpression, params, expr.startToken, functionExpr.endToken)
         }
       }
     }

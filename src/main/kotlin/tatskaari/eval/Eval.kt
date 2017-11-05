@@ -1,5 +1,6 @@
 package tatskaari.eval
 
+import tatskaari.GustoType
 import tatskaari.eval.values.Value
 import tatskaari.parsing.*
 
@@ -191,7 +192,8 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
 
   private fun getFunctionRunEnv(function : Expression.Function, functionCall: Expression.FunctionCall, functionDefEnv: Env, functionCallEnv: Env) : MutEnv {
     if (functionCall.params.size != function.params.size){
-      throw TypeMismatch("Wrong number of arguments to call $function ")
+      val functionType = GustoType.FunctionType(function.paramTypes.values.toMutableList(), function.returnType)
+      throw TypeMismatch("Wrong number of arguments to call $functionType")
     }
 
     val functionRunEnv = HashMap<String, Value>(functionDefEnv)
