@@ -158,7 +158,7 @@ class Parser {
     return Statement.FunctionDeclaration(name, function, startToken, body.endToken)
   }
 
-  private fun listType(type: PrimitiveType, tokens: TokenList): GustoType{
+  private fun listType(type: GustoType, tokens: TokenList): GustoType{
     return if (tokens.match(TokenType.List)){
       tokens.consumeToken()
       ListType(type)
@@ -204,6 +204,7 @@ class Parser {
       TokenType.Text -> listType(PrimitiveType.Text, tokens)
       TokenType.List -> ListType(UnknownType)
       TokenType.Unit -> PrimitiveType.Unit
+      TokenType.Identifier -> listType(GenericType(token.tokenText), tokens)
       else -> {
         tokens.addFirst(token)
         functionType(tokens)

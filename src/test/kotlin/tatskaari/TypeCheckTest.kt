@@ -146,5 +146,57 @@ object TypeCheckTest {
     assertEquals(1, typeChecker.typeMismatches.size)
   }
 
+  @Test
+  fun testGenericParamsCantBeTreatedAsInts(){
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+    val ast = parser.parse("function outputLine(a: (A) -> B) do output a+1 end")
+    val env = Env()
+    typeChecker.checkStatementListTypes(ast!!, env)
+    assertEquals(1, typeChecker.typeMismatches.size)
+  }
 
+  @Test
+  fun testGenericAndThen(){
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+    val ast = parser.parse("""
+function andThen(first : (A) -> B, second: (B) -> C) : (A) -> C do
+    return function(value: A): C do
+        return second(first(value))
+    end
+end
+
+function double(a: integer) : integer do
+    return a * 2
+end
+
+function square(a: integer) : integer do
+    return a * a
+end
+
+val doubleAndSquare := double.andThen(square).andThen(double)
+
+val out := 10.doubleAndSquare()
+""")
+    val env = Env()
+    typeChecker.checkStatementListTypes(ast!!, env)
+    assertEquals(0, typeChecker.typeMismatches.size)
+  }
+
+  @Test
+  fun testGenericReturn(){
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+    val ast = parser.parse("""
+function justReturn(value : A) : A do
+  return value
+end
+
+val out: integer := justReturn(10)
+""")
+    val env = Env()
+    typeChecker.checkStatementListTypes(ast!!, env)
+    assertEquals(0, typeChecker.typeMismatches.size)
+  }
 }

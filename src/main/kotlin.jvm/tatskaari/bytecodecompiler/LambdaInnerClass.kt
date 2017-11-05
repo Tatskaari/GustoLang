@@ -60,7 +60,7 @@ class LambdaInnerClass(
 
   private fun createSyntheticMethod(classWriter: ClassWriter, interfaceMethodName: String){
     // if the function has no params or return type then we don't need a bridge method
-    if (functionType.params.isEmpty() && functionType.returnType == GustoType.PrimitiveType.Unit){
+    if (compiler.getCallsiteLambdaType(functionType).descriptor == lambdaType.descriptor){
       return
     }
 

@@ -1,5 +1,6 @@
 package tatskaari.parsing.TypeChecking
 
+import tatskaari.GustoType
 import tatskaari.GustoType.*
 import tatskaari.parsing.*
 
@@ -98,23 +99,101 @@ class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors) : IExpr
     }
   }
 
+  private fun compareGenerics(genericType: GenericType, exprType: GustoType, genericTypes: HashMap<GenericType, GustoType>): Boolean{
+    return if (genericTypes.containsKey(genericType)){
+      val expectedType = genericTypes.getValue(genericType)
+
+      if (expectedType is GenericType){
+        compareGenerics(expectedType, exprType, genericTypes)
+      } else {
+        exprType == expectedType
+      }
+    } else {
+      genericTypes.put(genericType, exprType)
+      true
+    }
+  }
+
+  private fun comparePrimitiveType(expectedType: PrimitiveType, actualType: GustoType): Boolean {
+    return expectedType == actualType
+  }
+
+  private fun compareFunctionType(expectedType: FunctionType, actualType: GustoType, genericTypes: HashMap<GenericType, GustoType>): Boolean{
+    if (actualType is FunctionType){
+      expectedType.params.zip(actualType.params).forEach{(expected, actual) ->
+        if(!compareTypes(expected, actual, genericTypes)){
+          return false
+        }
+      }
+      return compareTypes(expectedType.returnType, actualType.returnType, genericTypes)
+    } else {
+      return false
+    }
+  }
+
+  private fun compareListType(expectedType: ListType, actualType: GustoType, genericTypes: HashMap<GenericType, GustoType>): Boolean{
+    if (actualType is ListType){
+      return compareTypes(expectedType.type, actualType.type, genericTypes)
+    }
+    return false
+  }
+
+  private fun compareTypes(expectedType: GustoType, actualType: GustoType, genericTypes: HashMap<GenericType, GustoType>): Boolean{
+    return when(expectedType){
+      is FunctionType -> compareFunctionType(expectedType, actualType, genericTypes)
+      is ListType -> compareListType(expectedType, actualType, genericTypes)
+      is GenericType -> compareGenerics(expectedType, actualType, genericTypes)
+      is PrimitiveType -> comparePrimitiveType(expectedType, actualType)
+      is GustoType.UnknownType -> return true
+    }
+  }
+
+  private fun expandGenerics(genericType: GenericType, genericTypes: HashMap<GenericType, GustoType>): GustoType{
+    return genericTypes.getOrDefault(genericType, genericType)
+  }
+
+  private fun expandFunctionType(expectedType: FunctionType, genericTypes: HashMap<GenericType, GustoType>): FunctionType{
+    val params = expectedType.params.map {
+      expandTypes(it, genericTypes)
+    }
+    val returnType = expandTypes(expectedType.returnType, genericTypes)
+    return FunctionType(params, returnType)
+  }
+
+  private fun expandListType(expectedType: ListType, genericTypes: HashMap<GenericType, GustoType>): ListType{
+    val type = expandTypes(expectedType.type, genericTypes)
+    return ListType(type)
+  }
+
+  private fun expandTypes(expectedType: GustoType, genericTypes: HashMap<GenericType, GustoType>): GustoType{
+    return when(expectedType){
+      is FunctionType -> expandFunctionType(expectedType, genericTypes)
+      is ListType -> expandListType(expectedType, genericTypes)
+      is GenericType -> expandGenerics(expectedType, genericTypes)
+      is PrimitiveType -> expectedType
+      is GustoType.UnknownType -> UnknownType
+    }
+  }
+
   override fun visit(expr: Expression.FunctionCall): TypedExpression {
     val functionExpr = expr.functionExpression.accept(this)
     val functionType = functionExpr.gustoType
     val params = ArrayList<TypedExpression>()
 
+    val genericTypes = HashMap<GenericType, GustoType>()
+
     return if (functionType is FunctionType){
       expr.params.zip(functionType.params).forEach { (paramExpr, type) ->
-        val exprType = paramExpr.accept(this)
-        params.add(exprType)
-        if (exprType.gustoType != type){
-          typeErrors.addTypeMissmatch(expr, type, exprType.gustoType)
+        val typedExpr = paramExpr.accept(this)
+        params.add(typedExpr)
+        if (!compareTypes(type, typedExpr.gustoType, genericTypes)){
+          typeErrors.addTypeMissmatch(expr, type, typedExpr.gustoType)
         }
       }
-      TypedExpression.FunctionCall(expr, functionExpr, params, functionType)
+
+      TypedExpression.FunctionCall(expr, functionExpr, params, expandFunctionType(functionType, genericTypes))
     } else {
-      // TODO improve this error message
-      typeErrors.add(expr, "Expected function, found $functionType")
+      typeErrors.add(expr, "Unexpected type for target of a function call. Expected function, found $functionType")
       TypedExpression.FunctionCall(expr, functionExpr, params, FunctionType(listOf(), UnknownType))
     }
   }

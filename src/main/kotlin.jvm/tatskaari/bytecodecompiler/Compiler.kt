@@ -137,6 +137,7 @@ class Compiler {
       PrimitiveType.Boolean -> if (boxed) "Ljava/lang/Boolean;" else "Z"
       PrimitiveType.Text -> "Ljava/lang/String;"
       GustoType.UnknownType -> throw Exception("Type unknown at compile time")
+      is GustoType.GenericType -> "Ljava/lang/Object;"
     }
   }
 

@@ -637,4 +637,42 @@ val out := 10.doubleAndSquare()
     assertEquals(800, env.getValue("out").intVal())
 
   }
+
+  @Test
+  fun testGenericMapFunction(){
+    val parser = Parser()
+    val ast = parser.parse("""
+function map(oldList: A list, mapper: (A) -> B) : B list do
+    val i := 0
+    val newList : B list := []
+
+    while i < size(oldList) do
+        newList[i] := mapper(oldList[i])
+        i := i + 1
+    end
+
+    return newList
+end
+
+val a : integer list := [1, 2, 3]
+
+function convertToString(entry: integer): text do
+    return "val: " + entry
+end
+
+val newList := a.map(convertToString)
+
+val out: text := newList[1]
+    """)
+    val typeChecker = TypeChecker()
+
+    val evalEnv = BuiltInFunction.getEvalEnv()
+    val typeCheckerEnv = BuiltInFunction.getTypeEnv()
+    typeChecker.checkStatementListTypes(ast!!, typeCheckerEnv)
+
+    Eval(StdinInputProvider, SystemOutputProvider).eval(ast, evalEnv)
+    assertEquals("val: 2", evalEnv.getValue("out").textVal())
+    assertEquals(0, typeChecker.typeMismatches.size)
+
+  }
 }

@@ -1,7 +1,11 @@
 package tatskaari
 
 sealed class GustoType {
-  object UnknownType: GustoType()
+  object UnknownType: GustoType() {
+    override fun toString(): String {
+      return "UnknownType"
+    }
+  }
 
   sealed class PrimitiveType : GustoType() {
     object Number : PrimitiveType()
@@ -21,6 +25,12 @@ sealed class GustoType {
     }
   }
 
+  data class GenericType(val name: String) : GustoType() {
+    override fun toString(): String {
+      return name
+    }
+  }
+
   data class ListType(val type: GustoType): GustoType() {
     override fun equals(other: Any?): Boolean {
       if (other is ListType) {
@@ -35,6 +45,7 @@ sealed class GustoType {
       return type.toString() + " list"
     }
   }
+
   data class FunctionType(val params: List<GustoType>, val returnType: GustoType): GustoType() {
 
     override fun toString(): String {

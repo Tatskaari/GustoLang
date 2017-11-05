@@ -504,4 +504,28 @@ output 10.add(20, 30)
 
     assertEquals("60", content)
   }
+
+  @Test
+  fun testGenerics(){
+    val content = compileAndGetOutput("""
+function andThen(first : (A) -> B, second: (B) -> C) : (A) -> C do
+    return function(value: A): C do
+        return second(first(value))
+    end
+end
+
+function double(a: integer) : integer do
+    return a * 2
+end
+
+function square(a: integer) : integer do
+    return a * a
+end
+
+val doubleAndSquare := double.andThen(square).andThen(double)
+
+output 10.doubleAndSquare()""")
+    assertEquals("800", content)
+
+  }
 }
