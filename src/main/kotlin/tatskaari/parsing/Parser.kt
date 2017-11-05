@@ -6,6 +6,7 @@ import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
 import tatskaari.tokenising.TokenType
 import tatskaari.GustoType.*
+import kotlin.collections.ArrayList
 
 class Parser {
   open class ParserException(val reason: String) : Exception()
@@ -343,17 +344,27 @@ class Parser {
 
     var expr = primary(tokens)
 
-    while(tokens.matchAny(TokenType.OpenParen, TokenType.ListStart)){
-      if(tokens.match(TokenType.OpenParen)){
-        tokens.getNextToken(TokenType.OpenParen)
-        val params = expressionList(tokens, TokenType.CloseParen)
-        val endToken = tokens.getNextToken(TokenType.CloseParen)
-        expr = Expression.FunctionCall(expr, params, expr.startToken, endToken)
-      } else if(tokens.match(TokenType.ListStart)){
-        tokens.getNextToken(TokenType.ListStart)
-        val indexExpression = expression(tokens)
-        val endToken = tokens.getNextToken(TokenType.ListEnd)
-        expr = Expression.ListAccess(expr, indexExpression, expr.startToken, endToken)
+    while(tokens.matchAny(TokenType.OpenParen, TokenType.ListStart, TokenType.Dot)){
+      when {
+        tokens.match(TokenType.OpenParen) -> {
+          tokens.getNextToken(TokenType.OpenParen)
+          val params = expressionList(tokens, TokenType.CloseParen)
+          val endToken = tokens.getNextToken(TokenType.CloseParen)
+          expr = Expression.FunctionCall(expr, params, expr.startToken, endToken)
+        }
+        tokens.match(TokenType.ListStart) -> {
+          tokens.getNextToken(TokenType.ListStart)
+          val indexExpression = expression(tokens)
+          val endToken = tokens.getNextToken(TokenType.ListEnd)
+          expr = Expression.ListAccess(expr, indexExpression, expr.startToken, endToken)
+        }
+        tokens.match(TokenType.Dot) -> {
+          tokens.getNextToken(TokenType.Dot)
+          val functionExpr = expression(tokens) as Expression.FunctionCall
+          val params = ArrayList(functionExpr.params)
+          params.add(0, expr)
+          expr = Expression.FunctionCall(functionExpr.functionExpression, params, expr.startToken, functionExpr.endToken)
+        }
       }
     }
 

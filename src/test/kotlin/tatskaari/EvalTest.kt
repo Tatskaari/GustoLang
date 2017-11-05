@@ -580,4 +580,34 @@ object EvalTest {
     assertEquals(5, env.getValue("out").intVal())
 
   }
+
+  @Test
+  fun testCompose() {
+    val parser = Parser()
+    val ast = parser.parse("""
+function andThen(first: (integer) -> integer, second: (integer) -> integer): (integer) -> integer do
+    return function(a: integer) : integer do
+        return second(first(a))
+    end
+end
+
+function double(a: integer) : integer do
+    return a * 2
+end
+
+function square(a: integer) : integer do
+    return a * a
+end
+
+
+val doubleAndSquare := double.andThen(square)
+
+val out := 10.doubleAndSquare()
+    """)
+
+    val env = MutEnv()
+    Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
+    assertEquals(400, env.getValue("out").intVal())
+
+  }
 }

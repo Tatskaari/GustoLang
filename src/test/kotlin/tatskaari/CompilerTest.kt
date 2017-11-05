@@ -14,9 +14,9 @@ object CompilerTest {
 
   private fun compileAndGetOutput(program: String): String{
     val parser = Parser()
-    val ast = parser.parse(program)!!
+    val ast = parser.parse(program)
     val typeChecker = TypeChecker()
-    val typedProgram = typeChecker.checkStatementListTypes(ast, HashMap())
+    val typedProgram = typeChecker.checkStatementListTypes(ast!!, HashMap())
     val compiler = Compiler()
     val classBytes = compiler.compileProgram(typedProgram)
 
@@ -486,6 +486,20 @@ end
 
 outputAdd(10, 20, 30)
 
+    """)
+
+    assertEquals("60", content)
+  }
+
+  @Test
+  fun testDotOperator(){
+    val content = compileAndGetOutput("""
+function add(a: integer, b: integer, c: integer): integer do
+  return a + b + c
+end
+
+
+output 10.add(20, 30)
     """)
 
     assertEquals("60", content)
