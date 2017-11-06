@@ -1,4 +1,4 @@
-# KotlinLang 
+# GustoLang 
 [![Build Status](https://travis-ci.org/Tatskaari/KotlinLang.svg?branch=master)](https://travis-ci.org/Tatskaari/KotlinLang)
 [![codecov](https://codecov.io/gh/Tatskaari/KotlinLang/branch/master/graph/badge.svg)](https://codecov.io/gh/Tatskaari/KotlinLang)
 
