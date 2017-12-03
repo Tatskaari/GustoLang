@@ -1,5 +1,5 @@
 # GustoLang 
-[![Build Status](https://travis-ci.org/Tatskaari/KotlinLang.svg?branch=master)](https://travis-ci.org/Tatskaari/KotlinLang)
+[![Build Status](https://travis-ci.org/Tatskaari/GustoLang.svg?branch=master)](https://travis-ci.org/Tatskaari/GustoLang)
 [![codecov](https://codecov.io/gh/Tatskaari/KotlinLang/branch/master/graph/badge.svg)](https://codecov.io/gh/Tatskaari/KotlinLang)
 
 A toy language written in kotlin. The original idea was to make a language that was simple to pick up for beginners
