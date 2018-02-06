@@ -4,7 +4,7 @@ import tatskaari.GustoType
 import tatskaari.tokenising.Token
 
 sealed class Statement(startToken: Token, endToken: Token): ASTNode(startToken, endToken) {
-  class ValDeclaration(val identifier: Token.Identifier, val expression: Expression, val type: GustoType, startToken: Token, endToken: Token) : Statement(startToken, endToken) {
+  class ValDeclaration(val identifier: Token.Identifier, val expression: Expression, val type: TypeNotation, startToken: Token, endToken: Token) : Statement(startToken, endToken) {
     override fun <NewNodeType> accept(visitor: IStatementVisitor<NewNodeType>): NewNodeType {
       return visitor.visit(this)
     }
@@ -61,6 +61,12 @@ sealed class Statement(startToken: Token, endToken: Token): ASTNode(startToken, 
   }
 
   class ExpressionStatement(val expression: Expression, startToken: Token, endToken: Token): Statement(startToken, endToken){
+    override fun <NewNodeType> accept(visitor: IStatementVisitor<NewNodeType>): NewNodeType {
+      return visitor.visit(this)
+    }
+  }
+
+  class TypeDeclaration(val identifier: Token.Identifier, val generics : List<TypeNotation>, val members : List<TypeNotation.VariantMember>, startToken: Token, endToken: Token) : Statement(startToken, endToken) {
     override fun <NewNodeType> accept(visitor: IStatementVisitor<NewNodeType>): NewNodeType {
       return visitor.visit(this)
     }

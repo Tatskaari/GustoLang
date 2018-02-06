@@ -7,8 +7,12 @@ import tatskaari.parsing.Statement
 import tatskaari.parsing.UnaryOperators
 import tatskaari.tokenising.Token
 
-typealias Env = HashMap<String, GustoType>
 typealias Errors = HashMap<Pair<Token, Token>, String>
+
+class TypeEnv(val variableTypes: HashMap<String, GustoType>, val types : HashMap<String, GustoType>) : MutableMap<String, GustoType> by variableTypes {
+  constructor(env: TypeEnv) : this(HashMap(env.variableTypes), HashMap(env.types))
+  constructor() : this(HashMap(), HashMap())
+}
 
 fun Errors.add(astNode: ASTNode, message: String){
   put(Pair(astNode.startToken, astNode.endToken), "Error at ${astNode.startToken.lineNumber}:${astNode.startToken.columnNumber} - $message")
@@ -29,8 +33,14 @@ fun Errors.addUnaryOperatorTypeError(astNode: ASTNode, operator: UnaryOperators,
 class TypeChecker {
   val typeMismatches: Errors = Errors()
 
-  fun checkStatementListTypes(statements: List<Statement>, env: Env): List<TypedStatement>{
+  fun checkStatementListTypes(statements: List<Statement>, env: TypeEnv): List<TypedStatement>{
     val statementVisitor = TypeCheckerStatementVisitor(env, typeMismatches, null)
     return statements.map{it.accept(statementVisitor)}
+  }
+
+  companion object {
+    fun envOf(vararg pairs: Pair<String, GustoType>) : TypeEnv {
+      return TypeEnv(hashMapOf(*pairs), HashMap())
+    }
   }
 }

@@ -1,23 +1,21 @@
 package tatskaari.eval
 
 import tatskaari.GustoType
-import tatskaari.eval.values.Value
+import tatskaari.eval.values.*
 import tatskaari.parsing.*
 
 
-typealias Env = Map<String, Value>
-typealias MutEnv = HashMap<String, Value>
 
 class Eval(private val inputProvider: InputProvider, private val outputProvider: OutputProvider) {
 
   data class TypeMismatch(override val message: String) : RuntimeException(message)
   object CastException: Exception()
   data class UndefinedIdentifier(override val message: String) : RuntimeException("Undeclared identifier '$message'")
-  data class VariableAlreadyDefined(val identifier: String) : RuntimeException("Identifier aready declared '$identifier'")
+  data class VariableAlreadyDefined(val identifier: String) : RuntimeException("Identifier already declared '$identifier'")
   object InvalidUserInput : RuntimeException("Please enter a number, some text or the value 'true' or 'false'")
 
 
-  fun eval(statements: List<Statement>, env: MutEnv) : Value?  {
+  fun eval(statements: List<Statement>, env: Env) : Value?  {
     statements.forEach {
       val value = eval(it, env)
       if (value != null) {
@@ -27,16 +25,16 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     return null
   }
 
-  fun eval(statement: Statement, env: MutEnv) : Value? {
+  fun eval(statement: Statement, env: Env) : Value? {
     when (statement) {
-      is Statement.CodeBlock -> return eval(statement.statementList, HashMap(env))
-      is Statement.If -> return evalIf(statement.condition, statement.body.statementList, null, HashMap(env))
-      is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody.statementList, statement.elseBody.statementList, HashMap(env))
-      is Statement.While -> return evalWhile(statement.condition, statement.body.statementList, HashMap(env))
+      is Statement.CodeBlock -> return eval(statement.statementList, Env(env))
+      is Statement.If -> return evalIf(statement.condition, statement.body.statementList, null, Env(env))
+      is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody.statementList, statement.elseBody.statementList, Env(env))
+      is Statement.While -> return evalWhile(statement.condition, statement.body.statementList, Env(env))
       is Statement.ValDeclaration-> {
         val identifierName = statement.identifier.name
 
-        if (env.containsKey(identifierName)){
+        if (env.hasVariable(identifierName)){
           throw VariableAlreadyDefined(identifierName)
         } else {
           env[identifierName] = eval(statement.expression, env).copyLiteralOrReferenceList()
@@ -45,11 +43,11 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       }
       is Statement.FunctionDeclaration -> {
         val identifierName = statement.identifier.name
-        if (env.containsKey(identifierName)){
+        if (env.hasVariable(identifierName)){
           throw VariableAlreadyDefined(identifierName)
         } else {
-          val functionVal = Value.FunctionVal(statement.function, HashMap(env))
-          functionVal.env.put(identifierName, functionVal)
+          val functionVal = Value.FunctionVal(statement.function, Env(env))
+          functionVal.env[identifierName] = functionVal
           env[identifierName] = functionVal
         }
         return null
@@ -57,15 +55,12 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       is Statement.Assignment -> {
         val identifier = statement.identifier.name
         val value = eval(statement.expression, env).copyLiteralOrReferenceList()
-        if (env.containsKey(identifier)) {
-          val existingValue = env.getValue(identifier)
-          if (existingValue::class != value::class) {
-            throw TypeMismatch("$identifier was already set to $existingValue, new value was $value")
-          }
-          env.getValue(identifier).value = value.value
-        } else {
-          throw UndefinedIdentifier(identifier)
+        val existingValue = env[identifier]
+        if (existingValue::class != value::class) {
+          throw TypeMismatch("$identifier was already set to $existingValue, new value was $value")
         }
+        env[identifier].value = value.value
+
         return null
       }
       is Statement.ListAssignment -> {
@@ -73,12 +68,9 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         val value = eval(statement.expression, env)
         val identifier = statement.identifier.name
 
-        if (env.containsKey(identifier)) {
-          val list = env.getValue(identifier).listVal()
-          list[index] = value.copyLiteralOrReferenceList()
-        } else {
-          throw UndefinedIdentifier(identifier)
-        }
+        val list = env[identifier].listVal()
+        list[index] = value.copyLiteralOrReferenceList()
+
 
         return null
       }
@@ -89,7 +81,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
           throw InvalidUserInput
         } else {
           val value: Value = Value.TextVal(input)
-          env.put(identifier, value)
+          env[identifier] = value
         }
         return null
       }
@@ -105,10 +97,16 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         eval(statement.expression, env)
         return null
       }
+      is Statement.TypeDeclaration -> {
+        val members = statement.members.map { it.toGustoType(env.typeDefinitions) }
+        env.typeDefinitions.putAll(members.associate { Pair(it.name, it) })
+        env.typeDefinitions[statement.identifier.name] = GustoType.VariantType(statement.identifier.name, members)
+        return null
+      }
     }
   }
 
-  private fun evalWhile(condition: Expression, body: List<Statement>, env: MutEnv) : Value? {
+  private fun evalWhile(condition: Expression, body: List<Statement>, env: Env) : Value? {
     while(evalCondition(condition, env).boolVal()){
       val value : Value? = eval(body, env)
       if (value != null) {
@@ -138,22 +136,16 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       is Expression.FunctionCall -> return callFunction(expression, env)
       is Expression.ListDeclaration -> return evalList(expression, env)
       is Expression.ListAccess -> return evalListAccess(expression, env)
-      is Expression.Function -> return Value.FunctionVal(expression, HashMap(env))
-      is Expression.Identifier -> {
-        val value = env[expression.name]
-        if (value != null) {
-          return value
-        } else {
-          throw UndefinedIdentifier(expression.name)
-        }
-      }
+      is Expression.Function -> return Value.FunctionVal(expression, Env(env))
+      is Expression.Identifier -> return env[expression.name]
+      is Expression.ConstructorCall -> return Value.VariantVal(expression.name)
     }
   }
 
   private fun evalList(expression: Expression.ListDeclaration, env: Env): Value.ListVal {
     val list = HashMap<Int, Value>()
     expression.items.forEachIndexed { index, expr->
-      list.put(index, eval(expr, env))
+      list[index] = eval(expr, env)
     }
 
     return Value.ListVal(list)
@@ -175,11 +167,11 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         return evalFunction(functionVal.functionVal().body.statementList, funEnv)
       }
       is Value.BifVal -> {
-        val funEnv = MutEnv()
+        val funEnv = Env()
         functionVal.bif.params
           .zip(functionCall.params)
           .forEach { (name, expr) ->
-            funEnv.put(name, eval(expr, env))
+            funEnv[name] = eval(expr, env)
           }
         return functionVal.bif.function(funEnv)
       }
@@ -190,23 +182,26 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
 
 
 
-  private fun getFunctionRunEnv(function : Expression.Function, functionCall: Expression.FunctionCall, functionDefEnv: Env, functionCallEnv: Env) : MutEnv {
+  private fun getFunctionRunEnv(function : Expression.Function, functionCall: Expression.FunctionCall, functionDefEnv: Env, functionCallEnv: Env) : Env {
     if (functionCall.params.size != function.params.size){
-      val functionType = GustoType.FunctionType(function.paramTypes.values.toMutableList(), function.returnType)
+      val paramTypes = function.paramTypes.values
+        .toMutableList()
+        .map { it.toGustoType(functionDefEnv.typeDefinitions) }
+      val functionType = GustoType.FunctionType(paramTypes, function.returnType.toGustoType(functionDefEnv.typeDefinitions))
       throw TypeMismatch("Wrong number of arguments to call $functionType")
     }
 
-    val functionRunEnv = HashMap<String, Value>(functionDefEnv)
+    val functionRunEnv = Env(functionDefEnv)
 
     functionCall.params.forEachIndexed({index, expression ->
       val paramVal : Value = eval(expression, functionCallEnv)
-      functionRunEnv.put(function.params[index].name, paramVal)
+      functionRunEnv[function.params[index].name] = paramVal
     })
 
     return functionRunEnv
   }
 
-  private fun evalFunction(body: List<Statement>, env: MutEnv) : Value {
+  private fun evalFunction(body: List<Statement>, env: Env) : Value {
     body.forEach{
       val value = eval(it, env)
       if (value != null){
@@ -222,28 +217,28 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     val rhsVal = eval(operatorExpression.rhs, env)
     when (operation) {
       BinaryOperators.Add -> {
-        if (lhsVal is Value.Addable && rhsVal is Value.Addable){
+        if (lhsVal is Addable && rhsVal is Addable){
           return lhsVal.plus(rhsVal)
         } else {
           throw TypeMismatch("$operation cannot be applied to $lhsVal and $rhsVal")
         }
       }
       BinaryOperators.Sub -> {
-        if (lhsVal is Value.Subtractable && rhsVal is Value.Subtractable){
+        if (lhsVal is Subtractable && rhsVal is Subtractable){
           return lhsVal.minus(rhsVal)
         } else {
           throw TypeMismatch("$operation cannot be applied to $lhsVal and $rhsVal")
         }
       }
       BinaryOperators.Div -> {
-        if (lhsVal is Value.Divisible && rhsVal is Value.Divisible){
+        if (lhsVal is Divisible && rhsVal is Divisible){
           return lhsVal.div(rhsVal)
         } else {
           throw TypeMismatch("$operation cannot be applied to $lhsVal and $rhsVal")
         }
       }
       BinaryOperators.Mul -> {
-        if (lhsVal is Value.Multiplicable && rhsVal is Value.Multiplicable){
+        if (lhsVal is Multiplicable && rhsVal is Multiplicable){
           return lhsVal.times(rhsVal)
         } else {
           throw TypeMismatch("$operation cannot be applied to $lhsVal and $rhsVal")
@@ -274,7 +269,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     }
   }
 
-  private fun evalIf(condition: Expression, ifBody: List<Statement>, elseBody: List<Statement>?, env: MutEnv) : Value? {
+  private fun evalIf(condition: Expression, ifBody: List<Statement>, elseBody: List<Statement>?, env: Env) : Value? {
     val conditionResult = eval(condition, env)
     if (conditionResult is Value.BoolVal) {
       var value : Value? = null

@@ -5,7 +5,7 @@ import org.eclipse.lsp4j.DiagnosticSeverity
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import tatskaari.parsing.Parser
-import tatskaari.parsing.typechecking.Env
+import tatskaari.parsing.typechecking.TypeEnv
 import tatskaari.parsing.typechecking.TypeChecker
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
@@ -25,7 +25,7 @@ class GustoSource(val source: String) {
 
     val program = parser.parse(source)
     if (program != null){
-      typeChecker.checkStatementListTypes(program, Env())
+      typeChecker.checkStatementListTypes(program, TypeEnv())
     }
 
     val typeCheckDiagnostic = typeChecker.typeMismatches.map {

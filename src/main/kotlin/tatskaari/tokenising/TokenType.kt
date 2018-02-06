@@ -22,12 +22,7 @@ enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, Str
   ListStart(KeywordMatcher("["), Token::Keyword),
   ListEnd(KeywordMatcher("]"), Token::Keyword),
   Value(KeywordMatcher("val"), Token::Keyword),
-  Number(KeywordMatcher("number"), Token::Keyword),
-  Integer(KeywordMatcher("integer"), Token::Keyword),
-  Boolean(KeywordMatcher("boolean"), Token::Keyword),
   List(KeywordMatcher("list"), Token::Keyword),
-  Text(KeywordMatcher("text"), Token::Keyword),
-  Unit(KeywordMatcher("unit"), Token::Keyword),
   Colon(KeywordMatcher(":"), Token::Keyword),
   AssignOp(KeywordMatcher(":="), Token::Keyword),
   Not(KeywordMatcher("!"), Token::Keyword),
@@ -44,11 +39,13 @@ enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, Str
   Output(KeywordMatcher("output"), Token::Keyword),
   RightArrow(KeywordMatcher("->"), Token::Keyword),
   Dot(KeywordMatcher("."), Token::Keyword),
+  Type(KeywordMatcher("type"), Token::Keyword),
   Comment(CommentMatcher, Token::Comment),
   IntLiteral(IntMatcher, Token::IntLiteral),
   NumLiteral(NumMatcher, Token::NumLiteral),
   TextLiteral(TextMatcher, Token::TextLiteral),
-  Identifier(IdentifierMatcher, Token::Identifier);
+  Identifier(IdentifierMatcher, Token::Identifier),
+  Constructor(ConstructorMatcher, Token::Identifier);
 
   override fun toString(): String {
     return matcher.getTokenDescription()

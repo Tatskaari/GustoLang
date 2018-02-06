@@ -63,7 +63,7 @@ sealed class Matcher {
   }
 
   object IdentifierMatcher : Matcher() {
-    val regex = Regex("""^[a-zA-Z_'][a-zA-Z0-9_']*""")
+    val regex = Regex("""^[a-z][a-zA-Z0-9_']*""")
 
     override fun lex(program: String): String? {
       val matchResult = regex.find(program)
@@ -75,6 +75,21 @@ sealed class Matcher {
 
     override fun getTokenDescription(): String {
       return "identifier"
+    }
+  }
+  object ConstructorMatcher : Matcher() {
+    val regex = Regex("""^[A-Z][a-zA-Z0-9_']*""")
+
+    override fun lex(program: String): String? {
+      val matchResult = regex.find(program)
+      if (matchResult != null) {
+        return matchResult.value
+      }
+      return null
+    }
+
+    override fun getTokenDescription(): String {
+      return "constructor"
     }
   }
   object TextMatcher: Matcher() {

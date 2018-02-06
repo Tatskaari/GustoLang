@@ -1,15 +1,16 @@
 package tatskaari.parsing
 
 interface IExpressionVisitor<NewNodeType> {
-  fun visit(expr: Expression.IntLiteral): NewNodeType
-  fun visit(expr: Expression.NumLiteral): NewNodeType
-  fun visit(expr: Expression.BooleanLiteral): NewNodeType
-  fun visit(expr: Expression.TextLiteral): NewNodeType
-  fun visit(expr: Expression.Identifier): NewNodeType
-  fun visit(expr: Expression.BinaryOperator): NewNodeType
-  fun visit(expr: Expression.UnaryOperator): NewNodeType
-  fun visit(expr: Expression.FunctionCall): NewNodeType
-  fun visit(expr: Expression.ListAccess): NewNodeType
-  fun visit(expr: Expression.ListDeclaration): NewNodeType
-  fun visit(expr: Expression.Function): NewNodeType
+  fun visit(intLiteral: Expression.IntLiteral): NewNodeType
+  fun visit(numLiteral: Expression.NumLiteral): NewNodeType
+  fun visit(booleanLiteral: Expression.BooleanLiteral): NewNodeType
+  fun visit(textLiteral: Expression.TextLiteral): NewNodeType
+  fun visit(identifier: Expression.Identifier): NewNodeType
+  fun visit(binaryOperator: Expression.BinaryOperator): NewNodeType
+  fun visit(unaryOperator: Expression.UnaryOperator): NewNodeType
+  fun visit(functionCall: Expression.FunctionCall): NewNodeType
+  fun visit(listAccess: Expression.ListAccess): NewNodeType
+  fun visit(listDeclaration: Expression.ListDeclaration): NewNodeType
+  fun visit(function: Expression.Function): NewNodeType
+  fun visit(constructorCall: Expression.ConstructorCall): NewNodeType
 }

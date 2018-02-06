@@ -3,6 +3,7 @@ package tatskaari
 import tatskaari.bytecodecompiler.Compiler
 
 import tatskaari.parsing.Parser
+import tatskaari.parsing.typechecking.TypeEnv
 import tatskaari.parsing.typechecking.TypeChecker
 import java.io.*
 
@@ -18,9 +19,9 @@ object Main {
 
 
     if (ast != null){
-      typeChecker.checkStatementListTypes(ast, HashMap())
+      typeChecker.checkStatementListTypes(ast, TypeEnv())
       if (typeChecker.typeMismatches.isEmpty()){
-        val typedProgram = typeChecker.checkStatementListTypes(ast, HashMap())
+        val typedProgram = typeChecker.checkStatementListTypes(ast, TypeEnv())
         val compiler = Compiler()
         val classBytes = compiler.compileProgram(typedProgram)
 

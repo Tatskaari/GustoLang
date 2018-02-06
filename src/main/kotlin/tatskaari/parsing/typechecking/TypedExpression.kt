@@ -106,6 +106,11 @@ sealed class TypedExpression(val gustoType: GustoType) {
       visitor.visit(this)
     }
   }
+  class ConstructorCall(val expr: Expression.ConstructorCall, type: GustoType.VariantMember) : TypedExpression(type) {
+    override fun accept(visitor: ITypedExpressionVisitor) {
+      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+  }
 
 
   abstract fun accept(visitor: ITypedExpressionVisitor)

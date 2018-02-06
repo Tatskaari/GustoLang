@@ -138,6 +138,7 @@ class Compiler {
       PrimitiveType.Text -> "Ljava/lang/String;"
       GustoType.UnknownType -> throw Exception("Type unknown at compile time")
       is GustoType.GenericType -> "Ljava/lang/Object;"
+      else -> TODO("Handle type declaration")
     }
   }
 

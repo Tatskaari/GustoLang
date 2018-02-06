@@ -3,6 +3,7 @@ package tatskaari
 import org.testng.annotations.Test
 import tatskaari.bytecodecompiler.Compiler
 import tatskaari.parsing.Parser
+import tatskaari.parsing.typechecking.TypeEnv
 import tatskaari.parsing.typechecking.TypeChecker
 import java.io.ByteArrayOutputStream
 import java.io.FileOutputStream
@@ -16,7 +17,7 @@ object CompilerTest {
     val parser = Parser()
     val ast = parser.parse(program)
     val typeChecker = TypeChecker()
-    val typedProgram = typeChecker.checkStatementListTypes(ast!!, HashMap())
+    val typedProgram = typeChecker.checkStatementListTypes(ast!!, TypeEnv())
     val compiler = Compiler()
     val classBytes = compiler.compileProgram(typedProgram)
 
@@ -508,8 +509,8 @@ output 10.add(20, 30)
   @Test
   fun testGenerics(){
     val content = compileAndGetOutput("""
-function andThen(first : (A) -> B, second: (B) -> C) : (A) -> C do
-    return function(value: A): C do
+function andThen(first : (a) -> b, second: (b) -> c) : (a) -> c do
+    return function(value: a): c do
         return second(first(value))
     end
 end

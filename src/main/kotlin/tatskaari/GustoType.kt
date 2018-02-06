@@ -31,18 +31,18 @@ sealed class GustoType {
     }
   }
 
-  data class ListType(val type: GustoType): GustoType() {
-    override fun equals(other: Any?): Boolean {
-      if (other is ListType) {
-        if (other.type == type || type == UnknownType || other.type == UnknownType){
-          return true
-        }
-      }
-      return false
-    }
+  data class VariantMember(val name: String, val type: GustoType) : GustoType()
+  data class VariantType(val name: String, val members : List<VariantMember>): GustoType()
 
+  data class ListType(val type: GustoType): GustoType() {
     override fun toString(): String {
       return type.toString() + " list"
+    }
+  }
+
+  data class TupleType(val types: List<GustoType>): GustoType() {
+    override fun toString(): String {
+      return types.joinToString(",", "(", ")")
     }
   }
 

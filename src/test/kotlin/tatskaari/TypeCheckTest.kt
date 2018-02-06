@@ -11,7 +11,7 @@ object TypeCheckTest {
   @Test
   fun testIfStatementType(){
     val ast = Parser().parse("do val a : integer := 1 if a = 1 then return true else return false end end")
-    val codeblock = TypeChecker().checkStatementListTypes(ast!!, HashMap())[0]
+    val codeblock = TypeChecker().checkStatementListTypes(ast!!, TypeEnv())[0]
     if (codeblock is TypedStatement.CodeBlock){
       assertEquals(PrimitiveType.Boolean, codeblock.returnType)
     }
@@ -22,7 +22,7 @@ object TypeCheckTest {
   fun testBiggestList(){
     val ast = Parser().parse(TestUtil.loadProgram("BiggestList"))
     val typeChecker = TypeChecker()
-    typeChecker.checkStatementListTypes(ast!!, HashMap())
+    typeChecker.checkStatementListTypes(ast!!, TypeEnv())
     assertEquals( 0, typeChecker.typeMismatches.size)
   }
 
@@ -31,7 +31,7 @@ object TypeCheckTest {
     val parser = Parser()
     val ast = parser.parse(TestUtil.loadProgram("Apply"))
     val typeChecker = TypeChecker()
-    typeChecker.checkStatementListTypes(ast!!, HashMap())
+    typeChecker.checkStatementListTypes(ast!!, TypeEnv())
     assertEquals( 0, typeChecker.typeMismatches.size)
   }
 
@@ -40,10 +40,10 @@ object TypeCheckTest {
     val parser = Parser()
     val typeChecker = TypeChecker()
 
-    typeChecker.checkStatementListTypes(parser.parse("val l : integer list := [1,2,3,4]")!!, HashMap())
+    typeChecker.checkStatementListTypes(parser.parse("val l : integer list := [1,2,3,4]")!!, TypeEnv())
     assertEquals(0, typeChecker.typeMismatches.size)
 
-    typeChecker.checkStatementListTypes(parser.parse("val l : integer list := [1,2, true, 4]")!!, HashMap())
+    typeChecker.checkStatementListTypes(parser.parse("val l : integer list := [1,2, true, 4]")!!, TypeEnv())
     assertEquals(1, typeChecker.typeMismatches.size)
   }
 
@@ -54,15 +54,15 @@ object TypeCheckTest {
 
 
     var typeChecker = TypeChecker()
-    typeChecker.checkStatementListTypes(ast, HashMap())
+    typeChecker.checkStatementListTypes(ast, TypeEnv())
     assertEquals(0, typeChecker.typeMismatches.size)
 
     typeChecker = TypeChecker()
-    typeChecker.checkStatementListTypes(parser.parse("val b : boolean := !1")!!, HashMap())
+    typeChecker.checkStatementListTypes(parser.parse("val b : boolean := !1")!!, TypeEnv())
     assertEquals(1, typeChecker.typeMismatches.size)
 
     typeChecker = TypeChecker()
-    typeChecker.checkStatementListTypes(parser.parse("val b : boolean := -true")!!, HashMap())
+    typeChecker.checkStatementListTypes(parser.parse("val b : boolean := -true")!!, TypeEnv())
     assertEquals(2, typeChecker.typeMismatches.size)
   }
 
@@ -72,7 +72,7 @@ object TypeCheckTest {
     val typeChecker = TypeChecker()
     val ast = parser.parse("function add(a: integer, b: integer) : integer do return true end")!!
 
-    typeChecker.checkStatementListTypes(ast, HashMap())
+    typeChecker.checkStatementListTypes(ast, TypeEnv())
     assertEquals(1, typeChecker.typeMismatches.size)
   }
 
@@ -82,7 +82,7 @@ object TypeCheckTest {
     val typeChecker = TypeChecker()
     val ast = parser.parse("val a: integer := b")!!
 
-    typeChecker.checkStatementListTypes(ast, HashMap())
+    typeChecker.checkStatementListTypes(ast, TypeEnv())
     assertEquals(1, typeChecker.typeMismatches.size)
   }
 
@@ -92,10 +92,10 @@ object TypeCheckTest {
     val typeChecker = TypeChecker()
     val ast = parser.parse("input b val a: text := b")!!
 
-    typeChecker.checkStatementListTypes(ast, HashMap())
+    typeChecker.checkStatementListTypes(ast, TypeEnv())
     assertEquals(0, typeChecker.typeMismatches.size)
 
-    typeChecker.checkStatementListTypes(parser.parse("input b val a: integer := b")!!, HashMap())
+    typeChecker.checkStatementListTypes(parser.parse("input b val a: integer := b")!!, TypeEnv())
     assertEquals(1, typeChecker.typeMismatches.size)
   }
 
@@ -104,7 +104,7 @@ object TypeCheckTest {
     val parser = Parser()
     val typeChecker = TypeChecker()
     val ast = parser.parse("function print() do output \"asdf\" end print()")
-    typeChecker.checkStatementListTypes(ast!!, HashMap())
+    typeChecker.checkStatementListTypes(ast!!, TypeEnv())
     assertEquals(0, typeChecker.typeMismatches.size)
   }
 
@@ -113,7 +113,7 @@ object TypeCheckTest {
     val parser = Parser()
     val typeChecker = TypeChecker()
     val ast = parser.parse("val a := function(a: integer, b: integer) : integer do return 10 end")
-    val env = Env()
+    val env = TypeEnv()
     typeChecker.checkStatementListTypes(ast!!, env)
 
     assertEquals(FunctionType(listOf(PrimitiveType.Integer, PrimitiveType.Integer), PrimitiveType.Integer), env.getValue("a"))
@@ -125,7 +125,7 @@ object TypeCheckTest {
     val parser = Parser()
     val typeChecker = TypeChecker()
     val ast = parser.parse("val a := function(p1: integer, p2: integer) : integer do return 1.0 end")
-    val env = Env()
+    val env = TypeEnv()
     typeChecker.checkStatementListTypes(ast!!, env)
 
     assertEquals(FunctionType(listOf(PrimitiveType.Integer, PrimitiveType.Integer), PrimitiveType.Integer), env.getValue("a"))
@@ -137,7 +137,7 @@ object TypeCheckTest {
     val parser = Parser()
     val typeChecker = TypeChecker()
     val ast = parser.parse("val a := 1 a := 10.0")
-    val env = Env()
+    val env = TypeEnv()
     typeChecker.checkStatementListTypes(ast!!, env)
     assertEquals(PrimitiveType.Integer, env.getValue("a"))
     assertEquals(1, typeChecker.typeMismatches.size)
@@ -147,8 +147,8 @@ object TypeCheckTest {
   fun testGenericParamsCantBeTreatedAsInts(){
     val parser = Parser()
     val typeChecker = TypeChecker()
-    val ast = parser.parse("function outputLine(a: (A) -> B) do output a+1 end")
-    val env = Env()
+    val ast = parser.parse("function outputLine(a: (a) -> b) do output a+1 end")
+    val env = TypeEnv()
     typeChecker.checkStatementListTypes(ast!!, env)
     assertEquals(1, typeChecker.typeMismatches.size)
   }
@@ -158,8 +158,8 @@ object TypeCheckTest {
     val parser = Parser()
     val typeChecker = TypeChecker()
     val ast = parser.parse("""
-function andThen(first : (A) -> B, second: (B) -> C) : (A) -> C do
-    return function(value: A): C do
+function andThen(first : (a) -> b, second: (b) -> c) : (a) -> c do
+    return function(value: a): c do
         return second(first(value))
     end
 end
@@ -176,7 +176,7 @@ val doubleAndSquare := double.andThen(square).andThen(double)
 
 val out := 10.doubleAndSquare()
 """)
-    val env = Env()
+    val env = TypeEnv()
     typeChecker.checkStatementListTypes(ast!!, env)
     assertEquals(0, typeChecker.typeMismatches.size)
   }
@@ -186,13 +186,13 @@ val out := 10.doubleAndSquare()
     val parser = Parser()
     val typeChecker = TypeChecker()
     val ast = parser.parse("""
-function justReturn(value : A) : A do
+function justReturn(value : a) : a do
   return value
 end
 
 val out: integer := justReturn(10)
 """)
-    val env = Env()
+    val env = TypeEnv()
     typeChecker.checkStatementListTypes(ast!!, env)
     assertEquals(0, typeChecker.typeMismatches.size)
   }
@@ -211,7 +211,7 @@ function returnSomething(value : integer) : integer do
 end
     """)
     val typeChecker = TypeChecker()
-    val env = Env()
+    val env = TypeEnv()
     checker.codeblock((typeChecker.checkStatementListTypes(ast!!, env).first() as TypedStatement.FunctionDeclaration).body, true)
 
     assertEquals(0, checker.typeErrors.size)
@@ -229,7 +229,7 @@ function returnSomething(value : integer) : integer do
 end
   """)
     val typeChecker = TypeChecker()
-    val env = Env()
+    val env = TypeEnv()
     checker.codeblock((typeChecker.checkStatementListTypes(ast!!, env).first() as TypedStatement.FunctionDeclaration).body, true)
     assertEquals(1, checker.typeErrors.size)
 
@@ -250,7 +250,7 @@ function doIf(a: boolean, doer: () -> integer) : integer do
 end
   """)
     val typeChecker = TypeChecker()
-    val env = Env()
+    val env = TypeEnv()
     checker.codeblock((typeChecker.checkStatementListTypes(ast!!, env).first() as TypedStatement.FunctionDeclaration).body, true)
     assertEquals(0, checker.typeErrors.size)
   }
@@ -265,9 +265,19 @@ function doIf(a: boolean, doer: () -> integer) : integer do
 end
   """)
     val typeChecker = TypeChecker()
-    val env = Env()
+    val env = TypeEnv()
     checker.codeblock((typeChecker.checkStatementListTypes(ast!!, env).first() as TypedStatement.FunctionDeclaration).body, true)
     assertEquals(0, checker.typeErrors.size)
+  }
+
+  @Test
+  fun testEmptyListDeclaration(){
+    val program = "val inputList : integer list := []"
+    val parser = Parser()
+    val typeChecker = TypeChecker()
+    val ast = parser.parse(program)
+    typeChecker.checkStatementListTypes(ast!!, TypeEnv())
+    assertEquals(0, typeChecker.typeMismatches.size)
   }
 
 }

@@ -3,34 +3,36 @@ package tatskaari.eval.values
 import tatskaari.BuiltInFunction
 import tatskaari.eval.Eval
 import tatskaari.parsing.Expression
+import tatskaari.eval.Env
+
+
+interface Addable {
+  infix fun plus(value: Addable): Value
+}
+
+interface Stringable : Addable {
+  override fun plus(value: Addable): Value {
+    if (value is Value.TextVal){
+      return Value.TextVal(toString() + value.toString())
+    }
+    throw Eval.TypeMismatch("You cannot add $this and $value")
+  }
+}
+
+interface Subtractable {
+  infix fun minus(value: Subtractable): Value
+}
+
+interface Multiplicable {
+  infix fun times(value: Multiplicable): Value
+}
+
+interface Divisible {
+  infix fun div(value: Divisible): Value
+}
 
 sealed class Value(var value: Any) {
   object Unit : Value(kotlin.Unit)
-
-  interface Addable {
-    infix fun plus(value: Addable): Value
-  }
-
-  interface Stringable : Addable {
-    override fun plus(value: Addable): Value {
-      if (value is TextVal){
-        return TextVal(toString() + value.toString())
-      }
-      throw Eval.TypeMismatch("You cannot add $this and $value")
-    }
-  }
-
-  interface Subtractable {
-    infix fun minus(value: Subtractable): Value
-  }
-
-  interface Multiplicable {
-    infix fun times(value: Multiplicable): Value
-  }
-
-  interface Divisible {
-    infix fun div(value: Divisible): Value
-  }
 
   class IntVal(intVal: Int) : Value(intVal), Addable, Subtractable, Multiplicable, Divisible {
     override fun plus(value: Addable): Value {
@@ -117,10 +119,12 @@ sealed class Value(var value: Any) {
 
   class BoolVal(boolVal: Boolean) : Value(boolVal), Stringable
 
-  class FunctionVal(functionVal: Expression.Function, val env : MutableMap<String, Value>) : Value(functionVal)
+  class FunctionVal(functionVal: Expression.Function, val env : Env) : Value(functionVal)
   class BifVal(val bif: BuiltInFunction): Value(bif)
 
   class ListVal(listVal: HashMap<Int, Value>): Value(listVal)
+
+  class VariantVal(name: String) : Value(name)
 
   fun intVal():Int{
     if (this is IntVal){

@@ -1,11 +1,9 @@
 package tatskaari.parsing
 
-import tatskaari.*
 import tatskaari.compatibility.*
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
 import tatskaari.tokenising.TokenType
-import tatskaari.GustoType.*
 import kotlin.collections.ArrayList
 
 class Parser {
@@ -26,7 +24,7 @@ class Parser {
     } catch (exception: ParsingFailedException){
       null
     } catch (exception: UnexpectedEndOfFile){
-      parserExceptions.add(ParserException("Unexpected end of file", tokens.last, tokens.last))
+      parserExceptions.add(ParserException("Unexpected end of file", tokens.last(), tokens.last()))
       null
     }
   }
@@ -54,6 +52,7 @@ class Parser {
         TokenType.Value -> valueDeclaration(tokens)
         TokenType.Input -> input(tokens)
         TokenType.Output -> output(tokens)
+        TokenType.Type -> typeDeclaration(tokens)
         // the statement is either as assignment or an expression statement
         TokenType.Identifier, TokenType.NumLiteral, TokenType.IntLiteral, TokenType.TextLiteral, TokenType.True, TokenType.False, TokenType.Sub, TokenType.Not -> {
           val expressionToken = tokens.consumeToken()
@@ -66,9 +65,8 @@ class Parser {
           }
         }
         else -> throw UnexpectedToken(token, listOf(TokenType.If, TokenType.While, TokenType.OpenBlock, TokenType.Function,
-          TokenType.Return, TokenType.Number, TokenType.Integer, TokenType.Boolean, TokenType.List, TokenType.Text,
-          TokenType.Input, TokenType.Output, TokenType.Identifier, TokenType.NumLiteral, TokenType.IntLiteral, TokenType.TextLiteral,
-          TokenType.True, TokenType.False, TokenType.Sub, TokenType.Not))
+          TokenType.Return, TokenType.Input, TokenType.Output, TokenType.Identifier, TokenType.NumLiteral, TokenType.IntLiteral,
+          TokenType.TextLiteral, TokenType.True, TokenType.False, TokenType.Sub, TokenType.Not))
       }
     } catch (rootException: ParserException){
       // Attempt to parse the next tokens as a statement until it works then parse the rest of the program to get any further errors
@@ -96,6 +94,26 @@ class Parser {
     }
 
     throw ParsingFailedException
+  }
+
+  private fun typeDeclaration(tokens: TokenList) : Statement.TypeDeclaration {
+    val startToken = tokens.getNextToken(TokenType.Type)
+    val typeName = tokens.getNextToken(TokenType.Identifier) as Token.Identifier
+    tokens.getNextToken(TokenType.AssignOp)
+    val members = ArrayList<Pair<Token, TypeNotation.VariantMember>>()
+    members.add(typeMember(tokens))
+    while (tokens.match(TokenType.Comma)){
+      tokens.consumeToken()
+      members.add(typeMember(tokens))
+    }
+
+    return Statement.TypeDeclaration(typeName, emptyList(), members.map { it.second }, startToken, members.last().first)
+  }
+
+  private fun typeMember(tokens: TokenList): Pair<Token, TypeNotation.VariantMember> {
+    val name = tokens.getNextToken(TokenType.Constructor)
+    //TODO add of keyword
+    return Pair(name, TypeNotation.VariantMember(name.tokenText, TypeNotation.Unit))
   }
 
   private fun expressionStatement(tokens: TokenList): Statement {
@@ -159,22 +177,22 @@ class Parser {
     return Statement.FunctionDeclaration(name, function, startToken, body.endToken)
   }
 
-  private fun listType(type: GustoType, tokens: TokenList): GustoType{
+  private fun listType(type: TypeNotation, tokens: TokenList): TypeNotation{
     return if (tokens.match(TokenType.List)){
       tokens.consumeToken()
-      ListType(type)
+      TypeNotation.ListOf(type)
     } else {
       return type
     }
   }
 
   // ("(" (typeNotation)? ",typeNotation"* ")" ("->" typeNotation)?)
-  private fun functionType(tokens: TokenList): GustoType{
+  private fun functionType(tokens: TokenList): TypeNotation{
     val token = tokens.consumeToken()
 
     return when(token.tokenType){
       TokenType.OpenParen -> {
-        val params = ArrayList<GustoType>()
+        val params = ArrayList<TypeNotation>()
         while(!tokens.match(TokenType.CloseParen)){
           params.add(typeNotation(tokens))
           if (tokens.match(TokenType.Comma)){
@@ -187,25 +205,20 @@ class Parser {
           tokens.getNextToken(TokenType.RightArrow)
           typeNotation(tokens)
         } else {
-          PrimitiveType.Unit
+          TypeNotation.Unit
         }
 
-        FunctionType(params, returnType)
+        TypeNotation.Function(params, returnType)
       }
-      else -> throw UnexpectedToken(token, listOf(TokenType.Text, TokenType.Integer, TokenType.Boolean, TokenType.Number, TokenType.List))
+      else -> throw UnexpectedToken(token, listOf(TokenType.Identifier, TokenType.List))
     }
   }
   // primitiveType => "unit" | "list" | ("number" | "integer" | "boolean" | "text") ("list")? | functionType
-  private fun primitiveType(tokens: TokenList): GustoType {
+  private fun primitiveType(tokens: TokenList): TypeNotation {
     val token = tokens.consumeToken()
     return when(token.tokenType){
-      TokenType.Number -> listType(PrimitiveType.Number, tokens)
-      TokenType.Boolean -> listType(PrimitiveType.Boolean, tokens)
-      TokenType.Integer -> listType(PrimitiveType.Integer, tokens)
-      TokenType.Text -> listType(PrimitiveType.Text, tokens)
-      TokenType.List -> ListType(UnknownType)
-      TokenType.Unit -> PrimitiveType.Unit
-      TokenType.Identifier -> listType(GenericType(token.tokenText), tokens)
+      TokenType.List -> TypeNotation.ListOf(TypeNotation.UnknownType)
+      TokenType.Identifier -> listType(TypeNotation.Atomic(token.tokenText), tokens)
       else -> {
         tokens.addFirst(token)
         functionType(tokens)
@@ -214,7 +227,7 @@ class Parser {
   }
 
   // typeNotation => ( primitiveType (list)?) | functionType
-  private fun typeNotation(tokens: TokenList): GustoType {
+  private fun typeNotation(tokens: TokenList): TypeNotation {
     return primitiveType(tokens)
   }
 
@@ -234,7 +247,7 @@ class Parser {
       tokens.getNextToken(TokenType.Colon)
       typeNotation(tokens)
     } else {
-      UnknownType
+      TypeNotation.UnknownType
     }
     tokens.getNextToken(TokenType.AssignOp)
     val expression = expression(tokens)
@@ -415,6 +428,7 @@ class Parser {
         return listDeclaration(tokens)
       }
       TokenType.Identifier -> return Expression.Identifier(token.tokenText, token, token)
+      TokenType.Constructor -> return Expression.ConstructorCall(token.tokenText, token, token) //TODO tuples here
       else -> throw UnexpectedToken(token, expectedTokens)
     }
 
@@ -428,14 +442,14 @@ class Parser {
     return Expression.Function(returnType, params, paramTypes, body, firstToken, body.endToken)
   }
 
-  private fun functionParams(tokens: TokenList): Pair<List<Token.Identifier>, Map<Token.Identifier, GustoType>> {
+  private fun functionParams(tokens: TokenList): Pair<List<Token.Identifier>, Map<Token.Identifier, TypeNotation>> {
     tokens.getNextToken(TokenType.OpenParen)
-    val paramTypes = HashMap<Token.Identifier, GustoType>()
+    val paramTypes = HashMap<Token.Identifier, TypeNotation>()
     val params = ArrayList<Token.Identifier>()
     while (!tokens.match(TokenType.CloseParen)){
       val paramIdentifier = tokens.getNextToken(TokenType.Identifier) as Token.Identifier
       tokens.getNextToken(TokenType.Colon)
-      val paramType: GustoType = typeNotation(tokens)
+      val paramType: TypeNotation = typeNotation(tokens)
 
       params.add(paramIdentifier)
       paramTypes.put(paramIdentifier, paramType)
@@ -450,12 +464,12 @@ class Parser {
   }
 
   // functionReturnType => NOTHING | ":" typeNotation
-  private fun functionReturnType(tokens: TokenList): GustoType {
+  private fun functionReturnType(tokens: TokenList): TypeNotation {
     return if (tokens.match(TokenType.Colon)) {
       tokens.consumeToken()
       typeNotation(tokens)
     } else {
-      PrimitiveType.Unit
+      TypeNotation.Unit
     }
   }
 

@@ -20,7 +20,7 @@ object LexerTest {
     val tokenList = Lexer.lex(program)
     val expectedTokens = listOf(
       TokenType.OpenBlock,
-      TokenType.Integer,
+      TokenType.Identifier,
       TokenType.Identifier,
       TokenType.AssignOp,
       TokenType.Add,
@@ -46,7 +46,7 @@ object LexerTest {
       TokenType.IntLiteral,
       TokenType.CloseParen,
       TokenType.Then,
-      TokenType.Integer,
+      TokenType.Identifier,
       TokenType.Identifier,
       TokenType.AssignOp,
       TokenType.IntLiteral,

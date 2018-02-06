@@ -2,7 +2,8 @@ package tatskaari
 
 import tatskaari.eval.*
 import tatskaari.parsing.Parser
-import tatskaari.parsing.TypeChecking.TypeChecker
+import tatskaari.parsing.typechecking.TypeChecker
+
 external fun error(text: String)
 object BrowserHooks {
 

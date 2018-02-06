@@ -1,6 +1,5 @@
 package tatskaari.parsing
 
-import tatskaari.GustoType
 import tatskaari.tokenising.Token
 
 data class InvalidOperatorToken(val token : Token) : RuntimeException("Invalid operator $token")
@@ -56,7 +55,12 @@ sealed class Expression(startToken: Token, endToken: Token) : ASTNode(startToken
       return visitor.visit(this)
     }
   }
-  class Function(val returnType: GustoType, val params: List<Token.Identifier>, val paramTypes: Map<Token.Identifier, GustoType>, val body: Statement.CodeBlock, startTok: Token, endTok: Token) : Expression(startTok, endTok){
+  class Function(val returnType: TypeNotation, val params: List<Token.Identifier>, val paramTypes: Map<Token.Identifier, TypeNotation>, val body: Statement.CodeBlock, startTok: Token, endTok: Token) : Expression(startTok, endTok){
+    override fun <NewNodeType> accept(visitor: IExpressionVisitor<NewNodeType>): NewNodeType {
+      return visitor.visit(this)
+    }
+  }
+  class ConstructorCall(val name: String, startTok: Token, endTok: Token): Expression(startTok, endTok) {
     override fun <NewNodeType> accept(visitor: IExpressionVisitor<NewNodeType>): NewNodeType {
       return visitor.visit(this)
     }

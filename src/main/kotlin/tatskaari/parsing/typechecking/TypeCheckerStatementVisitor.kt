@@ -5,7 +5,16 @@ import tatskaari.parsing.IStatementVisitor
 import tatskaari.parsing.Statement
 import tatskaari.GustoType.*
 
-class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors, val expectedReturnType: GustoType?) : IStatementVisitor<TypedStatement> {
+class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, val expectedReturnType: GustoType?) : IStatementVisitor<TypedStatement> {
+  override fun visit(typeDeclaration: Statement.TypeDeclaration): TypedStatement {
+    val members = typeDeclaration.members.associate { Pair(it.name, it.toGustoType(env.types)) }
+    val variantType = VariantType(typeDeclaration.identifier.name, members.values.toList())
+
+    env.types.putAll(members)
+    env.types[typeDeclaration.identifier.name] = variantType
+
+    return TypedStatement.TypeDeclaration(typeDeclaration, variantType)
+  }
 
 
   private val exprVisitor = TypeCheckerExpressionVisitor(env, typeErrors)
@@ -18,11 +27,16 @@ class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors, val expe
   override fun visit(statement: Statement.ValDeclaration): TypedStatement {
     val expression = statement.expression.accept(exprVisitor)
     val expressionType = expression.gustoType
+    val variableType = statement.type.toGustoType(env.types)
     if (expressionType != UnknownType){
-      when(statement.type){
-        expressionType -> env.put(statement.identifier.name, statement.type)
-        UnknownType -> env.put(statement.identifier.name, expressionType)
-        else -> typeErrors.addTypeMissmatch(statement, expressionType, statement.type)
+      when(variableType){
+        GustoType.UnknownType -> env[statement.identifier.name] = expressionType
+        else -> {
+          if (!TypeComparer.compareTypes(variableType, expressionType, HashMap())) {
+            typeErrors.addTypeMissmatch(statement, expressionType, statement.type.toGustoType(HashMap()))
+          }
+          env[statement.identifier.name] = variableType
+        }
       }
     }
 
@@ -31,7 +45,7 @@ class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors, val expe
   }
 
   override fun visit(statement: Statement.CodeBlock): TypedStatement {
-    val blockStatementVisitor = TypeCheckerStatementVisitor(Env(env), typeErrors, expectedReturnType)
+    val blockStatementVisitor = TypeCheckerStatementVisitor(TypeEnv(env), typeErrors, expectedReturnType)
 
     var returnType: GustoType? = null
     val body = ArrayList<TypedStatement>()
@@ -48,9 +62,9 @@ class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors, val expe
 
   override fun visit(statement: Statement.Assignment): TypedStatement {
     val expression = statement.expression.accept(exprVisitor)
-    val expectedVal = env.getValue(statement.identifier.name)
-    if (expression.gustoType != expectedVal) {
-      typeErrors.addTypeMissmatch(statement, expectedVal, expression.gustoType)
+    val expectedType = env.getValue(statement.identifier.name)
+    if (!TypeComparer.compareTypes(expectedType, expression.gustoType, HashMap())) {
+      typeErrors.addTypeMissmatch(statement, expectedType, expression.gustoType)
     }
     return TypedStatement.Assignment(statement, expression)
   }
@@ -117,10 +131,11 @@ class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors, val expe
   }
 
   override fun visit(statement: Statement.FunctionDeclaration): TypedStatement {
-    val functionEnv = HashMap(env)
-    functionEnv.putAll(statement.function.paramTypes.mapKeys { it.key.name })
+    //TODO pass in type definition map
+    val functionEnv = TypeEnv(env)
+    functionEnv.putAll(statement.function.paramTypes.mapKeys { it.key.name }.mapValues { it.value.toGustoType(HashMap()) })
 
-    val functionType = FunctionType(statement.function.params.map { statement.function.paramTypes.getValue(it) }, statement.function.returnType)
+    val functionType = FunctionType(statement.function.params.map { statement.function.paramTypes.getValue(it).toGustoType(HashMap()) }, statement.function.returnType.toGustoType(HashMap()))
 
     functionEnv[statement.identifier.name] = functionType
     val body = statement.function.body.accept(TypeCheckerStatementVisitor(functionEnv, typeErrors, functionType.returnType)) as TypedStatement.CodeBlock
