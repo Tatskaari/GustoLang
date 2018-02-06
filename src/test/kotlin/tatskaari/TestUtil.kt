@@ -15,16 +15,5 @@ object TestUtil {
 
   }
 
-  fun compareASTs(expected: List<Statement>, actual: List<Statement>) {
-    expected.zip(actual).map { (expectedVal, actualVal) ->
-      assertEquals(expectedVal, actualVal)
-    }
-  }
-
-  fun saveClassToFile(clazz: ByteArray, fileName: String){
-    val fos = FileOutputStream("target${File.pathSeparator}$fileName")
-    fos.write(clazz)
-    fos.close()
-  }
 }
 

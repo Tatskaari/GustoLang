@@ -1,4 +1,4 @@
-package tatskaari.parsing.TypeChecking
+package tatskaari.parsing.typechecking
 
 import tatskaari.*
 import tatskaari.parsing.ASTNode
@@ -30,10 +30,7 @@ class TypeChecker {
   val typeMismatches: Errors = Errors()
 
   fun checkStatementListTypes(statements: List<Statement>, env: Env): List<TypedStatement>{
-    val statementVisitor = TypeCheckerStatementVisitor(env, typeMismatches)
+    val statementVisitor = TypeCheckerStatementVisitor(env, typeMismatches, null)
     return statements.map{it.accept(statementVisitor)}
   }
-
-
-
 }

@@ -1,19 +1,22 @@
 package tatskaari.tokenising
 
 import tatskaari.compatibility.TokenList
-object Lexer {
-  class InvalidInputException(reason: String) : RuntimeException(reason)
 
-  fun String.rest(head: String): String {
+object Lexer {
+  data class InvalidInputException(val line : Int, val column: Int) : RuntimeException()
+
+  private fun String.rest(head: String): String {
     return substring(head.length, length)
   }
+
+
 
   fun lex(program: String): TokenList {
     var lineNumber = 1
     var columnNumber = 1
-    val trimPred = fun (it:Char): Boolean {
-      return if (it.isWhitespace()){
-        if (it == '\n'){
+    fun trimWhitespace(char: Char): Boolean =
+      if (char.isWhitespace()){
+        if (char == '\n'){
           lineNumber++
           columnNumber = 1
         } else {
@@ -23,14 +26,13 @@ object Lexer {
       } else {
         false
       }
-    }
 
-    var rest = program.trimStart(trimPred)
+    var rest = program.trimStart(::trimWhitespace)
 
     val tokens = TokenList()
     while (rest.isNotEmpty()) {
       val tokenResult = TokenType.values()
-        .map {
+        .mapNotNull {
           val result = it.matcher.lex(rest)
           if (result != null){
             Pair(it, result)
@@ -38,7 +40,6 @@ object Lexer {
             null
           }
         }
-        .filterNotNull()
         .maxBy { it.second.length }
       if (tokenResult != null) {
         val (tokenType, tokenText) = tokenResult
@@ -47,32 +48,14 @@ object Lexer {
         if (tokenType != TokenType.Comment){
           tokens.add(token)
         }
+        columnNumber += token.tokenText.length
 
-        val (newLine, newCol) = getLexingPosition(lineNumber, columnNumber, tokenText)
-        lineNumber = newLine
-        columnNumber = newCol
-
-        rest = rest.rest(tokenText).trimStart(trimPred)
+        rest = rest.rest(tokenText).trimStart(::trimWhitespace)
       } else {
-        throw InvalidInputException("Unexpected character: '" + program.substring(10) + "...'")
+        throw InvalidInputException(lineNumber, columnNumber)
       }
     }
 
     return tokens
   }
-
-  private fun getLexingPosition(oldLine: Int, oldCol: Int, text: String): Pair<Int, Int> {
-    val lineNumber = oldLine+text.count{ it == '\n' }
-    var columnNumber = oldCol
-
-    if (lineNumber != 0){
-      val textAfterNewline = text.substringAfterLast('\n')
-      columnNumber = textAfterNewline.length
-    } else {
-      columnNumber += text.length
-    }
-
-    return Pair(lineNumber, columnNumber)
-  }
-
 }

@@ -1,6 +1,4 @@
-package tatskaari.bytecodecompiler
-
-import tatskaari.parsing.TypeChecking.TypedExpression
+package tatskaari.parsing.typechecking
 
 interface ITypedExpressionVisitor {
   fun visit(expr: TypedExpression.IntLiteral)

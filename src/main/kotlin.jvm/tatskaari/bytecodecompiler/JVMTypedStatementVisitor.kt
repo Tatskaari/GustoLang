@@ -4,11 +4,11 @@ import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.*
 import org.objectweb.asm.commons.InstructionAdapter
 import org.objectweb.asm.commons.LocalVariablesSorter
-import tatskaari.parsing.TypeChecking.ITypedStatementVisitor
-import tatskaari.parsing.TypeChecking.TypedStatement
+import tatskaari.parsing.typechecking.ITypedStatementVisitor
+import tatskaari.parsing.typechecking.TypedStatement
 
 class JVMTypedStatementVisitor(
-  private val classWriter: ClassWriter,
+  classWriter: ClassWriter,
   private val localVars: Env = Env(),
   private val compiler: Compiler,
   methodName: String,
@@ -92,7 +92,7 @@ class JVMTypedStatementVisitor(
 
   override fun accept(stmt: TypedStatement.Return) {
     stmt.expression.accept(expressionVisitor)
-    box(stmt.returnType, methodVisitor)
+    box(stmt.returnType!!, methodVisitor)
     methodVisitor.visitInsn(ARETURN)
   }
 

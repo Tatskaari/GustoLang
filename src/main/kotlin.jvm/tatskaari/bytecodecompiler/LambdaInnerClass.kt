@@ -3,7 +3,7 @@ package tatskaari.bytecodecompiler
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
-import tatskaari.parsing.TypeChecking.TypedStatement
+import tatskaari.parsing.typechecking.TypedStatement
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.commons.InstructionAdapter
 import tatskaari.GustoType

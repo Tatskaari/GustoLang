@@ -2,14 +2,11 @@ package tatskaari.bytecodecompiler
 
 
 import tatskaari.GustoType.*
-import tatskaari.parsing.TypeChecking.ArithmeticOperator
-import tatskaari.parsing.TypeChecking.TypedExpression
 import org.objectweb.asm.Label
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.commons.InstructionAdapter
-import tatskaari.parsing.TypeChecking.BooleanLogicalOperator
-import tatskaari.parsing.TypeChecking.NumericLogicalOperator
+import tatskaari.parsing.typechecking.*
 
 
 class JVMTypedExpressionVisitor (private val methodVisitor: InstructionAdapter, private val localVars: Env, private val fields: Map<String, Type>, private val className: String, private val compiler: Compiler): ITypedExpressionVisitor {

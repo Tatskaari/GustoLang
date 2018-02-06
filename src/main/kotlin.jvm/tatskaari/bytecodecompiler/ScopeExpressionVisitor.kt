@@ -1,6 +1,7 @@
 package tatskaari.bytecodecompiler
 
-import tatskaari.parsing.TypeChecking.TypedExpression
+import tatskaari.parsing.typechecking.ITypedExpressionVisitor
+import tatskaari.parsing.typechecking.TypedExpression
 import java.util.*
 
 class ScopeExpressionVisitor(val declaredVariables: LinkedList<String> = LinkedList(), val undeclaredVariables: LinkedList<String> = LinkedList()) : ITypedExpressionVisitor {

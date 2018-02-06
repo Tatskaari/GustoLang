@@ -6,14 +6,14 @@ import tatskaari.tokenising.TokenType
 
 fun TokenList.consumeToken(): Token {
   if(isEmpty()){
-    throw Parser.UnexpectedEndOfFile
+    throw Parser.UnexpectedEndOfFile()
   }
   return removeFirst()
 }
 
 fun TokenList.lookAhead(): Token {
   if(isEmpty()){
-    throw Parser.UnexpectedEndOfFile
+    throw Parser.UnexpectedEndOfFile()
   }
   return this[0]
 }

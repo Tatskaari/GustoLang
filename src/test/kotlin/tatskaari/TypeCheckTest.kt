@@ -2,10 +2,8 @@ package tatskaari
 
 import org.testng.annotations.Test
 import tatskaari.parsing.*
-import tatskaari.parsing.TypeChecking.Env
-import tatskaari.parsing.TypeChecking.TypeChecker
-import tatskaari.parsing.TypeChecking.TypedStatement
 import tatskaari.GustoType.*
+import tatskaari.parsing.typechecking.*
 import kotlin.test.assertEquals
 
 object TypeCheckTest {
@@ -132,7 +130,6 @@ object TypeCheckTest {
 
     assertEquals(FunctionType(listOf(PrimitiveType.Integer, PrimitiveType.Integer), PrimitiveType.Integer), env.getValue("a"))
     assertEquals(1, typeChecker.typeMismatches.size)
-
   }
 
   @Test
@@ -199,4 +196,78 @@ val out: integer := justReturn(10)
     typeChecker.checkStatementListTypes(ast!!, env)
     assertEquals(0, typeChecker.typeMismatches.size)
   }
+
+  @Test
+  fun testReturnTypeCheckerFalseFlags(){
+    val checker = ReturnTypeChecker(Errors())
+    val parser = Parser()
+    val ast = parser.parse("""
+function returnSomething(value : integer) : integer do
+  if value < 10 then
+    return 10
+  else
+    return value
+  end
+end
+    """)
+    val typeChecker = TypeChecker()
+    val env = Env()
+    checker.codeblock((typeChecker.checkStatementListTypes(ast!!, env).first() as TypedStatement.FunctionDeclaration).body, true)
+
+    assertEquals(0, checker.typeErrors.size)
+  }
+
+  @Test
+  fun testReturnTypeCheckerIfStatementMissingReturn(){
+    val checker = ReturnTypeChecker(Errors())
+    val parser = Parser()
+    val ast = parser.parse("""
+function returnSomething(value : integer) : integer do
+  if value < 10 then
+    return 10
+  end
+end
+  """)
+    val typeChecker = TypeChecker()
+    val env = Env()
+    checker.codeblock((typeChecker.checkStatementListTypes(ast!!, env).first() as TypedStatement.FunctionDeclaration).body, true)
+    assertEquals(1, checker.typeErrors.size)
+
+  }
+
+  @Test
+  fun testIfElseReturn(){
+    val checker = ReturnTypeChecker(Errors())
+    val parser = Parser()
+    val ast = parser.parse("""
+function doIf(a: boolean, doer: () -> integer) : integer do
+    if a then
+        return 10
+    else
+        output 5
+    end
+    return 1
+end
+  """)
+    val typeChecker = TypeChecker()
+    val env = Env()
+    checker.codeblock((typeChecker.checkStatementListTypes(ast!!, env).first() as TypedStatement.FunctionDeclaration).body, true)
+    assertEquals(0, checker.typeErrors.size)
+  }
+
+  @Test
+  fun testUnitFunctionReturnCheck(){
+    val checker = ReturnTypeChecker(Errors())
+    val parser = Parser()
+    val ast = parser.parse("""
+function doIf(a: boolean, doer: () -> integer) : integer do
+
+end
+  """)
+    val typeChecker = TypeChecker()
+    val env = Env()
+    checker.codeblock((typeChecker.checkStatementListTypes(ast!!, env).first() as TypedStatement.FunctionDeclaration).body, true)
+    assertEquals(0, checker.typeErrors.size)
+  }
+
 }

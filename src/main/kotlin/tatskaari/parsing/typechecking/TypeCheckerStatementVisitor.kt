@@ -1,11 +1,11 @@
-package tatskaari.parsing.TypeChecking
+package tatskaari.parsing.typechecking
 
 import tatskaari.*
 import tatskaari.parsing.IStatementVisitor
 import tatskaari.parsing.Statement
 import tatskaari.GustoType.*
 
-class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors) : IStatementVisitor<TypedStatement> {
+class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors, val expectedReturnType: GustoType?) : IStatementVisitor<TypedStatement> {
 
 
   private val exprVisitor = TypeCheckerExpressionVisitor(env, typeErrors)
@@ -31,17 +31,15 @@ class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors) : IState
   }
 
   override fun visit(statement: Statement.CodeBlock): TypedStatement {
-    val blockStatementVisitor = TypeCheckerStatementVisitor(Env(env), typeErrors)
+    val blockStatementVisitor = TypeCheckerStatementVisitor(Env(env), typeErrors, expectedReturnType)
 
-    var returnType: GustoType = PrimitiveType.Unit
+    var returnType: GustoType? = null
     val body = ArrayList<TypedStatement>()
     statement.statementList.forEach {
       val typedStatement = it.accept(blockStatementVisitor)
       body.add(typedStatement)
-      if (returnType == PrimitiveType.Unit) {
+      if (returnType == null) {
         returnType = typedStatement.returnType
-      } else if(typedStatement.returnType != PrimitiveType.Unit && typedStatement.returnType != returnType){
-        typeErrors.addTypeMissmatch(statement, typedStatement.returnType, returnType)
       }
     }
 
@@ -84,7 +82,6 @@ class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors) : IState
     val typedConditionExpr = statement.condition.accept(exprVisitor)
     if (typedConditionExpr.gustoType != PrimitiveType.Boolean) {
       typeErrors.addTypeMissmatch(statement, PrimitiveType.Boolean, typedConditionExpr.gustoType)
-
     }
     val typedBody = statement.body.accept(this) as TypedStatement.CodeBlock
     return TypedStatement.If(statement, typedBody , typedConditionExpr)
@@ -98,9 +95,6 @@ class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors) : IState
     }
     val typedIfBody = statement.ifBody.accept(this) as TypedStatement.CodeBlock
     val typedElseBody = statement.elseBody.accept(this) as TypedStatement.CodeBlock
-    if (typedIfBody.returnType != typedElseBody.returnType) {
-      typeErrors.add(statement,"The return type of the else branch was ${typedElseBody.returnType} but the return type of the true branch was ${typedIfBody.returnType}")
-    }
     return TypedStatement.IfElse(statement, typedIfBody, typedElseBody, typedCondition)
   }
 
@@ -128,22 +122,25 @@ class TypeCheckerStatementVisitor(val env: Env, val typeErrors: Errors) : IState
 
     val functionType = FunctionType(statement.function.params.map { statement.function.paramTypes.getValue(it) }, statement.function.returnType)
 
-    functionEnv.put(statement.identifier.name, functionType)
-    val body = statement.function.body.accept(TypeCheckerStatementVisitor(functionEnv, typeErrors)) as TypedStatement.CodeBlock
+    functionEnv[statement.identifier.name] = functionType
+    val body = statement.function.body.accept(TypeCheckerStatementVisitor(functionEnv, typeErrors, functionType.returnType)) as TypedStatement.CodeBlock
 
-    env.put(statement.identifier.name, functionType)
+    env[statement.identifier.name] = functionType
 
-    if(body.returnType != functionType.returnType){
-      // if the return type of the body was null, this means that there was already a type missmatch in one of the
-      // expressions so we shouldn't add this as a type mismatch
-      val functionName = statement.identifier.name
-      val returnType = statement.function.returnType
-      typeErrors.add(statement, "The return type of $functionName is $returnType however the body of the function returns ${body.returnType}")
+    if (body.body.isEmpty() && functionType.returnType != PrimitiveType.Unit){
+      typeErrors.add(statement, "Missing return")
     }
+
+    ReturnTypeChecker(typeErrors).codeblock(body, functionType.returnType != PrimitiveType.Unit)
+
     return TypedStatement.FunctionDeclaration(statement, body, functionType)
   }
 
   override fun visit(statement: Statement.Return): TypedStatement {
-    return TypedStatement.Return(statement, statement.expression.accept(exprVisitor))
+    val expr= statement.expression.accept(exprVisitor)
+    if (expectedReturnType != expr.gustoType){
+      typeErrors.add(statement.expression, "Expected return type is $expectedReturnType however the body of the function returns ${expr.gustoType}")
+    }
+    return TypedStatement.Return(statement, expr)
   }
 }

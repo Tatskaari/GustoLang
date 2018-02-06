@@ -5,6 +5,7 @@ import org.testng.annotations.Test
 import tatskaari.tokenising.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 object LexerTest {
 
@@ -80,5 +81,24 @@ object LexerTest {
     val expectedTokens = listOf(TokenType.IntLiteral, TokenType.NotEquality, TokenType.IntLiteral)
     program.zip(expectedTokens)
       .forEach { (actual, expect) -> assertEquals(actual.tokenType, expect) }
+  }
+
+  @Test
+  fun testLineNumbers(){
+    val program = Lexer.lex("a != 2")
+    assertEquals(3, program.size)
+
+    assertEquals(1, program[0].lineNumber)
+    assertEquals(1, program[0].columnNumber)
+    assertEquals(1, program[0].tokenText.length)
+
+    assertEquals(1, program[1].lineNumber)
+    assertEquals(3, program[1].columnNumber)
+    assertEquals(2, program[1].tokenText.length)
+
+    assertEquals(1, program[2].lineNumber)
+    assertEquals(6, program[2].columnNumber)
+    assertEquals(1, program[2].tokenText.length)
+
   }
 }

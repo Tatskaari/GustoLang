@@ -1,4 +1,4 @@
-package tatskaari.parsing.TypeChecking
+package tatskaari.parsing.typechecking
 
 enum class NumericLogicalOperator {
   LessThan, GreaterThan, LessThanEq, GreaterThanEq

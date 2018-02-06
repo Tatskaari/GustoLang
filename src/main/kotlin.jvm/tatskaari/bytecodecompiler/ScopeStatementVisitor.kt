@@ -1,7 +1,7 @@
 package tatskaari.bytecodecompiler
 
-import tatskaari.parsing.TypeChecking.ITypedStatementVisitor
-import tatskaari.parsing.TypeChecking.TypedStatement
+import tatskaari.parsing.typechecking.ITypedStatementVisitor
+import tatskaari.parsing.typechecking.TypedStatement
 import java.util.*
 
 class ScopeStatementVisitor : ITypedStatementVisitor {

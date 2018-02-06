@@ -7,7 +7,7 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.commons.InstructionAdapter
 import tatskaari.GustoType
 import tatskaari.GustoType.*
-import tatskaari.parsing.TypeChecking.TypedStatement
+import tatskaari.parsing.typechecking.TypedStatement
 import java.util.*
 import java.util.function.*
 import java.util.function.Function

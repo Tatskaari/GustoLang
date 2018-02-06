@@ -1,4 +1,4 @@
-package tatskaari.parsing.TypeChecking
+package tatskaari.parsing.typechecking
 
 interface ITypedStatementVisitor {
   fun accept(stmt: TypedStatement.Assignment)

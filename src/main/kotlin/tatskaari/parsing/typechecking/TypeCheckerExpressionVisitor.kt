@@ -1,4 +1,4 @@
-package tatskaari.parsing.TypeChecking
+package tatskaari.parsing.typechecking
 
 import tatskaari.GustoType
 import tatskaari.GustoType.*
@@ -237,13 +237,16 @@ class TypeCheckerExpressionVisitor(val env: Env, val typeErrors: Errors) : IExpr
     }
 
     functionEnv.putAll(expr.paramTypes.mapKeys { it.key.name })
-    val body = expr.body.accept(TypeCheckerStatementVisitor(functionEnv, typeErrors)) as TypedStatement.CodeBlock
+    val functionType = FunctionType(paramTypes, expr.returnType)
+    val body = expr.body.accept(TypeCheckerStatementVisitor(functionEnv, typeErrors, functionType.returnType)) as TypedStatement.CodeBlock
 
-    if (body.returnType != expr.returnType){
-      typeErrors.add(expr, "Unexpected return type. Expected ${expr.returnType}, got ${body.returnType}.")
+    if (body.body.isEmpty() && functionType.returnType != PrimitiveType.Unit){
+      typeErrors.add(expr, "Missing return")
     }
 
-    return TypedExpression.Function(expr, body, FunctionType(paramTypes, expr.returnType))
+    ReturnTypeChecker(typeErrors).codeblock(body, functionType.returnType != PrimitiveType.Unit)
+
+    return TypedExpression.Function(expr, body, functionType)
   }
 
 }

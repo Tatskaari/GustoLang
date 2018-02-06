@@ -1,8 +1,7 @@
-package tatskaari.parsing.TypeChecking
+package tatskaari.parsing.typechecking
 
 import tatskaari.GustoType.*
 import tatskaari.GustoType
-import tatskaari.bytecodecompiler.ITypedExpressionVisitor
 import tatskaari.parsing.Expression
 
 sealed class TypedExpression(val gustoType: GustoType) {

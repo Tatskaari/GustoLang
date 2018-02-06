@@ -9,10 +9,10 @@ import tatskaari.GustoType.*
 import kotlin.collections.ArrayList
 
 class Parser {
-  open class ParserException(val reason: String) : Exception()
-  data class UnexpectedToken(val token: Token?, private val expectedTokens: List<TokenType>)
-    : ParserException("Unexpected token $token, expected one of $expectedTokens")
-  object UnexpectedEndOfFile: Exception()
+  open class ParserException(val reason: String, val start: Token, val end: Token) : Exception()
+  data class UnexpectedToken(val token: Token, private val expectedTokens: List<TokenType>)
+    : ParserException("Unexpected token $token, expected one of $expectedTokens", token, token)
+  class UnexpectedEndOfFile : Exception()
   object ParsingFailedException: Exception()
 
 
@@ -20,12 +20,13 @@ class Parser {
   val parserExceptions = ArrayList<ParserException>()
 
   fun parse(source: String): List<Statement>? {
+    val tokens = Lexer.lex(source)
     return try {
-      program(Lexer.lex(source))
+      program(TokenList(tokens))
     } catch (exception: ParsingFailedException){
       null
     } catch (exception: UnexpectedEndOfFile){
-      parserExceptions.add(ParserException("Unexpected end of file"))
+      parserExceptions.add(ParserException("Unexpected end of file", tokens.last, tokens.last))
       null
     }
   }
