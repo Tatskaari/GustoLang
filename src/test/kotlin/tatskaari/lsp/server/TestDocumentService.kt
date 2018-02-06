@@ -26,7 +26,7 @@ class TestDocumentService {
 
     docService.didOpen(
       DidOpenTextDocumentParams(
-        TextDocumentItem("file:/${TestUtil.getProgramPath(name)}", "Gusto", 1, TestUtil.loadProgram(name))
+        TextDocumentItem("file://name.flav", "Gusto", 1, TestUtil.loadProgram(name))
       )
     )
 

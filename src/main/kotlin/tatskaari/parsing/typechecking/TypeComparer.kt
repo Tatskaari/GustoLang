@@ -92,9 +92,7 @@ object TypeComparer {
       is GustoType.FunctionType -> expandFunctionType(expectedType, genericTypes)
       is GustoType.ListType -> expandListType(expectedType, genericTypes)
       is GustoType.GenericType -> expandGenerics(expectedType, genericTypes)
-      is GustoType.PrimitiveType -> expectedType
-      GustoType.UnknownType -> GustoType.UnknownType
-      else -> TODO("Handle type declaration")
+      else -> expectedType
     }
   }
 }

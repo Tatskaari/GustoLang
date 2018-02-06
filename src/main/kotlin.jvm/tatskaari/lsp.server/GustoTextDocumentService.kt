@@ -61,7 +61,6 @@ class GustoTextDocumentService (var server : GustoLanguageServer): TextDocumentS
         openDocuments.remove(textDoc.uri)
       }
       openDocuments[textDoc.uri] = textDoc
-      println("Opening ${textDoc.uri}")
 
       val diagnostic = GustoSource(textDoc.text).check()
       server.client!!.publishDiagnostics(
