@@ -212,7 +212,7 @@ class Parser {
     return when(token.tokenType){
       TokenType.List -> TypeNotation.ListOf(TypeNotation.UnknownType)
       TokenType.Identifier -> listType(TypeNotation.Atomic(token.tokenText), tokens)
-      TokenType.OpenParen -> functionType(tokens)
+      TokenType.OpenParen -> listType(functionType(tokens), tokens)
       else -> throw UnexpectedToken(token, listOf(TokenType.List, TokenType.Identifier, TokenType.OpenParen))
     }
   }
