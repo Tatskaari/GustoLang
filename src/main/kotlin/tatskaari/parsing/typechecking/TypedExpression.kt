@@ -112,6 +112,11 @@ sealed class TypedExpression(val gustoType: GustoType) {
     }
   }
 
+  class Tuple(val expr: Expression, type: GustoType) : TypedExpression(type) {
+    override fun accept(visitor: ITypedExpressionVisitor) {
+      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+  }
 
   abstract fun accept(visitor: ITypedExpressionVisitor)
 }

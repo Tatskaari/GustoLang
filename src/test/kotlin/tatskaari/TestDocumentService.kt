@@ -22,16 +22,16 @@ class TestDocumentService {
   fun testOpenFile(){
     startDocService()
 
-    val name = "apply"
+    val program = TestUtil.loadProgram("apply")
 
     docService.didOpen(
       DidOpenTextDocumentParams(
-        TextDocumentItem("file://name.flav", "Gusto", 1, TestUtil.loadProgram(name))
+        TextDocumentItem("file://name.flav", "Gusto", 1, program)
       )
     )
 
     assertEquals(1, server.textDocumentService.openDocuments.size)
-    assertEquals(TestUtil.loadProgram(name), server.textDocumentService.openDocuments.values.first().text)
+    assertEquals(program, server.textDocumentService.openDocuments.values.first().text)
   }
 
   @Test

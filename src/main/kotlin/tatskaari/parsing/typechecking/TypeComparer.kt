@@ -53,6 +53,16 @@ object TypeComparer {
     }
   }
 
+  private fun compareTupleTypes(expectedType: GustoType.TupleType, actualType: GustoType, genericTypes: HashMap<GustoType.GenericType, GustoType>): Boolean {
+    return if (actualType is GustoType.TupleType){
+      !expectedType.types.zip(actualType.types).any { (expectedType, actualType) ->
+        !compareTypes(expectedType, actualType, genericTypes)
+      }
+    } else {
+      false
+    }
+  }
+
   fun compareTypes(expectedType: GustoType, actualType: GustoType, genericTypes: HashMap<GustoType.GenericType, GustoType>): Boolean{
     return when(expectedType){
       is GustoType.FunctionType -> compareFunctionType(expectedType, actualType, genericTypes)
@@ -62,7 +72,7 @@ object TypeComparer {
       GustoType.UnknownType -> return true
       is GustoType.VariantMember -> expectedType == actualType
       is GustoType.VariantType -> compareVariantType(expectedType, actualType)
-      is GustoType.TupleType -> TODO("Implement tuple types")
+      is GustoType.TupleType -> compareTupleTypes(expectedType, actualType, genericTypes)
     }
   }
 

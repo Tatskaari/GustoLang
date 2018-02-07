@@ -40,8 +40,6 @@ enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, Str
   RightArrow(KeywordMatcher("->"), Token::Keyword),
   Dot(KeywordMatcher("."), Token::Keyword),
   Type(KeywordMatcher("type"), Token::Keyword),
-  StartTuple(KeywordMatcher("{"), Token::Keyword),
-  EndTuple(KeywordMatcher("}"), Token::Keyword),
   Comment(CommentMatcher, Token::Comment),
   IntLiteral(IntMatcher, Token::IntLiteral),
   NumLiteral(NumMatcher, Token::NumLiteral),

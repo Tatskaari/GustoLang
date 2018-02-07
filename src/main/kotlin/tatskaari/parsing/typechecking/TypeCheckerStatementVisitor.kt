@@ -6,6 +6,36 @@ import tatskaari.parsing.Statement
 import tatskaari.GustoType.*
 
 class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, val expectedReturnType: GustoType?) : IStatementVisitor<TypedStatement> {
+
+  override fun visit(tupleDeconstruction: Statement.TupleDeconstruction): TypedStatement {
+    val expression = tupleDeconstruction.expression.accept(exprVisitor)
+    val lhsType = TupleType(tupleDeconstruction.identifiers.map { it.second.toGustoType(env.types) })
+    if(!TypeComparer.compareTypes(lhsType, expression.gustoType, HashMap())){
+      typeErrors.addTypeMissmatch(tupleDeconstruction, lhsType, expression.gustoType)
+    }
+
+    val tupleType = if (expression.gustoType is TupleType && expression.gustoType.types.size == lhsType.types.size){
+      TupleType(
+        lhsType.types
+          .zip(expression.gustoType.types)
+          .map { (lhs, rhs) ->
+            if (lhs == UnknownType) rhs else lhs
+          }
+      )
+    } else {
+      lhsType
+    }
+
+    tupleDeconstruction.identifiers
+      .map { it.first.name }
+      .zip(tupleType.types)
+      .forEach { (ident, type) ->
+        env[ident] = type
+      }
+
+    return TypedStatement.TupleDeconstruction(tupleDeconstruction, tupleType)
+  }
+
   override fun visit(typeDeclaration: Statement.TypeDeclaration): TypedStatement {
     val members = typeDeclaration.members.associate { Pair(it.name, it.toGustoType(env.types)) }
     val variantType = VariantType(typeDeclaration.identifier.name, members.values.toList())

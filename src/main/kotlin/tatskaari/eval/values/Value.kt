@@ -3,7 +3,7 @@ package tatskaari.eval.values
 import tatskaari.BuiltInFunction
 import tatskaari.eval.Eval
 import tatskaari.parsing.Expression
-import tatskaari.eval.Env
+import tatskaari.eval.EvalEnv
 
 
 interface Addable {
@@ -119,7 +119,7 @@ sealed class Value(var value: Any) {
 
   class BoolVal(boolVal: Boolean) : Value(boolVal), Stringable
 
-  class FunctionVal(functionVal: Expression.Function, val env : Env) : Value(functionVal)
+  class FunctionVal(functionVal: Expression.Function, val env : EvalEnv) : Value(functionVal)
   class BifVal(val bif: BuiltInFunction): Value(bif)
 
   class ListVal(listVal: HashMap<Int, Value>): Value(listVal)
@@ -166,6 +166,14 @@ sealed class Value(var value: Any) {
     }
   }
 
+  fun tupleVal(): List<Value> {
+    if (this is TupleVal) {
+      return value as List<Value>
+    } else {
+      throw Eval.CastException
+    }
+  }
+
   fun listVal(): HashMap<Int, Value> {
     if (this is ListVal){
       return value as HashMap<Int, Value>
@@ -200,4 +208,6 @@ sealed class Value(var value: Any) {
   }
 
   override fun toString(): String = value.toString()
+
+  class TupleVal(values: List<Value>) : Value(values)
 }

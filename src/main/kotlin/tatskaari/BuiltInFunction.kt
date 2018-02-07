@@ -5,7 +5,7 @@ import tatskaari.eval.*
 import tatskaari.eval.values.Value
 import tatskaari.GustoType.*
 
-enum class BuiltInFunction(val funName: String, val params: List<String>, val type: FunctionType, val function: (Env) -> Value) {
+enum class BuiltInFunction(val funName: String, val params: List<String>, val type: FunctionType, val function: (EvalEnv) -> Value) {
   SizeOfList(
     "size",
     listOf("list"),
@@ -51,8 +51,8 @@ enum class BuiltInFunction(val funName: String, val params: List<String>, val ty
       return tatskaari.parsing.typechecking.TypeEnv(typeEnv, HashMap())
     }
 
-    fun getEvalEnv(): Env {
-      val evalEnv = Env()
+    fun getEvalEnv(): EvalEnv {
+      val evalEnv = EvalEnv()
       evalEnv.putAll(BuiltInFunction.values().map{ Pair(it.funName, Value.BifVal(it))})
       return evalEnv
     }

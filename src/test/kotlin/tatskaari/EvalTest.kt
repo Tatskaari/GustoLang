@@ -14,7 +14,7 @@ object EvalTest {
   @Test
   fun testBasicEval() {
     val program = TestUtil.loadProgram("TestMain")
-    val env = Env()
+    val env = EvalEnv()
     val parser = Parser()
     val AST = parser.parse(program)!!
     Eval(StdinInputProvider, SystemOutputProvider).eval(AST, env)
@@ -26,7 +26,7 @@ object EvalTest {
   fun numValInCondition() {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "if (1) then end"
-      val env = Env()
+      val env = EvalEnv()
       Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
     }
   }
@@ -35,7 +35,7 @@ object EvalTest {
   fun missingIdentifier() {
     assertFailsWith<Eval.UndefinedIdentifier> {
       val program = "if 1 = a then end"
-      val env = Env()
+      val env = EvalEnv()
       Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
     }
   }
@@ -44,7 +44,7 @@ object EvalTest {
   fun numIdentifierAssignBoolean() {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "val a: integer := 1 a := 1 = 1"
-      val env = Env()
+      val env = EvalEnv()
       Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
     }
   }
@@ -53,7 +53,7 @@ object EvalTest {
   fun testAddBoolRHS() {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "val a: integer := (1 = 1) + 1"
-      val env = Env()
+      val env = EvalEnv()
       Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
     }
   }
@@ -62,7 +62,7 @@ object EvalTest {
   fun testAddBoolLHS() {
     assertFailsWith<Eval.TypeMismatch> {
       val program = "val a: integer := 1 + (1 = 1) "
-      val env = Env()
+      val env = EvalEnv()
       Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
     }
   }
@@ -70,7 +70,7 @@ object EvalTest {
   @Test
   fun testAdd() {
     val program = "val a: integer := 1 + 1"
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
 
     assertEquals(2, env.getValue("a").intVal())
@@ -80,7 +80,7 @@ object EvalTest {
   @Test
   fun testSub() {
     val program = "val a: integer := 1 - 1"
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
 
     assertEquals(0, env.getValue("a").intVal())
@@ -89,12 +89,12 @@ object EvalTest {
   @Test
   fun testNullInput() {
     assertFailsWith<Eval.InvalidUserInput> {
-      val env = Env()
+      val env = EvalEnv()
       Eval(StringInputProvider("\n"), SystemOutputProvider).eval(Parser().parse("input a")!!, env)
     }
 
     assertFailsWith<Eval.InvalidUserInput> {
-      val env2 = Env()
+      val env2 = EvalEnv()
       Eval(StringInputProvider(""), SystemOutputProvider).eval(Parser().parse("input a")!!, env2)
     }
   }
@@ -102,7 +102,7 @@ object EvalTest {
   @Test
   fun outputTest() {
     val output = StringOutputProvider()
-    Eval(StdinInputProvider, output).eval(Parser().parse("output 1")!!, Env())
+    Eval(StdinInputProvider, output).eval(Parser().parse("output 1")!!, EvalEnv())
 
     assertEquals('1', output.outputString[0])
 
@@ -112,7 +112,7 @@ object EvalTest {
   fun ifElseTest() {
     val program = TestUtil.loadProgram("IfElse")
 
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
 
     assertEquals(1, env.getValue("someVar").intVal())
@@ -122,7 +122,7 @@ object EvalTest {
   @Test
   fun testBoolTrue() {
     val program = Parser().parse("val a: integer := true")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program, env)
     assertEquals(true, env.getValue("a").boolVal())
   }
@@ -130,7 +130,7 @@ object EvalTest {
   @Test
   fun testBoolFalse() {
     val program = Parser().parse("val a: integer := false")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program, env)
     assertEquals(false, env.getValue("a").boolVal())
   }
@@ -138,7 +138,7 @@ object EvalTest {
   @Test
   fun testNot() {
     val program = Parser().parse("val a: boolean := !false")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program, env)
     assertEquals(true, env.getValue("a").boolVal())
   }
@@ -146,12 +146,12 @@ object EvalTest {
   @Test
   fun testIfLiteral() {
     val program = Parser().parse("val a: integer := 0 if (true) then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program, env)
     assertEquals(1, env.getValue("a").intVal())
 
     val program2 = Parser().parse("val a: integer := 0 if (false) then a := 1 else a := 2 end")!!
-    val env2 = Env()
+    val env2 = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program2, env2)
     assertEquals(2, env2.getValue("a").intVal())
   }
@@ -159,7 +159,7 @@ object EvalTest {
   @Test
   fun testWhile() {
     val program = Parser().parse(TestUtil.loadProgram("While"))!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program, env)
     assertEquals(20, env.getValue("b").intVal())
   }
@@ -168,14 +168,14 @@ object EvalTest {
   fun whileWithNonBoolResult() {
     val program = Parser().parse("while (1) do end")!!
     assertFailsWith<Eval.TypeMismatch> {
-      Eval(StdinInputProvider, SystemOutputProvider).eval(program, Env())
+      Eval(StdinInputProvider, SystemOutputProvider).eval(program, EvalEnv())
     }
   }
 
   @Test
   fun fibTest() {
     val program = Parser().parse(TestUtil.loadProgram("Fib"))!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program, env)
     assertEquals(13, env.getValue("c").intVal())
   }
@@ -184,14 +184,14 @@ object EvalTest {
   fun redeclareEval() {
     val program = Parser().parse("val a: integer := 1 val a: integer := 2")!!
     assertFailsWith<Eval.VariableAlreadyDefined> {
-      Eval(StdinInputProvider, SystemOutputProvider).eval(program, Env())
+      Eval(StdinInputProvider, SystemOutputProvider).eval(program, EvalEnv())
     }
   }
 
   @Test
   fun testAnd() {
     val program = Parser().parse("val a: integer := 0 if(true and true) then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(1, env.getValue("a").intVal())
   }
@@ -199,7 +199,7 @@ object EvalTest {
   @Test
   fun testOr() {
     val program = Parser().parse("val a : integer := 0 if(true or false) then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(1, env.getValue("a").intVal())
   }
@@ -207,7 +207,7 @@ object EvalTest {
   @Test
   fun testNotAnd() {
     val program = Parser().parse("val a: integer := 0 if(true and false) then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(2, env.getValue("a").intVal())
   }
@@ -215,7 +215,7 @@ object EvalTest {
   @Test
   fun testNotOr() {
     val program = Parser().parse("val a: integer := 0 if(false or false) then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(2, env.getValue("a").intVal())
   }
@@ -223,7 +223,7 @@ object EvalTest {
   @Test
   fun testLT() {
     val program = Parser().parse("val a: integer := 0 if(1 < 2) then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(1, env.getValue("a").intVal())
   }
@@ -231,7 +231,7 @@ object EvalTest {
   @Test
   fun testGT() {
     val program = Parser().parse("val a: integer := 0 if 2 > 1 then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(1, env.getValue("a").intVal())
   }
@@ -239,7 +239,7 @@ object EvalTest {
   @Test
   fun testGTE() {
     val program = Parser().parse("val a: integer := 0 if(1 >= 1) then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(1, env.getValue("a").intVal())
   }
@@ -247,7 +247,7 @@ object EvalTest {
   @Test
   fun testLTE() {
     val program = Parser().parse("val a: integer := 0 if(1 <= 1) then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(1, env.getValue("a").intVal())
   }
@@ -256,7 +256,7 @@ object EvalTest {
   @Test
   fun testNotLT() {
     val program = Parser().parse("val a: integer := 0 if(2 < 1) then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(2, env.getValue("a").intVal())
   }
@@ -264,7 +264,7 @@ object EvalTest {
   @Test
   fun testNotGT() {
     val program = Parser().parse("val a: integer := 0 if(1 > 2) then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(2, env.getValue("a").intVal())
   }
@@ -272,7 +272,7 @@ object EvalTest {
   @Test
   fun testNotGTE() {
     val program = Parser().parse("val a: integer := 0 if(1 >= 2) then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(2, env.getValue("a").intVal())
   }
@@ -280,7 +280,7 @@ object EvalTest {
   @Test
   fun testNotLTE() {
     val program = Parser().parse("val a: integer := 0 if(2 <= 1) then a := 1 else a := 2 end")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(2, env.getValue("a").intVal())
   }
@@ -288,7 +288,7 @@ object EvalTest {
   @Test
   fun testMul() {
     val program = Parser().parse("val a: integer := 2 * 3")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(6, env.getValue("a").intVal())
   }
@@ -296,7 +296,7 @@ object EvalTest {
   @Test
   fun testDiv() {
     val program = Parser().parse("val a: integer := 9 / 3")!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(3.0, env.getValue("a").doubleVal())
   }
@@ -304,7 +304,7 @@ object EvalTest {
   @Test
   fun testFunctionCall() {
     val program = Parser().parse(TestUtil.loadProgram("Function"))!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program, env)
     assertEquals(3, env.getValue("c").intVal())
   }
@@ -313,7 +313,7 @@ object EvalTest {
   fun missingFuncDef(){
     val program = Parser().parse("val a: integer := add(1, 2)")!!
     assertFailsWith<Eval.UndefinedIdentifier> {
-      Eval(StdinInputProvider, SystemOutputProvider).eval(program, Env())
+      Eval(StdinInputProvider, SystemOutputProvider).eval(program, EvalEnv())
     }
   }
 
@@ -322,7 +322,7 @@ object EvalTest {
   fun callingInt(){
     val program = Parser().parse(" val a: integer := 2  val b: integer := a()")!!
     assertFailsWith<Eval.TypeMismatch> {
-      Eval(StdinInputProvider, SystemOutputProvider).eval(program, Env())
+      Eval(StdinInputProvider, SystemOutputProvider).eval(program, EvalEnv())
     }
   }
 
@@ -330,7 +330,7 @@ object EvalTest {
   fun wrongNumParams(){
     val program = Parser().parse("function add(a: integer, b: integer) do return a + b end val b : integer := add(1)")!!
     assertFailsWith<Eval.TypeMismatch> {
-      Eval(StdinInputProvider, SystemOutputProvider).eval(program, Env())
+      Eval(StdinInputProvider, SystemOutputProvider).eval(program, EvalEnv())
     }
   }
 
@@ -338,14 +338,14 @@ object EvalTest {
   fun paramDoesntExist(){
     val program = Parser().parse("function add( a: integer,  b: integer) do return a + b end val b: integer := add(1, 2, 3)")!!
     assertFailsWith<Eval.TypeMismatch> {
-      Eval(StdinInputProvider, SystemOutputProvider).eval(program, Env())
+      Eval(StdinInputProvider, SystemOutputProvider).eval(program, EvalEnv())
     }
   }
 
   @Test
   fun evalFuncFib(){
     val program = Parser().parse(TestUtil.loadProgram("FuncFib"))!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program, env)
     assertEquals(13, env.getValue("out").intVal())
   }
@@ -353,7 +353,7 @@ object EvalTest {
   @Test
   fun whileReturn(){
     val program = Parser().parse(TestUtil.loadProgram("WhileReturn"))!!
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program, env)
     assertEquals(100, env.getValue("out").intVal())
   }
@@ -361,27 +361,27 @@ object EvalTest {
   @Test
   fun testUnaryOperatorTypeMissmatch(){
     assertFailsWith<Eval.TypeMismatch> {
-      Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse("val a: integer := !1")!!, Env())
+      Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse("val a: integer := !1")!!, EvalEnv())
     }
     assertFailsWith<Eval.TypeMismatch> {
-      Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse("val a: integer := -true")!!, Env())
+      Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse("val a: integer := -true")!!, EvalEnv())
     }
   }
 
   @Test
   fun testExpressionParsing() {
-    assertEquals(14, Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().expression(Lexer.lex("1 + 3*2*2 + 1")), Env()).intVal())
-    assertEquals(true, Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().expression(Lexer.lex("1 + 3*2*2 + 1 < 15")), Env()).boolVal())
-    assertEquals(17, Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().expression(Lexer.lex("(1 + 3)*2*2 + 1")), Env()).intVal())
-    assertEquals(-15, Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().expression(Lexer.lex("-(1 + 3)*2*2 + 1")), Env()).intVal())
-    assertEquals(-17, Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().expression(Lexer.lex("-((1 + 3)*2*2 + 1)")), Env()).intVal())
+    assertEquals(14, Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().expression(Lexer.lex("1 + 3*2*2 + 1")), EvalEnv()).intVal())
+    assertEquals(true, Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().expression(Lexer.lex("1 + 3*2*2 + 1 < 15")), EvalEnv()).boolVal())
+    assertEquals(17, Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().expression(Lexer.lex("(1 + 3)*2*2 + 1")), EvalEnv()).intVal())
+    assertEquals(-15, Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().expression(Lexer.lex("-(1 + 3)*2*2 + 1")), EvalEnv()).intVal())
+    assertEquals(-17, Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().expression(Lexer.lex("-((1 + 3)*2*2 + 1)")), EvalEnv()).intVal())
   }
 
   @Test
   fun listTest(){
     val program = "val a: integer list := [10, 232, 31] val out: integer := a[1]"
     val parser = Parser()
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(parser.parse(program)!!, env)
     assertEquals(232, env.getValue("out").intVal())
   }
@@ -390,7 +390,7 @@ object EvalTest {
   fun listAssignTest(){
     val program = "val a: integer list := [] a[1]:= 232 val out: integer := a[1]"
     val parser = Parser()
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(parser.parse(program)!!, env)
     assertEquals(232, env.getValue("out").intVal())
   }
@@ -398,7 +398,7 @@ object EvalTest {
   @Test
   fun testText(){
     val program = "val a: integer := \"asdf\""
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(Parser().parse(program)!!, env)
     assertEquals("asdf", env.getValue("a").textVal())
   }
@@ -406,7 +406,7 @@ object EvalTest {
   @Test
   fun testReduce(){
     val program = TestUtil.loadProgram("TestReducer")
-    val env = Env()
+    val env = EvalEnv()
     val parser = Parser()
     val ast = parser.parse(program)
     Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
@@ -418,7 +418,7 @@ object EvalTest {
   @Test
   fun testStringConcat(){
     val program = """val out: text := 1 + "test" + 1 + true + 1.1 val outt: text := true + "test" """
-    val env = Env()
+    val env = EvalEnv()
     val parser = Parser()
     val ast = parser.parse(program)
     Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
@@ -430,7 +430,7 @@ object EvalTest {
   @Test
   fun testMulDiv(){
     val program = "val out: integer := (1.0*1)*1.0/1 + 10 * 2.1 val outt: integer := 3.0/1.5 val outtt: integer := 1/2.0"
-    val env = Env()
+    val env = EvalEnv()
     val parser = Parser()
     val ast = parser.parse(program)
     Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
@@ -442,7 +442,7 @@ object EvalTest {
   @Test
   fun testAddSub(){
     val program = "val out: integer := 1.0 + 1 - 1.0 val outt: integer := 1-1.0 val outtt: integer := 0.5+1"
-    val env = Env()
+    val env = EvalEnv()
     val parser = Parser()
     val ast = parser.parse(program)
     Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
@@ -454,7 +454,7 @@ object EvalTest {
   @Test
   fun testComparisons(){
     val program = "val out := 1.0 <= 1 val outt := \"1\" = \"1\" val outtt := 10 = 10.0 val outttt := 10.0 = 10"
-    val env = Env()
+    val env = EvalEnv()
     val parser = Parser()
     val ast = parser.parse(program)
     Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
@@ -483,7 +483,7 @@ object EvalTest {
     val parser = Parser()
     val program = parser.parse("val add : (integer, integer) -> integer := function(a: integer, b: integer) : integer do return a + b end " +
       "val out : integer := add(10, 11)")
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program!!, env)
     assertEquals(21, env.getValue("out").intVal())
   }
@@ -492,7 +492,7 @@ object EvalTest {
   fun testInput(){
     val parser = Parser()
     val program = parser.parse("input a")
-    val env = Env()
+    val env = EvalEnv()
     Eval(StringInputProvider("Hello, world!"), SystemOutputProvider).eval(program!!, env)
     assertEquals("Hello, world!", env.getValue("a").textVal())
   }
@@ -502,7 +502,7 @@ object EvalTest {
     val parser = Parser()
     val program = parser.parse("function doNothing() do end " +
       "val a: unit := doNothing()")
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(program!!, env)
     assertEquals(Unit, env.getValue("a").value)
   }
@@ -513,7 +513,7 @@ object EvalTest {
     val program = parser.parse("val a : integer list := [1,2,3] val out : integer := size(a)")
     val typeChecker = TypeChecker()
     typeChecker.checkStatementListTypes(program!!, TypeChecker.envOf("size" to BuiltInFunction.SizeOfList.type))
-    val env = Env(hashMapOf(Pair("size", Value.BifVal(BuiltInFunction.SizeOfList))), HashMap())
+    val env = EvalEnv(hashMapOf(Pair("size", Value.BifVal(BuiltInFunction.SizeOfList))), HashMap())
     Eval(StdinInputProvider, SystemOutputProvider).eval(program,env)
     assertEquals(3, env.getValue("out").intVal())
     assertEquals(0, typeChecker.typeMismatches.size)
@@ -574,7 +574,7 @@ object EvalTest {
   fun testStatementExpressions(){
     val parser = Parser()
     val ast = parser.parse("val out: integer := 0 function print() do out := 5 end print()")
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
 
     assertEquals(5, env.getValue("out").intVal())
@@ -603,7 +603,7 @@ end
 val out := double.andThen(square)(10)
     """)
 
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
     assertEquals(400, env.getValue("out").intVal())
 
@@ -632,7 +632,7 @@ val doubleAndSquare := double.andThen(square).andThen(double)
 val out := 10.doubleAndSquare()
     """)
 
-    val env = Env()
+    val env = EvalEnv()
     Eval(StdinInputProvider, SystemOutputProvider).eval(ast!!, env)
     assertEquals(800, env.getValue("out").intVal())
 

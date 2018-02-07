@@ -197,37 +197,23 @@ class Parser {
     }
     tokens.consumeToken()
 
-    val returnType = if (tokens.match(TokenType.RightArrow)) {
+    return if (tokens.match(TokenType.RightArrow)) {
       tokens.getNextToken(TokenType.RightArrow)
-      typeNotation(tokens)
+      TypeNotation.Function(params, typeNotation(tokens))
     } else {
-      TypeNotation.Unit
+      TypeNotation.Tuple(params)
     }
-
-    return TypeNotation.Function(params, returnType)
   }
 
-  private fun tupleType(tokens: TokenList): TypeNotation.Tuple {
-    val params = ArrayList<TypeNotation>()
-    while(!tokens.match(TokenType.EndTuple)){
-      params.add(typeNotation(tokens))
-      if (tokens.match(TokenType.Comma)){
-        tokens.consumeToken()
-      }
-    }
-    tokens.consumeToken()
 
-    return TypeNotation.Tuple(params)
-  }
   // primitiveType => "unit" | "list" | ("number" | "integer" | "boolean" | "text") ("list")? | functionType
   private fun primitiveType(tokens: TokenList): TypeNotation {
     val token = tokens.consumeToken()
     return when(token.tokenType){
       TokenType.List -> TypeNotation.ListOf(TypeNotation.UnknownType)
       TokenType.Identifier -> listType(TypeNotation.Atomic(token.tokenText), tokens)
-      TokenType.StartTuple -> tupleType(tokens)
       TokenType.OpenParen -> functionType(tokens)
-      else -> throw UnexpectedToken(token, listOf(TokenType.List, TokenType.Identifier, TokenType.StartTuple, TokenType.OpenParen))
+      else -> throw UnexpectedToken(token, listOf(TokenType.List, TokenType.Identifier, TokenType.OpenParen))
     }
   }
 
@@ -246,17 +232,45 @@ class Parser {
   // valueDeclaration => "var" STRING : typeNotation ":=" expression
   private fun valueDeclaration(tokens: TokenList): Statement {
     val startToken = tokens.getNextToken(TokenType.Value)
-    val identifier = tokens.getIdentifier()
-
-    val valType = if (tokens.match(TokenType.Colon)){
-      tokens.getNextToken(TokenType.Colon)
-      typeNotation(tokens)
+    return if (tokens.match(TokenType.OpenParen)) {
+      tokens.addFirst(startToken)
+      return tupleDeconstruction(tokens)
     } else {
-      TypeNotation.UnknownType
+      val identifier = tokens.getIdentifier()
+
+      val valType = if (tokens.match(TokenType.Colon)){
+        tokens.getNextToken(TokenType.Colon)
+        typeNotation(tokens)
+      } else {
+        TypeNotation.UnknownType
+      }
+      tokens.getNextToken(TokenType.AssignOp)
+      val expression = expression(tokens)
+      Statement.ValDeclaration(identifier, expression, valType, startToken, expression.endToken)
     }
+  }
+
+  private fun tupleDeconstruction(tokens: TokenList) : Statement{
+    val startToken = tokens.getNextToken(TokenType.Value)
+    tokens.getNextToken(TokenType.OpenParen)
+    val identifiers = ArrayList<Pair<Token.Identifier, TypeNotation>>()
+    while(!tokens.match(TokenType.CloseParen)){
+      val identifier = tokens.getNextToken(TokenType.Identifier) as Token.Identifier
+      if (tokens.match(TokenType.Colon)){
+        tokens.consumeToken()
+        identifiers.add(Pair(identifier, typeNotation(tokens)))
+      } else {
+        identifiers.add(Pair(identifier, TypeNotation.UnknownType))
+      }
+
+      while (tokens.match(TokenType.Comma)){
+        tokens.consumeToken()
+      }
+    }
+    tokens.getNextToken(TokenType.CloseParen)
     tokens.getNextToken(TokenType.AssignOp)
-    val expression = expression(tokens)
-    return Statement.ValDeclaration(identifier, expression, valType, startToken, expression.endToken)
+    val expr = expression(tokens)
+    return Statement.TupleDeconstruction(identifiers, expr, startToken, expr.endToken)
   }
 
   // assignment => STRING ":=" expression | STRING "[" expression "]" ":=" expression
@@ -424,15 +438,9 @@ class Parser {
         return anonymousFunction(tokens)
       }
       TokenType.OpenParen -> {
-        val expr = expression(tokens)
-        tokens.getNextToken(TokenType.CloseParen)
-        return expr
-      }
-      TokenType.StartTuple ->{
         tokens.addFirst(token)
-        return tuple(tokens)
+        return parenExpression(tokens)
       }
-
       TokenType.ListStart -> {
         tokens.addFirst(token)
         return listDeclaration(tokens)
@@ -441,14 +449,17 @@ class Parser {
       TokenType.Constructor -> return Expression.ConstructorCall(token.tokenText, token, token) //TODO tuples here
       else -> throw UnexpectedToken(token, expectedTokens)
     }
-
   }
 
-  private fun tuple(tokens: TokenList):Expression {
-    val startToken = tokens.getNextToken(TokenType.StartTuple)
-    val params = expressionList(tokens, TokenType.EndTuple)
-    val endToken = tokens.getNextToken(TokenType.EndTuple)
-    return Expression.Tuple(params, startToken, endToken)
+  private fun parenExpression(tokens: TokenList) : Expression{
+    val startToken = tokens.getNextToken(TokenType.OpenParen)
+    val exprs = expressionList(tokens, TokenType.CloseParen)
+    val endToken = tokens.getNextToken(TokenType.CloseParen)
+    return if (exprs.size == 1){
+      exprs.first()
+    } else {
+      Expression.Tuple(exprs, startToken, endToken)
+    }
   }
 
   // anonymousFunction => "function" "(" (STRING typeNotation(",")?)*  ")" codeBlock

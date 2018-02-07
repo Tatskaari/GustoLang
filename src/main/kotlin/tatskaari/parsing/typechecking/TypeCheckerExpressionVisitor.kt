@@ -5,6 +5,11 @@ import tatskaari.GustoType.*
 import tatskaari.parsing.*
 
 class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Errors) : IExpressionVisitor<TypedExpression> {
+  override fun visit(tuple: Expression.Tuple): TypedExpression {
+    val type = TupleType(tuple.params.map { it.accept(this).gustoType })
+    return TypedExpression.Tuple(tuple, type)
+  }
+
   override fun visit(constructorCall: Expression.ConstructorCall): TypedExpression {
     if (env.types.containsKey(constructorCall.name)) {
       val type = env.types[constructorCall.name]

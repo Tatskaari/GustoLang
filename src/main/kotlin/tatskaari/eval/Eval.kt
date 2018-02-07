@@ -15,7 +15,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
   object InvalidUserInput : RuntimeException("Please enter a number, some text or the value 'true' or 'false'")
 
 
-  fun eval(statements: List<Statement>, env: Env) : Value?  {
+  fun eval(statements: List<Statement>, env: EvalEnv) : Value?  {
     statements.forEach {
       val value = eval(it, env)
       if (value != null) {
@@ -25,12 +25,12 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     return null
   }
 
-  fun eval(statement: Statement, env: Env) : Value? {
+  fun eval(statement: Statement, env: EvalEnv) : Value? {
     when (statement) {
-      is Statement.CodeBlock -> return eval(statement.statementList, Env(env))
-      is Statement.If -> return evalIf(statement.condition, statement.body.statementList, null, Env(env))
-      is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody.statementList, statement.elseBody.statementList, Env(env))
-      is Statement.While -> return evalWhile(statement.condition, statement.body.statementList, Env(env))
+      is Statement.CodeBlock -> return eval(statement.statementList, EvalEnv(env))
+      is Statement.If -> return evalIf(statement.condition, statement.body.statementList, null, EvalEnv(env))
+      is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody.statementList, statement.elseBody.statementList, EvalEnv(env))
+      is Statement.While -> return evalWhile(statement.condition, statement.body.statementList, EvalEnv(env))
       is Statement.ValDeclaration-> {
         val identifierName = statement.identifier.name
 
@@ -46,7 +46,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         if (env.hasVariable(identifierName)){
           throw VariableAlreadyDefined(identifierName)
         } else {
-          val functionVal = Value.FunctionVal(statement.function, Env(env))
+          val functionVal = Value.FunctionVal(statement.function, EvalEnv(env))
           functionVal.env[identifierName] = functionVal
           env[identifierName] = functionVal
         }
@@ -103,10 +103,24 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         env.typeDefinitions[statement.identifier.name] = GustoType.VariantType(statement.identifier.name, members)
         return null
       }
+      is Statement.TupleDeconstruction -> {
+        val tupleVal = eval(statement.expression, env)
+        if (tupleVal is Value.TupleVal) {
+          statement.identifiers.map { it.first.name }
+            .zip(tupleVal.tupleVal())
+            .forEach { (ident, value) ->
+              env[ident] = value
+            }
+          return null
+        } else {
+          throw RuntimeException("Right hand side of tuple deconstruction wasn't a tuple")
+        }
+
+      }
     }
   }
 
-  private fun evalWhile(condition: Expression, body: List<Statement>, env: Env) : Value? {
+  private fun evalWhile(condition: Expression, body: List<Statement>, env: EvalEnv) : Value? {
     while(evalCondition(condition, env).boolVal()){
       val value : Value? = eval(body, env)
       if (value != null) {
@@ -116,7 +130,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     return null
   }
 
-  private fun evalCondition(condition: Expression, env: Env) : Value.BoolVal {
+  private fun evalCondition(condition: Expression, env: EvalEnv) : Value.BoolVal {
     val value = eval(condition, env)
     if (value is Value.BoolVal) {
       return value
@@ -125,25 +139,25 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     }
   }
 
-  fun eval(expression: Expression, env: Env): Value {
-    when (expression) {
-      is Expression.IntLiteral -> return Value.IntVal(expression.value)
-      is Expression.NumLiteral -> return Value.NumVal(expression.value)
-      is Expression.BooleanLiteral -> return Value.BoolVal(expression.value)
-      is Expression.TextLiteral -> return Value.TextVal(expression.value)
-      is Expression.BinaryOperator -> return applyBinaryOperator(expression, env)
-      is Expression.UnaryOperator -> return applyUnaryOperator(expression, env)
-      is Expression.FunctionCall -> return callFunction(expression, env)
-      is Expression.ListDeclaration -> return evalList(expression, env)
-      is Expression.ListAccess -> return evalListAccess(expression, env)
-      is Expression.Function -> return Value.FunctionVal(expression, Env(env))
-      is Expression.Identifier -> return env[expression.name]
-      is Expression.ConstructorCall -> return Value.VariantVal(expression.name)
-      is Expression.Tuple -> TODO("Handle tuples")
+  fun eval(expression: Expression, env: EvalEnv): Value {
+    return when (expression) {
+      is Expression.IntLiteral -> Value.IntVal(expression.value)
+      is Expression.NumLiteral -> Value.NumVal(expression.value)
+      is Expression.BooleanLiteral -> Value.BoolVal(expression.value)
+      is Expression.TextLiteral -> Value.TextVal(expression.value)
+      is Expression.BinaryOperator -> applyBinaryOperator(expression, env)
+      is Expression.UnaryOperator -> applyUnaryOperator(expression, env)
+      is Expression.FunctionCall -> callFunction(expression, env)
+      is Expression.ListDeclaration -> evalList(expression, env)
+      is Expression.ListAccess -> evalListAccess(expression, env)
+      is Expression.Function -> Value.FunctionVal(expression, EvalEnv(env))
+      is Expression.Identifier -> env[expression.name]
+      is Expression.ConstructorCall -> Value.VariantVal(expression.name)
+      is Expression.Tuple -> Value.TupleVal(expression.params.map { eval(it, env) })
     }
   }
 
-  private fun evalList(expression: Expression.ListDeclaration, env: Env): Value.ListVal {
+  private fun evalList(expression: Expression.ListDeclaration, env: EvalEnv): Value.ListVal {
     val list = HashMap<Int, Value>()
     expression.items.forEachIndexed { index, expr->
       list[index] = eval(expr, env)
@@ -152,14 +166,14 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     return Value.ListVal(list)
   }
 
-  private fun evalListAccess(expression: Expression.ListAccess, env: Env): Value{
+  private fun evalListAccess(expression: Expression.ListAccess, env: EvalEnv): Value{
     val list = eval(expression.listExpression, env)
     val index = eval(expression.indexExpression, env).intVal()
     return list.listVal().getValue(index).copyLiteralOrReferenceList()
   }
 
 
-  private fun callFunction(functionCall: Expression.FunctionCall, env: Env) : Value{
+  private fun callFunction(functionCall: Expression.FunctionCall, env: EvalEnv) : Value{
     val functionVal = eval(functionCall.functionExpression, env)
 
     when (functionVal) {
@@ -168,7 +182,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         return evalFunction(functionVal.functionVal().body.statementList, funEnv)
       }
       is Value.BifVal -> {
-        val funEnv = Env()
+        val funEnv = EvalEnv()
         functionVal.bif.params
           .zip(functionCall.params)
           .forEach { (name, expr) ->
@@ -183,7 +197,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
 
 
 
-  private fun getFunctionRunEnv(function : Expression.Function, functionCall: Expression.FunctionCall, functionDefEnv: Env, functionCallEnv: Env) : Env {
+  private fun getFunctionRunEnv(function : Expression.Function, functionCall: Expression.FunctionCall, functionDefEnv: EvalEnv, functionCallEnv: EvalEnv) : EvalEnv {
     if (functionCall.params.size != function.params.size){
       val paramTypes = function.paramTypes.values
         .toMutableList()
@@ -192,7 +206,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       throw TypeMismatch("Wrong number of arguments to call $functionType")
     }
 
-    val functionRunEnv = Env(functionDefEnv)
+    val functionRunEnv = EvalEnv(functionDefEnv)
 
     functionCall.params.forEachIndexed({index, expression ->
       val paramVal : Value = eval(expression, functionCallEnv)
@@ -202,7 +216,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     return functionRunEnv
   }
 
-  private fun evalFunction(body: List<Statement>, env: Env) : Value {
+  private fun evalFunction(body: List<Statement>, env: EvalEnv) : Value {
     body.forEach{
       val value = eval(it, env)
       if (value != null){
@@ -212,7 +226,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     return Value.Unit
   }
 
-  private fun applyBinaryOperator(operatorExpression: Expression.BinaryOperator, env: Env): Value {
+  private fun applyBinaryOperator(operatorExpression: Expression.BinaryOperator, env: EvalEnv): Value {
     val operation = operatorExpression.operator
     val lhsVal = eval(operatorExpression.lhs, env)
     val rhsVal = eval(operatorExpression.rhs, env)
@@ -257,7 +271,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
 
   }
 
-  private fun applyUnaryOperator(operatorExpr: Expression.UnaryOperator, env: Env): Value{
+  private fun applyUnaryOperator(operatorExpr: Expression.UnaryOperator, env: EvalEnv): Value{
     val result = eval(operatorExpr.expression, env)
     val operator = operatorExpr.operator
     return try {
@@ -270,7 +284,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     }
   }
 
-  private fun evalIf(condition: Expression, ifBody: List<Statement>, elseBody: List<Statement>?, env: Env) : Value? {
+  private fun evalIf(condition: Expression, ifBody: List<Statement>, elseBody: List<Statement>?, env: EvalEnv) : Value? {
     val conditionResult = eval(condition, env)
     if (conditionResult is Value.BoolVal) {
       var value : Value? = null
