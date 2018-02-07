@@ -9,7 +9,7 @@ import tatskaari.tokenising.Lexer
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class TypeDeclarationTest {
+class DataTypeTests {
   private val workingProgram = """
       type binaryOperator := Add, Sub, Div, Mul
 
@@ -74,5 +74,12 @@ class TypeDeclarationTest {
     val typeChecker = TypeChecker()
     typeChecker.checkStatementListTypes(program!!, tatskaari.parsing.typechecking.TypeEnv())
     assertEquals(1, typeChecker.typeMismatches.size)
+  }
+
+  @Test
+  fun testTupleType(){
+    val parser = Parser()
+    parser.parse("val someVar : {integer, integer} := {10, 11}")
+    assertEquals(0, parser.parserExceptions.size)
   }
 }

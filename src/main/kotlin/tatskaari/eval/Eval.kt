@@ -139,6 +139,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       is Expression.Function -> return Value.FunctionVal(expression, Env(env))
       is Expression.Identifier -> return env[expression.name]
       is Expression.ConstructorCall -> return Value.VariantVal(expression.name)
+      is Expression.Tuple -> TODO("Handle tuples")
     }
   }
 

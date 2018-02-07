@@ -187,31 +187,37 @@ class Parser {
   }
 
   // ("(" (typeNotation)? ",typeNotation"* ")" ("->" typeNotation)?)
-  private fun functionType(tokens: TokenList): TypeNotation{
-    val token = tokens.consumeToken()
-
-    return when(token.tokenType){
-      TokenType.OpenParen -> {
-        val params = ArrayList<TypeNotation>()
-        while(!tokens.match(TokenType.CloseParen)){
-          params.add(typeNotation(tokens))
-          if (tokens.match(TokenType.Comma)){
-            tokens.consumeToken()
-          }
-        }
+  private fun functionType(tokens: TokenList): TypeNotation {
+    val params = ArrayList<TypeNotation>()
+    while(!tokens.match(TokenType.CloseParen)){
+      params.add(typeNotation(tokens))
+      if (tokens.match(TokenType.Comma)){
         tokens.consumeToken()
-
-        val returnType = if (tokens.match(TokenType.RightArrow)) {
-          tokens.getNextToken(TokenType.RightArrow)
-          typeNotation(tokens)
-        } else {
-          TypeNotation.Unit
-        }
-
-        TypeNotation.Function(params, returnType)
       }
-      else -> throw UnexpectedToken(token, listOf(TokenType.Identifier, TokenType.List))
     }
+    tokens.consumeToken()
+
+    val returnType = if (tokens.match(TokenType.RightArrow)) {
+      tokens.getNextToken(TokenType.RightArrow)
+      typeNotation(tokens)
+    } else {
+      TypeNotation.Unit
+    }
+
+    return TypeNotation.Function(params, returnType)
+  }
+
+  private fun tupleType(tokens: TokenList): TypeNotation.Tuple {
+    val params = ArrayList<TypeNotation>()
+    while(!tokens.match(TokenType.EndTuple)){
+      params.add(typeNotation(tokens))
+      if (tokens.match(TokenType.Comma)){
+        tokens.consumeToken()
+      }
+    }
+    tokens.consumeToken()
+
+    return TypeNotation.Tuple(params)
   }
   // primitiveType => "unit" | "list" | ("number" | "integer" | "boolean" | "text") ("list")? | functionType
   private fun primitiveType(tokens: TokenList): TypeNotation {
@@ -219,10 +225,9 @@ class Parser {
     return when(token.tokenType){
       TokenType.List -> TypeNotation.ListOf(TypeNotation.UnknownType)
       TokenType.Identifier -> listType(TypeNotation.Atomic(token.tokenText), tokens)
-      else -> {
-        tokens.addFirst(token)
-        functionType(tokens)
-      }
+      TokenType.StartTuple -> tupleType(tokens)
+      TokenType.OpenParen -> functionType(tokens)
+      else -> throw UnexpectedToken(token, listOf(TokenType.List, TokenType.Identifier, TokenType.StartTuple, TokenType.OpenParen))
     }
   }
 
@@ -423,6 +428,11 @@ class Parser {
         tokens.getNextToken(TokenType.CloseParen)
         return expr
       }
+      TokenType.StartTuple ->{
+        tokens.addFirst(token)
+        return tuple(tokens)
+      }
+
       TokenType.ListStart -> {
         tokens.addFirst(token)
         return listDeclaration(tokens)
@@ -433,6 +443,14 @@ class Parser {
     }
 
   }
+
+  private fun tuple(tokens: TokenList):Expression {
+    val startToken = tokens.getNextToken(TokenType.StartTuple)
+    val params = expressionList(tokens, TokenType.EndTuple)
+    val endToken = tokens.getNextToken(TokenType.EndTuple)
+    return Expression.Tuple(params, startToken, endToken)
+  }
+
   // anonymousFunction => "function" "(" (STRING typeNotation(",")?)*  ")" codeBlock
   private fun anonymousFunction(tokens: TokenList): Expression.Function {
     val firstToken = tokens.getNextToken(TokenType.Function)

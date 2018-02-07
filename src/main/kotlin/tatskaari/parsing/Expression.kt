@@ -66,5 +66,12 @@ sealed class Expression(startToken: Token, endToken: Token) : ASTNode(startToken
     }
   }
 
+  class Tuple(val params : List<Expression>, startTok: Token, endTok: Token) : Expression(startTok, endTok) {
+    override fun <NewNodeType> accept(visitor: IExpressionVisitor<NewNodeType>): NewNodeType {
+      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+  }
+
   abstract fun <NewNodeType> accept(visitor: IExpressionVisitor<NewNodeType>): NewNodeType
 }
