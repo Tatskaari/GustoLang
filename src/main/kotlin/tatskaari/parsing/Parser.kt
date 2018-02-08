@@ -112,8 +112,14 @@ class Parser {
 
   private fun typeMember(tokens: TokenList): Pair<Token, TypeNotation.VariantMember> {
     val name = tokens.getNextToken(TokenType.Constructor)
-    //TODO add of keyword
-    return Pair(name, TypeNotation.VariantMember(name.tokenText, TypeNotation.Unit))
+    val type = if (tokens.match(TokenType.Of)){
+      tokens.consumeToken()
+      typeNotation(tokens)
+    } else {
+      TypeNotation.Unit
+    }
+
+    return Pair(name, TypeNotation.VariantMember(name.tokenText, type))
   }
 
   private fun expressionStatement(tokens: TokenList): Statement {
@@ -446,8 +452,23 @@ class Parser {
         return listDeclaration(tokens)
       }
       TokenType.Identifier -> return Expression.Identifier(token.tokenText, token, token)
-      TokenType.Constructor -> return Expression.ConstructorCall(token.tokenText, token, token) //TODO tuples here
+      TokenType.Constructor -> {
+        tokens.addFirst(token)
+        return constructorCall(tokens)
+      }
       else -> throw UnexpectedToken(token, expectedTokens)
+    }
+  }
+
+  private fun constructorCall(tokens: TokenList) : Expression.ConstructorCall {
+    val startToken = tokens.getNextToken(TokenType.Constructor)
+    return if (tokens.match(TokenType.OpenParen)){
+      val expr = parenExpression(tokens)
+      Expression.ConstructorCall(startToken.tokenText, expr,  startToken, expr.endToken)
+
+    } else {
+      Expression.ConstructorCall(startToken.tokenText, null,  startToken, startToken)
+
     }
   }
 

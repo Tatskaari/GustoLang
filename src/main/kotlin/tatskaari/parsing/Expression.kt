@@ -60,7 +60,7 @@ sealed class Expression(startToken: Token, endToken: Token) : ASTNode(startToken
       return visitor.visit(this)
     }
   }
-  class ConstructorCall(val name: String, startTok: Token, endTok: Token): Expression(startTok, endTok) {
+  class ConstructorCall(val name: String, val expr : Expression?, startTok: Token, endTok: Token): Expression(startTok, endTok) {
     override fun <NewNodeType> accept(visitor: IExpressionVisitor<NewNodeType>): NewNodeType {
       return visitor.visit(this)
     }

@@ -12,6 +12,7 @@ enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, Str
   LessThanEq(KeywordMatcher("<="), Token::Keyword),
   GreaterThanEq(KeywordMatcher(">="), Token::Keyword),
   And(KeywordMatcher("and"), Token::Keyword),
+  Of(KeywordMatcher("of"), Token::Keyword),
   Function(KeywordMatcher("function"), Token::Keyword),
   Return(KeywordMatcher("return"), Token::Keyword),
   Comma(KeywordMatcher(","), Token::Keyword),

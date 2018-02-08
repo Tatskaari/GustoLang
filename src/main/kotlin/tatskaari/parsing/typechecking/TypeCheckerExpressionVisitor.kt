@@ -11,18 +11,27 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
   }
 
   override fun visit(constructorCall: Expression.ConstructorCall): TypedExpression {
-    if (env.types.containsKey(constructorCall.name)) {
-      val type = env.types[constructorCall.name]
-      if (type is GustoType.VariantMember){
-        return TypedExpression.ConstructorCall(constructorCall, type)
-      } else {
-        // It shouldn't be possible to create a variable with an identifier that follows the constructor pattern so this shouldn't happen
-        throw RuntimeException("Non-constructor called as a constructor")
-      }
-    } else {
+    if (!env.types.containsKey(constructorCall.name)) {
       typeErrors.add(constructorCall, "Constructor not defined.")
+      return TypedExpression.ConstructorCall(constructorCall, null, VariantMember(constructorCall.name, UnknownType))
     }
-    return TypedExpression.ConstructorCall(constructorCall, VariantMember(constructorCall.name, UnknownType))
+  // It shouldn't be possible to create a variable with an identifier that follows the constructor pattern so this shouldn't happen
+    val type = env.types[constructorCall.name]!! as? GustoType.VariantMember ?:
+      throw RuntimeException("Non-constructor called as a constructor")
+
+    return if (constructorCall.expr != null){
+      val expr = constructorCall.expr.accept(this)
+      if(!TypeComparer.compareTypes(type.type, expr.gustoType, HashMap())) {
+        typeErrors.addTypeMissmatch(expr.expression, type.type, expr.gustoType)
+      }
+      TypedExpression.ConstructorCall(constructorCall, expr, type)
+    } else {
+      if (type.type != PrimitiveType.Unit){
+        typeErrors.addTypeMissmatch(constructorCall, type.type, PrimitiveType.Unit)
+      }
+      TypedExpression.ConstructorCall(constructorCall, null, type)
+    }
+
   }
 
   override fun visit(intLiteral: Expression.IntLiteral): TypedExpression {

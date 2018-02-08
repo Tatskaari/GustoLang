@@ -159,4 +159,40 @@ class DataTypeTests {
     assertEquals(10, env["x"].intVal())
     assertEquals(11, env["y"].intVal())
   }
+
+  @Test
+  fun testVariantOf(){
+    val parser = Parser()
+    val program = parser.parse("""
+      type binaryOperator := Add, Sub, Div, Mul
+      type expression :=
+        Num of integer,
+        BinaryOperation of (binaryOperator, expression, expression)
+
+      val expr : expression := BinaryOperation(Add, Num(10), Num(10))
+    """)
+    assertEquals(0, parser.parserExceptions.size)
+
+    val typeChecker = TypeChecker()
+    typeChecker.checkStatementListTypes(program!!, TypeEnv())
+    assertEquals(0, typeChecker.typeMismatches.size)
+  }
+
+  @Test
+  fun testBadVariantOf(){
+    val parser = Parser()
+    val program = parser.parse("""
+      type binaryOperator := Add, Sub, Div, Mul
+      type expression :=
+        Num of integer,
+        BinaryOperation of (binaryOperator, expression, expression)
+
+      val expr : expression := BinaryOperation(Num(10), Num(10), Num(10))
+    """)
+    assertEquals(0, parser.parserExceptions.size)
+
+    val typeChecker = TypeChecker()
+    typeChecker.checkStatementListTypes(program!!, TypeEnv())
+    assertEquals(1, typeChecker.typeMismatches.size)
+  }
 }
