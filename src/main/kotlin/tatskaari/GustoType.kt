@@ -31,10 +31,10 @@ sealed class GustoType {
     }
   }
 
-  data class VariantMember(val name: String, val type: GustoType) : GustoType() {
+  data class VariantMember(val name: String, var type: GustoType) : GustoType() {
     override fun toString() = "$name of $type"
   }
-  data class VariantType(val name: String, val members : List<VariantMember>): GustoType() {
+  data class VariantType(val name: String, var members : List<VariantMember>): GustoType() {
     override fun toString() = name
   }
 

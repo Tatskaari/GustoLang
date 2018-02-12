@@ -1,0 +1,19 @@
+type binaryOperator := Add, Sub, Div, Mul
+
+type expression :=
+    Num of integer,
+    BinaryOperation of (binaryOperator, expression, expression)
+
+val expr : expression := BinaryOperation(Add, Num(10), Num(10))
+
+function add(expression : BinaryOperation) : integer do
+    val BinaryOperation(op, lhs, rhs) := expression
+    if op = Add and lhs = Num(10) and rhs = Num(10) then
+        return 10 + 10
+    else
+        return 0
+    end
+end
+
+val out := add(expr)
+val out2 := add(BinaryOperation(Add, Num(11), Num(12)))

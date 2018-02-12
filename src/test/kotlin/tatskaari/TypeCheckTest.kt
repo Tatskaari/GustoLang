@@ -63,7 +63,7 @@ object TypeCheckTest {
 
     typeChecker = TypeChecker()
     typeChecker.checkStatementListTypes(parser.parse("val b : boolean := -true")!!, TypeEnv())
-    assertEquals(2, typeChecker.typeMismatches.size)
+    assertEquals(1, typeChecker.typeMismatches.size)
   }
 
   @Test

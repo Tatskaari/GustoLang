@@ -218,6 +218,7 @@ class Parser {
     return when(token.tokenType){
       TokenType.List -> TypeNotation.ListOf(TypeNotation.UnknownType)
       TokenType.Identifier -> listType(TypeNotation.Atomic(token.tokenText), tokens)
+      TokenType.Constructor -> listType(TypeNotation.Atomic(token.tokenText), tokens)
       TokenType.OpenParen -> listType(functionType(tokens), tokens)
       else -> throw UnexpectedToken(token, listOf(TokenType.List, TokenType.Identifier, TokenType.OpenParen))
     }
@@ -238,45 +239,51 @@ class Parser {
   // valueDeclaration => "var" STRING : typeNotation ":=" expression
   private fun valueDeclaration(tokens: TokenList): Statement {
     val startToken = tokens.getNextToken(TokenType.Value)
-    return if (tokens.match(TokenType.OpenParen)) {
-      tokens.addFirst(startToken)
-      return tupleDeconstruction(tokens)
-    } else {
-      val identifier = tokens.getIdentifier()
+    val pattern = pattern(tokens)
+    tokens.getNextToken(TokenType.AssignOp)
+    val expression = expression(tokens)
+    return Statement.ValDeclaration(pattern, expression, startToken, expression.endToken)
+  }
 
-      val valType = if (tokens.match(TokenType.Colon)){
-        tokens.getNextToken(TokenType.Colon)
-        typeNotation(tokens)
-      } else {
-        TypeNotation.UnknownType
-      }
-      tokens.getNextToken(TokenType.AssignOp)
-      val expression = expression(tokens)
-      Statement.ValDeclaration(identifier, expression, valType, startToken, expression.endToken)
+  private fun pattern(tokens: TokenList) : AssignmentPattern {
+    return when(tokens.lookAhead().tokenType){
+      TokenType.Identifier -> variablePattern(tokens)
+      TokenType.Constructor -> constructorPattern(tokens)
+      TokenType.OpenParen -> tuplePattern(tokens)
+      else -> throw UnexpectedToken(tokens.lookAhead(), listOf(TokenType.Identifier, TokenType.Constructor, TokenType.OpenParen))
     }
   }
 
-  private fun tupleDeconstruction(tokens: TokenList) : Statement{
-    val startToken = tokens.getNextToken(TokenType.Value)
-    tokens.getNextToken(TokenType.OpenParen)
-    val identifiers = ArrayList<Pair<Token.Identifier, TypeNotation>>()
-    while(!tokens.match(TokenType.CloseParen)){
-      val identifier = tokens.getNextToken(TokenType.Identifier) as Token.Identifier
-      if (tokens.match(TokenType.Colon)){
-        tokens.consumeToken()
-        identifiers.add(Pair(identifier, typeNotation(tokens)))
-      } else {
-        identifiers.add(Pair(identifier, TypeNotation.UnknownType))
-      }
+  private fun variablePattern(tokens: TokenList) : AssignmentPattern.Variable {
+    val identifier = tokens.getIdentifier()
 
-      while (tokens.match(TokenType.Comma)){
-        tokens.consumeToken()
-      }
+    val valType = if (tokens.match(TokenType.Colon)){
+      tokens.getNextToken(TokenType.Colon)
+      typeNotation(tokens)
+    } else {
+      TypeNotation.UnknownType
+    }
+
+    return AssignmentPattern.Variable(identifier, valType)
+  }
+
+  private fun constructorPattern(tokens: TokenList) : AssignmentPattern.Constructor {
+    val name = tokens.getNextToken(TokenType.Constructor) as Token.Constructor
+    val pattern = pattern(tokens)
+    val unwrappedPattern = if (pattern is AssignmentPattern.Tuple && pattern.identifiers.size == 1) pattern.identifiers.first() else pattern
+    return AssignmentPattern.Constructor(name, unwrappedPattern)
+  }
+
+  private fun tuplePattern(tokens: TokenList) : AssignmentPattern.Tuple {
+    tokens.getNextToken(TokenType.OpenParen)
+    val patterns = ArrayList<AssignmentPattern>()
+    while(!tokens.match(TokenType.CloseParen)){
+      patterns.add(pattern(tokens))
+      if (tokens.match(TokenType.Comma)) tokens.getNextToken(TokenType.Comma)
     }
     tokens.getNextToken(TokenType.CloseParen)
-    tokens.getNextToken(TokenType.AssignOp)
-    val expr = expression(tokens)
-    return Statement.TupleDeconstruction(identifiers, expr, startToken, expr.endToken)
+    return AssignmentPattern.Tuple(patterns)
+
   }
 
   // assignment => STRING ":=" expression | STRING "[" expression "]" ":=" expression

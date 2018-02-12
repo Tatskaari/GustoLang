@@ -15,7 +15,6 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
       typeErrors.add(constructorCall, "Constructor not defined.")
       return TypedExpression.ConstructorCall(constructorCall, null, VariantMember(constructorCall.name, UnknownType))
     }
-  // It shouldn't be possible to create a variable with an identifier that follows the constructor pattern so this shouldn't happen
     val type = env.types[constructorCall.name]!! as? GustoType.VariantMember ?:
       throw RuntimeException("Non-constructor called as a constructor")
 

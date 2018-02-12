@@ -4,7 +4,7 @@ import tatskaari.GustoType
 import tatskaari.tokenising.Token
 
 sealed class Statement(startToken: Token, endToken: Token): ASTNode(startToken, endToken) {
-  class ValDeclaration(val identifier: Token.Identifier, val expression: Expression, val type: TypeNotation, startToken: Token, endToken: Token) : Statement(startToken, endToken) {
+  class ValDeclaration(val pattern: AssignmentPattern, val expression: Expression, startToken: Token, endToken: Token) : Statement(startToken, endToken) {
     override fun <NewNodeType> accept(visitor: IStatementVisitor<NewNodeType>): NewNodeType {
       return visitor.visit(this)
     }
@@ -72,11 +72,6 @@ sealed class Statement(startToken: Token, endToken: Token): ASTNode(startToken, 
     }
   }
 
-  class TupleDeconstruction(val identifiers: List<Pair<Token.Identifier, TypeNotation>>, val expression: Expression, startToken: Token, endToken: Token) : Statement(startToken, endToken) {
-    override fun <NewNodeType> accept(visitor: IStatementVisitor<NewNodeType>): NewNodeType {
-      return visitor.visit(this)
-    }
-  }
 
   abstract fun <NewNodeType> accept(visitor: IStatementVisitor<NewNodeType>): NewNodeType
 }

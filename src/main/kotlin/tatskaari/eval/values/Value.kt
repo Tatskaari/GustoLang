@@ -124,7 +124,24 @@ sealed class Value(var value: Any) {
 
   class ListVal(listVal: HashMap<Int, Value>): Value(listVal)
 
-  class VariantVal(name: String) : Value(name)
+  class VariantVal(val name: String, val params : Value?) : Value(name) {
+    override fun equals(other: Any?): Boolean {
+      if (other is VariantVal){
+        if (other.name != this.name){
+          return false
+        }
+        return other.params == params
+      } else {
+        return false
+      }
+    }
+
+    override fun hashCode(): Int {
+      var result = name.hashCode()
+      result = 31 * result + (params?.hashCode() ?: 0)
+      return result
+    }
+  }
 
   fun intVal():Int{
     if (this is IntVal){
@@ -209,5 +226,9 @@ sealed class Value(var value: Any) {
 
   override fun toString(): String = value.toString()
 
-  class TupleVal(values: List<Value>) : Value(values)
+  class TupleVal(val values: List<Value>) : Value(values) {
+    override fun equals(other: Any?): Boolean {
+      return other is TupleVal && other.values.size == values.size && !other.values.zip(values).any {(other, it) -> other != it}
+    }
+  }
 }

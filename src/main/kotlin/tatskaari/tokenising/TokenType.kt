@@ -46,7 +46,7 @@ enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, Str
   NumLiteral(NumMatcher, Token::NumLiteral),
   TextLiteral(TextMatcher, Token::TextLiteral),
   Identifier(IdentifierMatcher, Token::Identifier),
-  Constructor(ConstructorMatcher, Token::Identifier);
+  Constructor(ConstructorMatcher, Token::Constructor);
 
   override fun toString(): String {
     return matcher.getTokenDescription()

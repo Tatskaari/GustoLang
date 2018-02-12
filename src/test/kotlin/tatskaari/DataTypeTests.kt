@@ -2,13 +2,11 @@ package tatskaari
 
 import org.testng.annotations.Test
 import tatskaari.eval.*
-import tatskaari.parsing.Expression
-import tatskaari.parsing.Parser
-import tatskaari.parsing.Statement
-import tatskaari.parsing.TypeNotation
+import tatskaari.parsing.*
 import tatskaari.parsing.typechecking.TypeChecker
 import tatskaari.parsing.typechecking.TypeEnv
 import tatskaari.tokenising.Lexer
+import java.util.regex.Pattern
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -87,7 +85,8 @@ class DataTypeTests {
     program!!
     val valDec = program.first()
     assert(valDec is Statement.ValDeclaration)
-    assert((valDec as Statement.ValDeclaration).type is TypeNotation.Tuple)
+    assert((valDec as Statement.ValDeclaration).pattern is AssignmentPattern.Variable)
+    assert((valDec.pattern as AssignmentPattern.Variable).typeNotation is TypeNotation.Tuple)
     assert(valDec.expression is Expression.Tuple)
   }
 
@@ -117,7 +116,7 @@ class DataTypeTests {
     val program = parser.parse("val someVar : (integer, integer) := (10, 11) val (x : integer, y : integer) := someVar")
 
     assertEquals(0, parser.parserExceptions.size)
-    assert(program!![1] is Statement.TupleDeconstruction)
+    assert(program!![1] is Statement.ValDeclaration)
   }
 
   @Test
@@ -142,7 +141,7 @@ class DataTypeTests {
     val parser = Parser()
     val program = parser.parse("val someVar : (integer, integer) := (10, 11) val (x : integer, y : number) := someVar")
     val typeChecker = TypeChecker()
-    val typedProgram = typeChecker.checkStatementListTypes(program!!, TypeEnv())
+    typeChecker.checkStatementListTypes(program!!, TypeEnv())
 
     assertEquals(1, typeChecker.typeMismatches.size)
   }
@@ -153,8 +152,6 @@ class DataTypeTests {
     val eval = Eval(StdinInputProvider, SystemOutputProvider)
     val env = EvalEnv()
     eval.eval(program!!, env)
-
-    println(env.vairableEnv)
 
     assertEquals(10, env["x"].intVal())
     assertEquals(11, env["y"].intVal())
@@ -171,11 +168,16 @@ class DataTypeTests {
 
       val expr : expression := BinaryOperation(Add, Num(10), Num(10))
     """)
+
     assertEquals(0, parser.parserExceptions.size)
 
     val typeChecker = TypeChecker()
     typeChecker.checkStatementListTypes(program!!, TypeEnv())
     assertEquals(0, typeChecker.typeMismatches.size)
+
+    val eval = Eval(StdinInputProvider, SystemOutputProvider)
+    val env = EvalEnv()
+    eval.eval(program, env)
   }
 
   @Test
@@ -194,5 +196,23 @@ class DataTypeTests {
     val typeChecker = TypeChecker()
     typeChecker.checkStatementListTypes(program!!, TypeEnv())
     assertEquals(1, typeChecker.typeMismatches.size)
+  }
+
+  @Test
+  fun testBasicEval(){
+    val parser = Parser()
+    val program = parser.parse(TestUtil.loadProgram("Eval"))
+    val typeChecker = TypeChecker()
+
+    typeChecker.checkStatementListTypes(program!!, TypeEnv())
+    assertEquals(0, typeChecker.typeMismatches.size)
+
+    val eval = Eval(StdinInputProvider, SystemOutputProvider)
+    val env = EvalEnv()
+    eval.eval(program, env)
+
+    assertEquals(20, env["out"].intVal())
+    assertEquals(0, env["out2"].intVal())
+
   }
 }

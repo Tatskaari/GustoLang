@@ -73,11 +73,5 @@ sealed class TypedStatement(val returnType: GustoType?, val stmt: Statement){
     }
   }
 
-  class TupleDeconstruction(val statement: Statement.TupleDeconstruction, val tupleType: GustoType.TupleType) : TypedStatement(null, statement) {
-    override fun accept(visitor: ITypedStatementVisitor) {
-      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-  }
-
   abstract fun accept(visitor: ITypedStatementVisitor)
 }

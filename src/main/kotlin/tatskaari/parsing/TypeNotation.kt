@@ -32,10 +32,10 @@ sealed class TypeNotation {
       return if (primitiveTypes.containsKey(name)){
         primitiveTypes.getValue(name)
       } else {
-        if (env.containsKey(name)){
-          return env.getValue(name)
+        return if (env.containsKey(name)){
+          env.getValue(name)
         } else {
-          return GustoType.GenericType(name)
+          GustoType.GenericType(name)
         }
       }
     }

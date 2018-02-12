@@ -14,5 +14,4 @@ interface IStatementVisitor <NewNodeType>{
   fun visit(statement: Statement.Return): NewNodeType
   fun visit(statement: Statement.ExpressionStatement): NewNodeType
   fun visit(typeDeclaration: Statement.TypeDeclaration): NewNodeType
-  fun visit(tupleDeconstruction: Statement.TupleDeconstruction): NewNodeType
 }

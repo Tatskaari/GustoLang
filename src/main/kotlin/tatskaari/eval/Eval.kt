@@ -25,6 +25,37 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     return null
   }
 
+  fun eval(pattern: AssignmentPattern, value: Value, env: EvalEnv) {
+    when(pattern){
+      is AssignmentPattern.Variable -> {
+        val identifierName = pattern.identifier.name
+
+        if (env.hasVariable(identifierName)){
+          throw VariableAlreadyDefined(identifierName)
+        } else {
+          env[identifierName] = value.copyLiteralOrReferenceList()
+        }
+      }
+      is AssignmentPattern.Constructor -> {
+        if (value is Value.VariantVal) {
+          eval(pattern.pattern, value.params!!, env)
+        } else {
+          throw TypeMismatch("Expected variant type, found " + value)
+        }
+      }
+      is AssignmentPattern.Tuple -> {
+        if (value is Value.TupleVal) {
+          pattern.identifiers
+            .zip(value.tupleVal())
+            .forEach { (pattern, expression) -> eval(pattern, expression, env) }
+        } else {
+          throw TypeMismatch("Expected tuple found " + value)
+        }
+
+      }
+    }
+  }
+
   fun eval(statement: Statement, env: EvalEnv) : Value? {
     when (statement) {
       is Statement.CodeBlock -> return eval(statement.statementList, EvalEnv(env))
@@ -32,13 +63,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       is Statement.IfElse -> return evalIf(statement.condition, statement.ifBody.statementList, statement.elseBody.statementList, EvalEnv(env))
       is Statement.While -> return evalWhile(statement.condition, statement.body.statementList, EvalEnv(env))
       is Statement.ValDeclaration-> {
-        val identifierName = statement.identifier.name
-
-        if (env.hasVariable(identifierName)){
-          throw VariableAlreadyDefined(identifierName)
-        } else {
-          env[identifierName] = eval(statement.expression, env).copyLiteralOrReferenceList()
-        }
+        eval(statement.pattern, eval(statement.expression, env), env)
         return null
       }
       is Statement.FunctionDeclaration -> {
@@ -103,20 +128,6 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
         env.typeDefinitions[statement.identifier.name] = GustoType.VariantType(statement.identifier.name, members)
         return null
       }
-      is Statement.TupleDeconstruction -> {
-        val tupleVal = eval(statement.expression, env)
-        if (tupleVal is Value.TupleVal) {
-          statement.identifiers.map { it.first.name }
-            .zip(tupleVal.tupleVal())
-            .forEach { (ident, value) ->
-              env[ident] = value
-            }
-          return null
-        } else {
-          throw RuntimeException("Right hand side of tuple deconstruction wasn't a tuple")
-        }
-
-      }
     }
   }
 
@@ -152,7 +163,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       is Expression.ListAccess -> evalListAccess(expression, env)
       is Expression.Function -> Value.FunctionVal(expression, EvalEnv(env))
       is Expression.Identifier -> env[expression.name]
-      is Expression.ConstructorCall -> Value.VariantVal(expression.name)
+      is Expression.ConstructorCall -> Value.VariantVal(expression.name, if (expression.expr != null) eval(expression.expr, env) else null)
       is Expression.Tuple -> Value.TupleVal(expression.params.map { eval(it, env) })
     }
   }

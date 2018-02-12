@@ -1,5 +1,6 @@
 package tatskaari.bytecodecompiler
 
+import tatskaari.parsing.AssignmentPattern
 import tatskaari.parsing.typechecking.ITypedStatementVisitor
 import tatskaari.parsing.typechecking.TypedStatement
 import java.util.*
@@ -19,7 +20,8 @@ class ScopeStatementVisitor : ITypedStatementVisitor {
 
   override fun accept(stmt: TypedStatement.ValDeclaration) {
     stmt.expression.accept(expressionVisitor)
-    declaredVariables.add(stmt.statement.identifier.name)
+    //TODO other patterns
+    declaredVariables.add((stmt.statement.pattern as AssignmentPattern.Variable).identifier.name)
   }
 
   override fun accept(stmt: TypedStatement.While) {

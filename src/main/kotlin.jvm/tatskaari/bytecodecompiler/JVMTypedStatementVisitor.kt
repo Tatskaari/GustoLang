@@ -4,6 +4,7 @@ import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.*
 import org.objectweb.asm.commons.InstructionAdapter
 import org.objectweb.asm.commons.LocalVariablesSorter
+import tatskaari.parsing.AssignmentPattern
 import tatskaari.parsing.typechecking.ITypedStatementVisitor
 import tatskaari.parsing.typechecking.TypedStatement
 
@@ -39,11 +40,12 @@ class JVMTypedStatementVisitor(
   }
 
   override fun accept(stmt: TypedStatement.ValDeclaration) {
-    val identifierName = stmt.statement.identifier.name
+    //TODO other patterns
+    val identifier = stmt.statement.pattern as AssignmentPattern.Variable
 
     val type = Type.getType(compiler.getTypeDesc(stmt.expression.gustoType, false))
     val varIndex = localVariableSetter.newLocal(type)
-    localVars.put(identifierName, Variable(varIndex, type))
+    localVars.put(identifier.identifier.name, Variable(varIndex, type))
 
     stmt.expression.accept(expressionVisitor)
     methodVisitor.store(varIndex, type)

@@ -4,44 +4,27 @@ import tatskaari.*
 import tatskaari.parsing.IStatementVisitor
 import tatskaari.parsing.Statement
 import tatskaari.GustoType.*
+import tatskaari.parsing.AssignmentPattern
+import tatskaari.parsing.Expression
 
 class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, val expectedReturnType: GustoType?) : IStatementVisitor<TypedStatement> {
 
-  override fun visit(tupleDeconstruction: Statement.TupleDeconstruction): TypedStatement {
-    val expression = tupleDeconstruction.expression.accept(exprVisitor)
-    val lhsType = TupleType(tupleDeconstruction.identifiers.map { it.second.toGustoType(env.types) })
-    if(!TypeComparer.compareTypes(lhsType, expression.gustoType, HashMap())){
-      typeErrors.addTypeMissmatch(tupleDeconstruction, lhsType, expression.gustoType)
-    }
-
-    val tupleType = if (expression.gustoType is TupleType && expression.gustoType.types.size == lhsType.types.size){
-      TupleType(
-        lhsType.types
-          .zip(expression.gustoType.types)
-          .map { (lhs, rhs) ->
-            if (lhs == UnknownType) rhs else lhs
-          }
-      )
-    } else {
-      lhsType
-    }
-
-    tupleDeconstruction.identifiers
-      .map { it.first.name }
-      .zip(tupleType.types)
-      .forEach { (ident, type) ->
-        env[ident] = type
-      }
-
-    return TypedStatement.TupleDeconstruction(tupleDeconstruction, tupleType)
-  }
-
   override fun visit(typeDeclaration: Statement.TypeDeclaration): TypedStatement {
-    val members = typeDeclaration.members.associate { Pair(it.name, it.toGustoType(env.types)) }
-    val variantType = VariantType(typeDeclaration.identifier.name, members.values.toList())
+    // pre-populate the env with stub versions of the types so recursive types work
+    val variantType = VariantType(typeDeclaration.identifier.name, emptyList())
+    val members = typeDeclaration.members.associate { Pair(it.name, VariantMember(it.name, GustoType.UnknownType)) }
 
-    env.types.putAll(members)
     env.types[typeDeclaration.identifier.name] = variantType
+    env.types.putAll(members)
+
+    // Update the types with the real values
+    typeDeclaration.members.forEach {
+      members[it.name]!!.type = it.type.toGustoType(env.types)
+    }
+    variantType.members = members.values.toList()
+
+    env.types[typeDeclaration.identifier.name] = variantType
+    env.types.putAll(members)
 
     return TypedStatement.TypeDeclaration(typeDeclaration, variantType)
   }
@@ -57,22 +40,40 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, val 
   override fun visit(statement: Statement.ValDeclaration): TypedStatement {
     val expression = statement.expression.accept(exprVisitor)
     val expressionType = expression.gustoType
-    val variableType = statement.type.toGustoType(env.types)
-    if (expressionType != UnknownType){
-      when(variableType){
-        GustoType.UnknownType -> env[statement.identifier.name] = expressionType
-        else -> {
-          if (!TypeComparer.compareTypes(variableType, expressionType, HashMap())) {
-            typeErrors.addTypeMissmatch(statement, expressionType, statement.type.toGustoType(HashMap()))
-          }
-          env[statement.identifier.name] = variableType
-        }
-      }
-    }
-
+    checkPattern(statement.pattern, expressionType, expression.expression)
 
     return TypedStatement.ValDeclaration(statement, expression)
   }
+
+  private fun checkPattern(pattern: AssignmentPattern, expressionType: GustoType, expression: Expression){
+    val patternType = pattern.toGustoType(env.types)
+
+    when(pattern) {
+      is AssignmentPattern.Variable -> {
+        if (!TypeComparer.compareTypes(patternType, expressionType, HashMap())){
+          typeErrors.addTypeMissmatch(expression, patternType, expressionType)
+        }
+        env[pattern.identifier.name] = if (patternType is UnknownType) expressionType else patternType
+      }
+      is AssignmentPattern.Tuple -> {
+        if (expressionType is GustoType.TupleType){
+          pattern.identifiers
+            .zip(expressionType.types)
+            .forEach { (pattern, type) -> checkPattern(pattern, type, expression) }
+        } else {
+          typeErrors.addTypeMissmatch(expression, patternType, expressionType)
+        }
+      }
+      is AssignmentPattern.Constructor -> {
+        if (expressionType !is GustoType.VariantMember || expressionType.name != pattern.name.name) {
+          typeErrors.addTypeMissmatch(expression, patternType, expressionType)
+        } else {
+          checkPattern(pattern.pattern, expressionType.type, expression)
+        }
+      }
+    }
+  }
+
 
   override fun visit(statement: Statement.CodeBlock): TypedStatement {
     val blockStatementVisitor = TypeCheckerStatementVisitor(TypeEnv(env), typeErrors, expectedReturnType)
@@ -163,9 +164,14 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, val 
   override fun visit(statement: Statement.FunctionDeclaration): TypedStatement {
     //TODO pass in type definition map
     val functionEnv = TypeEnv(env)
-    functionEnv.putAll(statement.function.paramTypes.mapKeys { it.key.name }.mapValues { it.value.toGustoType(HashMap()) })
+    functionEnv.putAll(statement.function.paramTypes.mapKeys { it.key.name }.mapValues { it.value.toGustoType(functionEnv.types) })
 
-    val functionType = FunctionType(statement.function.params.map { statement.function.paramTypes.getValue(it).toGustoType(HashMap()) }, statement.function.returnType.toGustoType(HashMap()))
+    val functionType = FunctionType(
+      statement.function.params.map {
+        statement.function.paramTypes.getValue(it).toGustoType(functionEnv.types)
+      },
+      statement.function.returnType.toGustoType(functionEnv.types)
+    )
 
     functionEnv[statement.identifier.name] = functionType
     val body = statement.function.body.accept(TypeCheckerStatementVisitor(functionEnv, typeErrors, functionType.returnType)) as TypedStatement.CodeBlock

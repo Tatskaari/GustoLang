@@ -63,6 +63,14 @@ object TypeComparer {
     }
   }
 
+  private fun compareVariantMember(expectedType: GustoType.VariantMember, actualType: GustoType):Boolean{
+    return if (actualType is GustoType.VariantMember){
+      expectedType == actualType
+    } else {
+      actualType is GustoType.VariantType && actualType.members.contains(expectedType)
+    }
+  }
+
   fun compareTypes(expectedType: GustoType, actualType: GustoType, genericTypes: HashMap<GustoType.GenericType, GustoType>): Boolean{
     return when(expectedType){
       is GustoType.FunctionType -> compareFunctionType(expectedType, actualType, genericTypes)
@@ -70,7 +78,7 @@ object TypeComparer {
       is GustoType.GenericType -> compareGenerics(expectedType, actualType, genericTypes)
       is GustoType.PrimitiveType -> comparePrimitiveType(expectedType, actualType)
       GustoType.UnknownType -> return true
-      is GustoType.VariantMember -> expectedType == actualType
+      is GustoType.VariantMember -> compareVariantMember(expectedType, actualType)
       is GustoType.VariantType -> compareVariantType(expectedType, actualType)
       is GustoType.TupleType -> compareTupleTypes(expectedType, actualType, genericTypes)
     }

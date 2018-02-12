@@ -6,17 +6,23 @@ if => "if" expression "then" (statement)* ("else" (statement)*)? "end"
 while => "while" expression codeBlock
 codeBlock => "do" program "end"
 function => STRING "(" (STRING (",")*)* ")" functionReturnType codeBlock
-functionType => ("(" (typeNotation)? (","typeNotation)* ")" ("->" typeNotation)?)
-tupleType => "(" typeNotation ("," typeNotation)* ")"
+
 functionReturnType => NOTHING | ":" typeNotation
-typeNotation => primitiveType
-primitiveType => "unit" | "list" | (("number" | "integer" | "boolean" | "text") ("list")?) | functionType | tupleType
 return => "return" expression
-valueDeclaration => "val" STRING ":" typeNotation "":=" expression
+valueDeclaration => "val" pattern (":" typeNotation)? "":=" expression
 assignment => STRING ":=" expression
 input => "input" STRING
 output => "output" expression
 
+typeNotation => primitiveType
+primitiveType => "unit" | "list" | ((atomicType | functionType | tupleType) "list"?)
+functionType => ("(" (typeNotation)? (","typeNotation)* ")" ("->" typeNotation)?)
+tupleType => "(" typeNotation ("," typeNotation)* ")"
+atomicType => STRING | CONSTRUCTOR
+
+pattern => STRING (":" typeNotation)? | constructorPattern | tuplePattern
+constructorPattern => CONSTRUCTOR tuplePattern
+tuplePattern => "(" (pattern ","?)+ ")"
 
 
 
