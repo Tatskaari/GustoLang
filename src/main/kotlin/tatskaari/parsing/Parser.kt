@@ -269,8 +269,17 @@ class Parser {
 
   private fun constructorPattern(tokens: TokenList) : AssignmentPattern.Constructor {
     val name = tokens.getNextToken(TokenType.Constructor) as Token.Constructor
-    val pattern = pattern(tokens)
-    val unwrappedPattern = if (pattern is AssignmentPattern.Tuple && pattern.identifiers.size == 1) pattern.identifiers.first() else pattern
+    val pattern = if(tokens.match(TokenType.Comma)){
+      AssignmentPattern.Unit
+    } else {
+      pattern(tokens)
+    }
+    // If there's only 1 parameter to the tuple then it should be treated as a normal value pattern
+    val unwrappedPattern = if (pattern is AssignmentPattern.Tuple && pattern.identifiers.size == 1) {
+      pattern.identifiers.first()
+    } else {
+      pattern
+    }
     return AssignmentPattern.Constructor(name, unwrappedPattern)
   }
 
@@ -446,6 +455,10 @@ class Parser {
       TokenType.True -> return Expression.BooleanLiteral(true, token, token)
       TokenType.False -> return Expression.BooleanLiteral(false, token, token)
       TokenType.TextLiteral -> return Expression.TextLiteral((token as Token.TextLiteral).text, token, token)
+      TokenType.Match -> {
+        tokens.addFirst(token)
+        return match(tokens)
+      }
       TokenType.Function -> {
         tokens.addFirst(token)
         return anonymousFunction(tokens)
@@ -464,6 +477,28 @@ class Parser {
         return constructorCall(tokens)
       }
       else -> throw UnexpectedToken(token, expectedTokens)
+    }
+  }
+
+  private fun match(tokens: TokenList) : Expression.Match {
+    val startToken = tokens.getNextToken(TokenType.Match)
+    val expression = expression(tokens)
+    tokens.getNextToken(TokenType.With)
+    val matchBranches  = ArrayList<MatchBranch>()
+    while (!tokens.matchAny(TokenType.Else, TokenType.CloseBlock)) {
+      val pattern = pattern(tokens)
+      tokens.getNextToken(TokenType.RightArrow)
+      val statement = statement(tokens)
+      matchBranches.add(MatchBranch(pattern, statement))
+    }
+    return if (tokens.match(TokenType.CloseBlock)) {
+      Expression.Match(matchBranches, expression, ElseMatchBranch.NoElseBranch, startToken, tokens.consumeToken())
+    } else {
+      tokens.getNextToken(TokenType.Else)
+      tokens.getNextToken(TokenType.RightArrow)
+      val statement = statement(tokens)
+      val elseBranch = ElseMatchBranch.ElseBranch(statement)
+      Expression.Match(matchBranches, expression, elseBranch, startToken, tokens.getNextToken(TokenType.CloseBlock))
     }
   }
 

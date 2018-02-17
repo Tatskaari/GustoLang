@@ -22,5 +22,11 @@ sealed class AssignmentPattern {
     }
   }
 
+  object Unit : AssignmentPattern() {
+    override fun toGustoType(env: HashMap<String, GustoType>): GustoType {
+      return GustoType.PrimitiveType.Unit
+    }
+  }
+
   abstract fun toGustoType(env: HashMap<String, GustoType>): GustoType
 }

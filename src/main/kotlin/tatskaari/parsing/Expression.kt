@@ -70,7 +70,12 @@ sealed class Expression(startToken: Token, endToken: Token) : ASTNode(startToken
     override fun <NewNodeType> accept(visitor: IExpressionVisitor<NewNodeType>): NewNodeType {
       return visitor.visit(this)
     }
+  }
 
+  class Match(val matchBranches : List<MatchBranch>, val expression: Expression, val elseBranch: ElseMatchBranch, startTok: Token, endTok: Token) : Expression(startTok, endTok) {
+    override fun <NewNodeType> accept(visitor: IExpressionVisitor<NewNodeType>): NewNodeType {
+      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
   }
 
   abstract fun <NewNodeType> accept(visitor: IExpressionVisitor<NewNodeType>): NewNodeType

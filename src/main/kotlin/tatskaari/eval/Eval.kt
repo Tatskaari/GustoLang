@@ -163,8 +163,27 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       is Expression.ListAccess -> evalListAccess(expression, env)
       is Expression.Function -> Value.FunctionVal(expression, EvalEnv(env))
       is Expression.Identifier -> env[expression.name]
-      is Expression.ConstructorCall -> Value.VariantVal(expression.name, if (expression.expr != null) eval(expression.expr, env) else null)
+      is Expression.ConstructorCall -> Value.VariantVal(expression.name, if (expression.expr != null) eval(expression.expr, env) else Value.Unit)
       is Expression.Tuple -> Value.TupleVal(expression.params.map { eval(it, env) })
+      is Expression.Match -> eval(expression, env)
+    }
+  }
+
+  fun eval(match: Expression.Match, env: EvalEnv) : Value {
+    val value = eval(match.expression, env)
+    val matchBranch = match.matchBranches.find {
+      PatternMatcher.match(value, it.pattern)
+    }
+
+    return if (matchBranch != null){
+      eval(matchBranch.pattern, value, env)
+      evalFunction(listOf(matchBranch.statement), env)
+    } else {
+      if (match.elseBranch is ElseMatchBranch.ElseBranch){
+        evalFunction(listOf(match.elseBranch.statement), env)
+      } else {
+        throw RuntimeException("No branch matched " + value)
+      }
     }
   }
 

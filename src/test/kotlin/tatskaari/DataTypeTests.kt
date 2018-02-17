@@ -213,6 +213,31 @@ class DataTypeTests {
 
     assertEquals(20, env["out"].intVal())
     assertEquals(0, env["out2"].intVal())
+  }
 
+  @Test
+  fun testMatch(){
+    val parser = Parser()
+    val program = parser.parse("""
+      type binaryOperator := Add, Sub, Div, Mul
+      type expression :=
+        Num of integer,
+        BinaryOperation of (binaryOperator, expression, expression)
+
+      val expr : expression := BinaryOperation(Add, Num(10), Num(10))
+
+      val out := match expr with
+        BinaryOperation(Add, Num(lhs), Num(rhs)) -> return lhs + rhs
+        else -> 0
+      end
+    """)
+
+    assertEquals(0, parser.parserExceptions.size)
+
+    val eval = Eval(StdinInputProvider, SystemOutputProvider)
+    val env = EvalEnv()
+    eval.eval(program!!, env)
+
+    assertEquals(20, env["out"].intVal())
   }
 }

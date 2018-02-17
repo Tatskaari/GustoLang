@@ -124,7 +124,7 @@ sealed class Value(var value: Any) {
 
   class ListVal(listVal: HashMap<Int, Value>): Value(listVal)
 
-  class VariantVal(val name: String, val params : Value?) : Value(name) {
+  class VariantVal(val name: String, val params : Value) : Value(name) {
     override fun equals(other: Any?): Boolean {
       if (other is VariantVal){
         if (other.name != this.name){
