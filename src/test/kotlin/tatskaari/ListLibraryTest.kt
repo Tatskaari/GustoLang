@@ -48,4 +48,44 @@ class ListLibraryTest {
     assertEquals(4, env["out"].intVal())
     assertEquals(4.0, env["out2"].numVal())
   }
+
+  @Test
+  fun testFilter(){
+    val program = getProgram("""
+      include "list"
+
+      function isThree(a : t) : boolean do
+        return a = 3 or a = 3.0
+      end
+
+      val intList := [1,2,3]
+      val numList := [1.0, 2.0, 3.0]
+
+      val out := intList.filter(isThree).size()
+      val out2 := numList.filter(isThree).size()
+    """)
+    val env = eval(program)
+
+    assertEquals(1, env["out"].intVal())
+    assertEquals(1, env["out2"].numVal())
+  }
+
+  @Test
+  fun testReduce(){
+    val program = getProgram("""
+include "list"
+
+val myList := [1,2,3]
+
+
+function sum(runningTotal : integer, next : integer) : integer do
+    return runningTotal + next
+end
+
+val out := myList.reduce(0, sum)
+    """)
+    val env = eval(program)
+
+    assertEquals(6, env["out"].intVal())
+  }
 }

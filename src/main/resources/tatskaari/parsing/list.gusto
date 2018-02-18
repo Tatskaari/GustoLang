@@ -29,3 +29,14 @@ function filter(theList : a list, predicate : (a) -> boolean) : a list do
     end
     return newList
 end
+
+function reduce(theList : a list, startingValue : b, reducer : (b, a) -> b) : b do
+    val index := 0
+    val result := startingValue
+    while index < theList.size() do
+        result := reducer(result, theList[index])
+        index := index + 1
+    end
+
+    return result
+end
