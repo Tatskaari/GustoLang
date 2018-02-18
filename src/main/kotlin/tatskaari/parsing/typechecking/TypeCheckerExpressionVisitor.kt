@@ -5,6 +5,33 @@ import tatskaari.GustoType.*
 import tatskaari.parsing.*
 
 class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Errors) : IExpressionVisitor<TypedExpression> {
+  override fun visit(match: Expression.Match): TypedExpression {
+    val expression = match.expression.accept(this)
+    val matchBranches = match.matchBranches.map {
+      val statementVisitor = TypeCheckerStatementVisitor(env, typeErrors, UnknownType)
+      statementVisitor.checkPattern(it.pattern, expression.gustoType, expression.expression)
+      val statement = it.statement.accept(statementVisitor)
+      TypedMatchBranch(it.pattern, statement)
+    }
+
+    val returnType = matchBranches.first().statement.returnType ?: GustoType.PrimitiveType.Unit
+    matchBranches.forEach {
+      val branchReturnType = it.statement.returnType ?: PrimitiveType.Unit
+      if(!TypeComparator.compareTypes(returnType, branchReturnType, HashMap())){
+        typeErrors.addTypeMissmatch(it.statement.stmt, returnType, branchReturnType)
+      }
+    }
+    val elseBranch = if (match.elseBranch is ElseMatchBranch.ElseBranch){
+      val statementVisitor = TypeCheckerStatementVisitor(env, typeErrors, returnType)
+      TypedElseBranch.ElseBranch(match.elseBranch.statement.accept(statementVisitor))
+    } else {
+      TypedElseBranch.NoElseBranch
+
+    }
+
+    return TypedExpression.Match(match, matchBranches, expression, elseBranch, returnType)
+  }
+
   override fun visit(tuple: Expression.Tuple): TypedExpression {
     val type = TupleType(tuple.params.map { it.accept(this).gustoType })
     return TypedExpression.Tuple(tuple, type)
@@ -20,7 +47,7 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
 
     return if (constructorCall.expr != null){
       val expr = constructorCall.expr.accept(this)
-      if(!TypeComparer.compareTypes(type.type, expr.gustoType, HashMap())) {
+      if(!TypeComparator.compareTypes(type.type, expr.gustoType, HashMap())) {
         typeErrors.addTypeMissmatch(expr.expression, type.type, expr.gustoType)
       }
       TypedExpression.ConstructorCall(constructorCall, expr, type)
@@ -138,12 +165,12 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
       functionCall.params.zip(functionType.params).forEach { (paramExpr, type) ->
         val typedExpr = paramExpr.accept(this)
         params.add(typedExpr)
-        if (!TypeComparer.compareTypes(type, typedExpr.gustoType, genericTypes)){
+        if (!TypeComparator.compareTypes(type, typedExpr.gustoType, genericTypes)){
           typeErrors.addTypeMissmatch(functionCall, type, typedExpr.gustoType)
         }
       }
 
-      TypedExpression.FunctionCall(functionCall, functionExpr, params, TypeComparer.expandFunctionType(functionType, genericTypes))
+      TypedExpression.FunctionCall(functionCall, functionExpr, params, TypeComparator.expandFunctionType(functionType, genericTypes))
     } else {
       typeErrors.add(functionCall, "Unexpected type for target of a function call. Expected function, found $functionType")
       TypedExpression.FunctionCall(functionCall, functionExpr, params, FunctionType(listOf(), UnknownType))

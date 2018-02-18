@@ -18,7 +18,7 @@ sealed class AssignmentPattern {
 
   data class Constructor(val name : Token.Constructor, val pattern: AssignmentPattern) : AssignmentPattern() {
     override fun toGustoType(env: HashMap<String, GustoType>): GustoType {
-      return env[name.name]!!
+      return GustoType.VariantMember(name.name, pattern.toGustoType(env))
     }
   }
 

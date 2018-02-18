@@ -7,7 +7,7 @@ import tatskaari.GustoType.*
 import tatskaari.parsing.AssignmentPattern
 import tatskaari.parsing.Expression
 
-class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, val expectedReturnType: GustoType?) : IStatementVisitor<TypedStatement> {
+class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, var expectedReturnType: GustoType?) : IStatementVisitor<TypedStatement> {
 
   override fun visit(typeDeclaration: Statement.TypeDeclaration): TypedStatement {
     // pre-populate the env with stub versions of the types so recursive types work
@@ -45,15 +45,15 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, val 
     return TypedStatement.ValDeclaration(statement, expression)
   }
 
-  private fun checkPattern(pattern: AssignmentPattern, expressionType: GustoType, expression: Expression){
+  fun checkPattern(pattern: AssignmentPattern, expressionType: GustoType, expression: Expression){
     val patternType = pattern.toGustoType(env.types)
 
     when(pattern) {
       is AssignmentPattern.Variable -> {
-        if (!TypeComparer.compareTypes(patternType, expressionType, HashMap())){
+        if (!TypeComparator.compareTypes(patternType, expressionType, HashMap())){
           typeErrors.addTypeMissmatch(expression, patternType, expressionType)
         }
-        env[pattern.identifier.name] = if (patternType is UnknownType) expressionType else patternType
+        env[pattern.identifier.name] = if (patternType == UnknownType) expressionType else patternType
       }
       is AssignmentPattern.Tuple -> {
         if (expressionType is GustoType.TupleType){
@@ -65,10 +65,20 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, val 
         }
       }
       is AssignmentPattern.Constructor -> {
-        if (expressionType !is GustoType.VariantMember || expressionType.name != pattern.name.name) {
+        //TODO add compiler warning if the expression type is a variant type as it might not match the variant member
+        if (!TypeComparator.compareTypes(pattern.toGustoType(env.types), expressionType, HashMap())){
           typeErrors.addTypeMissmatch(expression, patternType, expressionType)
         } else {
-          checkPattern(pattern.pattern, expressionType.type, expression)
+          when(expressionType){
+            is VariantType -> {
+              val type = expressionType.members.find { it.name == pattern.name.name }!!
+              checkPattern(pattern.pattern, type.type, expression)
+            }
+            is VariantMember ->
+              checkPattern(pattern.pattern, expressionType.type, expression)
+            else ->
+              throw RuntimeException("Type comparison says the pattern type and expression type matches but expression type was $expressionType and pattern type was $patternType")
+          }
         }
       }
     }
@@ -94,7 +104,7 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, val 
   override fun visit(statement: Statement.Assignment): TypedStatement {
     val expression = statement.expression.accept(exprVisitor)
     val expectedType = env.getValue(statement.identifier.name)
-    if (!TypeComparer.compareTypes(expectedType, expression.gustoType, HashMap())) {
+    if (!TypeComparator.compareTypes(expectedType, expression.gustoType, HashMap())) {
       typeErrors.addTypeMissmatch(statement, expectedType, expression.gustoType)
     }
     return TypedStatement.Assignment(statement, expression)
@@ -189,8 +199,10 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, val 
 
   override fun visit(statement: Statement.Return): TypedStatement {
     val expr= statement.expression.accept(exprVisitor)
-    if (expectedReturnType != expr.gustoType){
-      typeErrors.add(statement.expression, "Expected return type is $expectedReturnType however the body of the function returns ${expr.gustoType}")
+    if (expectedReturnType == UnknownType){
+      expectedReturnType = expr.gustoType
+    } else if (expectedReturnType != expr.gustoType){
+      typeErrors.add(statement.expression, "Expected return type is $expectedReturnType however the actual type was ${expr.gustoType}")
     }
     return TypedStatement.Return(statement, expr)
   }

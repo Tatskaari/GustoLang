@@ -118,5 +118,11 @@ sealed class TypedExpression(val gustoType: GustoType, val expression : Expressi
     }
   }
 
+  class Match(val expr: Expression.Match, val matchBranches : List<TypedMatchBranch>, val matchExpr: TypedExpression, val elseBranch: TypedElseBranch, type: GustoType) : TypedExpression(type, expr) {
+    override fun accept(visitor: ITypedExpressionVisitor) {
+      TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+  }
+
   abstract fun accept(visitor: ITypedExpressionVisitor)
 }

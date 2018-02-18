@@ -2,7 +2,7 @@ package tatskaari.parsing.typechecking
 
 import tatskaari.GustoType
 
-object TypeComparer {
+object TypeComparator {
   private fun compareGenerics(genericType: GustoType.GenericType, exprType: GustoType, genericTypes: HashMap<GustoType.GenericType, GustoType>): Boolean{
     return if (genericTypes.containsKey(genericType)){
       val expectedType = genericTypes.getValue(genericType)
@@ -63,11 +63,20 @@ object TypeComparer {
     }
   }
 
-  private fun compareVariantMember(expectedType: GustoType.VariantMember, actualType: GustoType):Boolean{
+  private fun compareVariantMember(expectedType: GustoType.VariantMember, actualType: GustoType, genericTypes: HashMap<GustoType.GenericType, GustoType>):Boolean{
     return if (actualType is GustoType.VariantMember){
-      expectedType == actualType
+      if (actualType.name == expectedType.name){
+        compareTypes(expectedType.type, actualType.type, genericTypes)
+      } else {
+        false
+      }
     } else {
-      actualType is GustoType.VariantType && actualType.members.contains(expectedType)
+      if(actualType is GustoType.VariantType){
+        val member = actualType.members.find { it.name == expectedType.name }
+        member != null && compareTypes(expectedType.type, member.type, genericTypes)
+      } else {
+        false
+      }
     }
   }
 
@@ -78,7 +87,7 @@ object TypeComparer {
       is GustoType.GenericType -> compareGenerics(expectedType, actualType, genericTypes)
       is GustoType.PrimitiveType -> comparePrimitiveType(expectedType, actualType)
       GustoType.UnknownType -> return true
-      is GustoType.VariantMember -> compareVariantMember(expectedType, actualType)
+      is GustoType.VariantMember -> compareVariantMember(expectedType, actualType, genericTypes)
       is GustoType.VariantType -> compareVariantType(expectedType, actualType)
       is GustoType.TupleType -> compareTupleTypes(expectedType, actualType, genericTypes)
     }

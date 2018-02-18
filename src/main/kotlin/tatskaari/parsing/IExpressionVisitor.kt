@@ -14,4 +14,5 @@ interface IExpressionVisitor<NewNodeType> {
   fun visit(function: Expression.Function): NewNodeType
   fun visit(constructorCall: Expression.ConstructorCall): NewNodeType
   fun visit(tuple: Expression.Tuple): NewNodeType
+  fun visit(match: Expression.Match): NewNodeType
 }

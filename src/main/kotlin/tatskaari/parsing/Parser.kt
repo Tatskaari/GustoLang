@@ -245,7 +245,7 @@ class Parser {
     return Statement.ValDeclaration(pattern, expression, startToken, expression.endToken)
   }
 
-  private fun pattern(tokens: TokenList) : AssignmentPattern {
+  fun pattern(tokens: TokenList) : AssignmentPattern {
     return when(tokens.lookAhead().tokenType){
       TokenType.Identifier -> variablePattern(tokens)
       TokenType.Constructor -> constructorPattern(tokens)
@@ -486,10 +486,11 @@ class Parser {
     tokens.getNextToken(TokenType.With)
     val matchBranches  = ArrayList<MatchBranch>()
     while (!tokens.matchAny(TokenType.Else, TokenType.CloseBlock)) {
+      val start = tokens.lookAhead()
       val pattern = pattern(tokens)
       tokens.getNextToken(TokenType.RightArrow)
       val statement = statement(tokens)
-      matchBranches.add(MatchBranch(pattern, statement))
+      matchBranches.add(MatchBranch(pattern, statement, start, statement.endToken))
     }
     return if (tokens.match(TokenType.CloseBlock)) {
       Expression.Match(matchBranches, expression, ElseMatchBranch.NoElseBranch, startToken, tokens.consumeToken())

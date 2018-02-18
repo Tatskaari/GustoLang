@@ -1,15 +1,12 @@
 package tatskaari.parsing.typechecking
 
 import tatskaari.*
-import tatskaari.parsing.ASTNode
-import tatskaari.parsing.BinaryOperators
-import tatskaari.parsing.Statement
-import tatskaari.parsing.UnaryOperators
+import tatskaari.parsing.*
 import tatskaari.tokenising.Token
 
 typealias Errors = HashMap<Pair<Token, Token>, String>
 
-class TypeEnv(val variableTypes: HashMap<String, GustoType>, val types : HashMap<String, GustoType>) : MutableMap<String, GustoType> by variableTypes {
+class TypeEnv(private val variableTypes: HashMap<String, GustoType>, val types : HashMap<String, GustoType>) : MutableMap<String, GustoType> by variableTypes {
   constructor(env: TypeEnv) : this(HashMap(env.variableTypes), HashMap(env.types))
   constructor() : this(HashMap(), HashMap())
 }

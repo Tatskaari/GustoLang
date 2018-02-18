@@ -3,9 +3,12 @@ package tatskaari
 import org.testng.annotations.Test
 import tatskaari.eval.*
 import tatskaari.parsing.*
+import tatskaari.parsing.typechecking.Errors
 import tatskaari.parsing.typechecking.TypeChecker
+import tatskaari.parsing.typechecking.TypeCheckerStatementVisitor
 import tatskaari.parsing.typechecking.TypeEnv
 import tatskaari.tokenising.Lexer
+import tatskaari.tokenising.Token
 import java.util.regex.Pattern
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -227,7 +230,12 @@ class DataTypeTests {
       val expr : expression := BinaryOperation(Add, Num(10), Num(10))
 
       val out := match expr with
-        BinaryOperation(Add, Num(lhs), Num(rhs)) -> return lhs + rhs
+        BinaryOperation(Add, Num(lhs), Num(rhs)) -> do
+          return lhs + rhs
+        end
+        BinaryOperation(Sub, Num(lhs), Num(rhs)) -> do
+          return lhs - rhs
+        end
         else -> 0
       end
     """)
@@ -239,5 +247,31 @@ class DataTypeTests {
     eval.eval(program!!, env)
 
     assertEquals(20, env["out"].intVal())
+
+    val typeChecker = TypeChecker()
+    typeChecker.checkStatementListTypes(program, TypeEnv())
+
+    assertEquals(0, typeChecker.typeMismatches.size)
+  }
+
+  @Test
+  fun testAssignmentPattern(){
+    val program = Parser().parse("""
+      type binaryOperator := Add, Sub, Div, Mul
+      type expression :=
+        Num of integer,
+        BinaryOperation of (binaryOperator, expression, expression)
+    """)
+
+    val typeChecker = TypeChecker()
+    val env = TypeEnv()
+    typeChecker.checkStatementListTypes(program!!, env)
+
+    val statementVisitor = TypeCheckerStatementVisitor(env, typeChecker.typeMismatches, null)
+
+    val assignmentPattern = Parser().pattern(Lexer.lex("BinaryOperation(Add, Num(lhs), Num(rhs))"))
+    val expression = Parser().expression(Lexer.lex("BinaryOperation(Add, Num(10), Num(10))"))
+    statementVisitor.checkPattern(assignmentPattern, env.types["expression"]!!, expression)
+    assertEquals(0, typeChecker.typeMismatches.size)
   }
 }
