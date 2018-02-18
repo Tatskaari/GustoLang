@@ -38,6 +38,7 @@ output "The number " + num
 <script type="text/javascript" src="lib/kotlin.js"></script>
 <script type="text/javascript" src="KotlinLang.js"></script>
 <script src="https://ace.c9.io/build/src/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <script type="text/javascript">
   var outputElement = document.getElementById("output");
   function output(text){
@@ -49,6 +50,20 @@ output "The number " + num
   function input(){
     return window.prompt("Please enter a value")
   }
+
+  function getResource(path) {
+    var source;
+
+    $.ajax({
+       type: "GET",
+       url: path,
+       async: false,
+       success: function(response) { source = response; }
+    });
+
+    return source;
+  }
+
   var editor = ace.edit("code");
   editor.setTheme("ace/theme/monokai");
   editor.getSession().setMode("ace/mode/ada");

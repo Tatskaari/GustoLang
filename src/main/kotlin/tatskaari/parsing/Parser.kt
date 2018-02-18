@@ -6,7 +6,9 @@ import tatskaari.tokenising.Token
 import tatskaari.tokenising.TokenType
 import kotlin.collections.ArrayList
 
-class Parser {
+class Parser(private var sourceTree: SourceTree) {
+  constructor() : this(NoSourceTree)
+
   open class ParserException(val reason: String, val start: Token, val end: Token) : Exception()
   data class UnexpectedToken(val token: Token, private val expectedTokens: List<TokenType>)
     : ParserException("Unexpected token $token, expected one of $expectedTokens", token, token)
@@ -17,15 +19,33 @@ class Parser {
   private var isPanicMode = false
   val parserExceptions = ArrayList<ParserException>()
 
-  fun parse(source: String): List<Statement>? {
+  fun parse(source: String): ArrayList<Statement>? {
     val tokens = Lexer.lex(source)
-    return try {
-      program(TokenList(tokens))
-    } catch (exception: ParsingFailedException){
+    val statements = loadSources(tokens)
+    return if (parserExceptions.size == 0){
+      try {
+        statements.addAll(program(TokenList(tokens)))
+        statements
+      } catch (exception: ParsingFailedException){
+        null
+      } catch (exception: UnexpectedEndOfFile){
+        parserExceptions.add(ParserException("Unexpected end of file", tokens.last(), tokens.last()))
+        null
+      }
+    } else {
       null
-    } catch (exception: UnexpectedEndOfFile){
-      parserExceptions.add(ParserException("Unexpected end of file", tokens.last(), tokens.last()))
-      null
+    }
+  }
+
+  private fun loadSources(tokens: TokenList) : ArrayList<Statement>{
+    val sources = ArrayList<String>()
+    while(tokens.match(TokenType.Include)){
+      tokens.getNextToken(TokenType.Include)
+      val text = tokens.getNextToken(TokenType.TextLiteral) as Token.TextLiteral
+      sources.add(text.text)
+    }
+    return sources.flatMapTo(ArrayList<Statement>()) {
+      parse(sourceTree.getSource(it)) ?: ArrayList()
     }
   }
 

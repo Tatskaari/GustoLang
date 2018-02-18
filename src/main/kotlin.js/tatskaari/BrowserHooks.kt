@@ -2,6 +2,7 @@ package tatskaari
 
 import tatskaari.eval.*
 import tatskaari.parsing.Parser
+import tatskaari.parsing.WebRootSourceTree
 import tatskaari.parsing.typechecking.TypeChecker
 
 external fun error(text: String)
@@ -10,7 +11,7 @@ object BrowserHooks {
   @JsName("eval")
   fun eval(program: String){
     try {
-      val parser = Parser()
+      val parser = Parser(WebRootSourceTree)
       val eval = Eval(JSHookInputProvider, JSHookOutputProvider)
       val ast = parser.parse(program)
       val typeChecker = TypeChecker()

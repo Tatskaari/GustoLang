@@ -1,0 +1,31 @@
+function forEach(theList : a list, fun : (a) -> unit) do
+    val index:  integer := 0
+    while index < theList.size() do
+        fun(theList[index])
+        index := index + 1
+    end
+end
+
+function map(theList : a list, transform : (a) -> b) : b list do
+    val index:  integer := 0
+    val newList : b list := []
+    while index < theList.size() do
+        newList[index] := transform(theList[index])
+        index := index + 1
+    end
+    return newList
+end
+
+function filter(theList : a list, predicate : (a) -> boolean) : a list do
+    val index:  integer := 0
+    val newListIndex : integer := 0
+    val newList : a list := []
+    while index < theList.size() do
+        if(predicate(theList[index])) then
+            newList[newListIndex] := theList[index]
+            newListIndex := newListIndex + 1
+        end
+        index := index + 1
+    end
+    return newList
+end

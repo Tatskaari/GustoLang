@@ -72,6 +72,5 @@ sealed class Statement(startToken: Token, endToken: Token): ASTNode(startToken, 
     }
   }
 
-
   abstract fun <NewNodeType> accept(visitor: IStatementVisitor<NewNodeType>): NewNodeType
 }

@@ -4,8 +4,6 @@ import tatskaari.GustoType
 import tatskaari.eval.values.*
 import tatskaari.parsing.*
 
-
-
 class Eval(private val inputProvider: InputProvider, private val outputProvider: OutputProvider) {
 
   data class TypeMismatch(override val message: String) : RuntimeException(message)
@@ -38,7 +36,7 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       }
       is AssignmentPattern.Constructor -> {
         if (value is Value.VariantVal) {
-          eval(pattern.pattern, value.params!!, env)
+          eval(pattern.pattern, value.params, env)
         } else {
           throw TypeMismatch("Expected variant type, found " + value)
         }
