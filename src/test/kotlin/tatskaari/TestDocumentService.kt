@@ -22,7 +22,26 @@ class TestDocumentService {
   fun testOpenFile(){
     startDocService()
 
-    val program = TestUtil.loadProgram("apply")
+    val program = """(* this is a demonstration of higher order functions *)
+
+function add(a: integer, b: integer) : integer do
+    return a + b
+end
+
+function apply(fun: (integer, integer) -> integer, first: integer) : (integer) -> integer do
+    return function (second: integer) : integer do
+        return fun(first, second)
+    end
+end
+
+val increment : (integer) -> integer := apply(add, 1)
+val decrement : (integer) -> integer := apply(add, -1)
+
+val num : integer := 10
+
+output "The number " + num
++ " is one less than " + increment(num)
++ " and one more than " + decrement(num)"""
 
     docService.didOpen(
       DidOpenTextDocumentParams(
