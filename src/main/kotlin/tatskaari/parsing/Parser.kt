@@ -74,7 +74,7 @@ class Parser(private var sourceTree: SourceTree) {
         TokenType.Output -> output(tokens)
         TokenType.Type -> typeDeclaration(tokens)
         // the statement is either as assignment or an expression statement
-        TokenType.Identifier, TokenType.NumLiteral, TokenType.IntLiteral, TokenType.TextLiteral, TokenType.True, TokenType.False, TokenType.Sub, TokenType.Not -> {
+        else -> {
           val expressionToken = tokens.consumeToken()
           if (tokens.matchAny(TokenType.AssignOp, TokenType.ListStart)) {
             tokens.addFirst(expressionToken)
@@ -84,9 +84,6 @@ class Parser(private var sourceTree: SourceTree) {
             expressionStatement(tokens)
           }
         }
-        else -> throw UnexpectedToken(token, listOf(TokenType.If, TokenType.While, TokenType.OpenBlock, TokenType.Function,
-          TokenType.Return, TokenType.Input, TokenType.Output, TokenType.Identifier, TokenType.NumLiteral, TokenType.IntLiteral,
-          TokenType.TextLiteral, TokenType.True, TokenType.False, TokenType.Sub, TokenType.Not))
       }
     } catch (rootException: ParserException){
       // Attempt to parse the next tokens as a statement until it works then parse the rest of the program to get any further errors
@@ -431,7 +428,7 @@ class Parser(private var sourceTree: SourceTree) {
       expr = Expression.FunctionCall(function, params, expr.startToken, endToken)
     }
 
-    while(tokens.matchAny(TokenType.OpenParen, TokenType.ListStart)){
+    while(!expr.endToken.newLineAfter && tokens.matchAny(TokenType.OpenParen, TokenType.ListStart)){
       when {
         tokens.match(TokenType.OpenParen) -> {
           tokens.getNextToken(TokenType.OpenParen)

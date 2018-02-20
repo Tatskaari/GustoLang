@@ -14,10 +14,11 @@ class ListLibraryTest {
   fun getProgram(program: String) : List<Statement> {
     val parser = Parser(ClassSourceTree)
     val ast = parser.parse(program)
+
     return ast!!
   }
 
-  fun eval(program : List<Statement>) : EvalEnv {
+  private fun eval(program : List<Statement>) : EvalEnv {
     val eval = Eval(StdinInputProvider, SystemOutputProvider)
     val env = BuiltInFunction.getEvalEnv()
     eval.eval(program, env)

@@ -99,6 +99,16 @@ object LexerTest {
     assertEquals(1, program[2].lineNumber)
     assertEquals(6, program[2].columnNumber)
     assertEquals(1, program[2].tokenText.length)
+  }
 
+  @Test
+  fun lineNumberAfterTest(){
+    val program = Lexer.lex("""a b
+      c
+      """)
+
+    assert(!program[0].newLineAfter)
+    assert(program[1].newLineAfter)
+    assert(program[2].newLineAfter)
   }
 }

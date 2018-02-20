@@ -2,7 +2,7 @@ package tatskaari.tokenising
 
 import tatskaari.tokenising.Matcher.*
 
-enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, String, Int, Int) -> Token) {
+enum class TokenType(var matcher: Matcher, var tokenConstructor: (TokenType, String, Int, Int, Boolean) -> Token) {
   Add(KeywordMatcher("+"),Token::Keyword),
   Sub(KeywordMatcher("-"), Token::Keyword),
   Mul(KeywordMatcher("*"), Token::Keyword),

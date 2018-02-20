@@ -43,14 +43,18 @@ object Lexer {
         .maxBy { it.second.length }
       if (tokenResult != null) {
         val (tokenType, tokenText) = tokenResult
-        val token = tokenResult.first.tokenConstructor(tokenType, tokenText, lineNumber, columnNumber)
+
+        val lineNumBefore = lineNumber
+        val columnNumBefore = columnNumber
+
+        columnNumber += tokenText.length
+        rest = rest.rest(tokenText).trimStart(::trimWhitespace)
+
+        val token = tokenResult.first.tokenConstructor(tokenType, tokenText, lineNumBefore, columnNumBefore, lineNumBefore != lineNumber)
 
         if (tokenType != TokenType.Comment){
           tokens.add(token)
         }
-        columnNumber += token.tokenText.length
-
-        rest = rest.rest(tokenText).trimStart(::trimWhitespace)
       } else {
         throw InvalidInputException(lineNumber, columnNumber)
       }

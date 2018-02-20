@@ -5,7 +5,7 @@ import tatskaari.parsing.Parser
 import kotlin.test.assertEquals
 import kotlin.test.fail
 
-object ParserErrorTest {
+object ParserTest {
   @Test
   fun testSingleError(){
     val parser = Parser()
@@ -28,5 +28,23 @@ object ParserErrorTest {
     parser.parse("do val a -> numaber := 1 end val c : integer := 1 val b -> taext := 1")
 
     assertEquals(2, parser.parserExceptions.size)
+  }
+
+  @Test
+  fun testInlineListExpression(){
+    val parser = Parser()
+    parser.parse("""val out := 0
+      [1,2,3].size()""")
+
+    assertEquals(0, parser.parserExceptions.size)
+  }
+
+  @Test
+  fun testInlineTupleExpression(){
+    val parser = Parser()
+    parser.parse("""val out := 0
+      (1,2,3).first()""")
+
+    assertEquals(0, parser.parserExceptions.size)
   }
 }
