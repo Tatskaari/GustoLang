@@ -13,20 +13,28 @@ function add(a: integer, b: integer) : integer do
     return a + b
 end
 
-function apply(fun: (integer, integer) -> integer, first: integer) : (integer) -> integer do
-    return function (second: integer) : integer do
+function concat(lhs : text, rhs : text) : text do
+    return lhs + rhs
+end
+
+function apply(fun: (a, b) -> c, first: a) : (b) -> c do
+    return function (second: b) : c do
         return fun(first, second)
     end
 end
+
+val prependTheNumber := concat.apply("The number ")
 
 val increment : (integer) -> integer := apply(add, 1)
 val decrement : (integer) -> integer := apply(add, -1)
 
 val num : integer := 10
 
-output "The number " + num
-+ " is one less than " + increment(num)
-+ " and one more than " + decrement(num)</div>
+output prependTheNumber(
+    num + " is one less than " + increment(num)
+    + " and one more than " + decrement(num)
+)
+    </div>
     <div id="output"> </div>
 </div>
 <div class="toolbar">

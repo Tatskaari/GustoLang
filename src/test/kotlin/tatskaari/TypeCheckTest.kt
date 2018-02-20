@@ -280,4 +280,21 @@ end
     assertEquals(0, typeChecker.typeMismatches.size)
   }
 
+  @Test
+  fun testFunctionGenericsResolve(){
+    val program = Parser().parse("""
+function getFirst(tuple : (a, a)) : a do
+  val (first, second) := tuple
+  return first
+end
+
+val ten := (10, 20).getFirst()""")
+    val typeChecker = TypeChecker()
+    val typeEnv = TypeEnv()
+    typeChecker.checkStatementListTypes(program!!, typeEnv)
+
+    assertEquals(0, typeChecker.typeMismatches.size)
+    assertEquals(GustoType.PrimitiveType.Integer, typeEnv.getValue("ten"))
+  }
+
 }
