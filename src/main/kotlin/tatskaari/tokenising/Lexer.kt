@@ -5,7 +5,7 @@ import tatskaari.compatibility.TokenList
 object Lexer {
   data class InvalidInputException(val line : Int, val column: Int) : RuntimeException()
 
-  private fun String.rest(head: String): String {
+  private fun String.textAfter(head: String): String {
     return substring(head.length, length)
   }
 
@@ -43,14 +43,24 @@ object Lexer {
         .maxBy { it.second.length }
       if (tokenResult != null) {
         val (tokenType, tokenText) = tokenResult
+        val tokenLine = lineNumber
+        val tokenCol = columnNumber
 
-        val lineNumBefore = lineNumber
-        val columnNumBefore = columnNumber
+        tokenText.forEach {
+          if (it == '\n'){
+            lineNumber++
+            columnNumber = 1
+          } else {
+            columnNumber++
+          }
+        }
 
-        columnNumber += tokenText.length
-        rest = rest.rest(tokenText).trimStart(::trimWhitespace)
+        rest = rest.textAfter(tokenText)
+        val trimmedProgram = rest.trimStart(::trimWhitespace)
+        val trimmedText = rest.substring(0, rest.length - trimmedProgram.length)
 
-        val token = tokenResult.first.tokenConstructor(tokenType, tokenText, lineNumBefore, columnNumBefore, lineNumBefore != lineNumber)
+        val token = tokenResult.first.tokenConstructor(tokenType, tokenText, tokenLine, tokenCol, trimmedText.contains("\n"))
+        rest = trimmedProgram
 
         if (tokenType != TokenType.Comment){
           tokens.add(token)

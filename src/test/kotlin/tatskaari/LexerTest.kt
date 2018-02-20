@@ -123,4 +123,14 @@ object LexerTest {
     val program = Lexer.lex("(* comment (*one*) *) val a := b (* (*(**)*)comment two *)")
     assertEquals(4, program.size)
   }
+
+  @Test
+  fun testMultiLineComments(){
+    val program = Lexer.lex("(* comment (*one*) \n*) val (*\n*)\n   val")
+    assertEquals(2, program.size)
+    assertEquals(2, program[0].lineNumber)
+    assertEquals(4, program[0].columnNumber)
+    assertEquals(4, program[1].lineNumber)
+    assertEquals(4, program[1].columnNumber)
+  }
 }

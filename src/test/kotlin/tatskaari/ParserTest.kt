@@ -47,4 +47,12 @@ object ParserTest {
 
     assertEquals(0, parser.parserExceptions.size)
   }
+
+  @Test
+  fun test(){
+    val parser = Parser()
+    val prog = parser.parse("""(*
+asdf
+*) var a""")
+  }
 }

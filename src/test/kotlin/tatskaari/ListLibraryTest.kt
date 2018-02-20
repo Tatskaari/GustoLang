@@ -10,8 +10,8 @@ import tatskaari.parsing.Parser
 import tatskaari.parsing.Statement
 import kotlin.test.assertEquals
 
-class ListLibraryTest {
-  fun getProgram(program: String) : List<Statement> {
+object ListLibraryTest {
+  private fun getProgram(program: String) : List<Statement> {
     val parser = Parser(ClassSourceTree)
     val ast = parser.parse(program)
 

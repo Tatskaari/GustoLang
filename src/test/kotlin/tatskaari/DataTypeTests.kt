@@ -13,8 +13,8 @@ import java.util.regex.Pattern
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class DataTypeTests {
-  private val workingProgram = """
+object DataTypeTests {
+  private const val workingProgram = """
       type binaryOperator := Add, Sub, Div, Mul
 
       val out := 0

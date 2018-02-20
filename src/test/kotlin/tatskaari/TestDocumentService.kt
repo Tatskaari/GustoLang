@@ -7,7 +7,7 @@ import org.testng.annotations.*
 import tatskaari.TestUtil
 import kotlin.test.assertEquals
 
-class TestDocumentService {
+object TestDocumentService {
   private var server : GustoLanguageServer = GustoLanguageServer()
   private var docService : GustoTextDocumentService = server.textDocumentService
   private var client = mock(LanguageClient::class.java)
