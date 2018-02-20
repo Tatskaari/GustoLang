@@ -5,7 +5,7 @@ sealed class Matcher {
   abstract fun lex(program: String): String?
   abstract fun getTokenDescription(): String
 
-  class KeywordMatcher(val tokenText: String) : Matcher() {
+  class KeywordMatcher(private val tokenText: String) : Matcher() {
     override fun lex(program: String): String? {
       if (program.startsWith(tokenText)) {
         return tokenText
@@ -19,7 +19,7 @@ sealed class Matcher {
   }
 
   object IntMatcher : Matcher() {
-    val regex = Regex("^[0-9]+")
+    private val regex = Regex("^[0-9]+")
     override fun lex(program: String): String? {
       val matchResult = regex.find(program)
       if (matchResult != null) {
@@ -34,7 +34,7 @@ sealed class Matcher {
   }
 
   object NumMatcher : Matcher() {
-    val regex = Regex("^[0-9]+\\.[0-9]+")
+    private val regex = Regex("^[0-9]+\\.[0-9]+")
     override fun lex(program: String): String? {
       val matchResult = regex.find(program)
       if (matchResult != null) {
@@ -47,12 +47,35 @@ sealed class Matcher {
       return "number"
     }
   }
+
+
   object CommentMatcher : Matcher() {
-    val regex = Regex("""^\(\*(.|\n|\r)*\*\)""")
     override fun lex(program: String): String? {
-      val matchResult = regex.find(program)
-      if (matchResult != null) {
-        return matchResult.value
+      if (program.startsWith("(*")){
+        var rest = program.substring(2)
+        var comment = "(*"
+        var nesting = 1
+        if (rest.contains("*)")){
+          while(nesting > 0){
+            when {
+              rest.startsWith("(*") -> {
+                nesting++
+                comment+="(*"
+                rest = rest.substring(2)
+              }
+              rest.startsWith("*)") -> {
+                nesting--
+                comment+="*)"
+                rest = rest.substring(2)
+              }
+              else -> {
+                comment += rest.first()
+                rest = rest.substring(1)
+              }
+            }
+          }
+          return comment
+        }
       }
       return null
     }
@@ -63,7 +86,7 @@ sealed class Matcher {
   }
 
   object IdentifierMatcher : Matcher() {
-    val regex = Regex("""^[a-z][a-zA-Z0-9_']*""")
+    private val regex = Regex("""^[a-z][a-zA-Z0-9_']*""")
 
     override fun lex(program: String): String? {
       val matchResult = regex.find(program)
@@ -78,7 +101,7 @@ sealed class Matcher {
     }
   }
   object ConstructorMatcher : Matcher() {
-    val regex = Regex("""^[A-Z][a-zA-Z0-9_']*""")
+    private val regex = Regex("""^[A-Z][a-zA-Z0-9_']*""")
 
     override fun lex(program: String): String? {
       val matchResult = regex.find(program)

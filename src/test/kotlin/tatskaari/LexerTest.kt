@@ -111,4 +111,16 @@ object LexerTest {
     assert(program[1].newLineAfter)
     assert(program[2].newLineAfter)
   }
+
+  @Test
+  fun testTwoComments(){
+    val program = Lexer.lex("(* comment one *) val a := b (*comment two *)")
+    assertEquals(4, program.size)
+  }
+
+  @Test
+  fun testNestedComments(){
+    val program = Lexer.lex("(* comment (*one*) *) val a := b (* (*(**)*)comment two *)")
+    assertEquals(4, program.size)
+  }
 }
