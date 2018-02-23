@@ -53,6 +53,9 @@ object ParserTest {
     val parser = Parser()
     val prog = parser.parse("""(*
 asdf
-*) var a""")
+*) var a""")!!
+
+    assertEquals(4, prog[0].startToken.columnNumber)
+    assertEquals(8, prog[1].startToken.columnNumber)
   }
 }
