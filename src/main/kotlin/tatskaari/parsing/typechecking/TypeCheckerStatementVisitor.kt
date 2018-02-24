@@ -51,7 +51,7 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, var 
     when(pattern) {
       is AssignmentPattern.Variable -> {
         if (!TypeComparator.compareTypes(patternType, expressionType, HashMap())){
-          typeErrors.addTypeMissmatch(expression, patternType, expressionType)
+          typeErrors.addTypeMismatch(expression, patternType, expressionType)
         }
         env[pattern.identifier.name] = if (patternType == UnknownType) expressionType else patternType
       }
@@ -61,13 +61,13 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, var 
             .zip(expressionType.types)
             .forEach { (pattern, type) -> checkPattern(pattern, type, expression) }
         } else {
-          typeErrors.addTypeMissmatch(expression, patternType, expressionType)
+          typeErrors.addTypeMismatch(expression, patternType, expressionType)
         }
       }
       is AssignmentPattern.Constructor -> {
         //TODO add compiler warning if the expression type is a variant type as it might not match the variant member
         if (!TypeComparator.compareTypes(pattern.toGustoType(env.types), expressionType, HashMap())){
-          typeErrors.addTypeMissmatch(expression, patternType, expressionType)
+          typeErrors.addTypeMismatch(expression, patternType, expressionType)
         } else {
           when(expressionType){
             is VariantType -> {
@@ -105,7 +105,7 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, var 
     val expression = statement.expression.accept(exprVisitor)
     val expectedType = env.getValue(statement.identifier.name)
     if (!TypeComparator.compareTypes(expectedType, expression.gustoType, HashMap())) {
-      typeErrors.addTypeMissmatch(statement, expectedType, expression.gustoType)
+      typeErrors.addTypeMismatch(statement, expectedType, expression.gustoType)
     }
     return TypedStatement.Assignment(statement, expression)
   }
@@ -119,11 +119,11 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, var 
       val expressionType = listExpr.gustoType
       val indexType = indexExpr.gustoType
       if (expressionType != listType.type){
-        typeErrors.addTypeMissmatch(statement, listType.type, expressionType)
+        typeErrors.addTypeMismatch(statement, listType.type, expressionType)
 
       }
       if (indexType != PrimitiveType.Integer){
-        typeErrors.addTypeMissmatch(statement, PrimitiveType.Integer, indexType)
+        typeErrors.addTypeMismatch(statement, PrimitiveType.Integer, indexType)
 
       }
     } else {
@@ -136,7 +136,7 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, var 
   override fun visit(statement: Statement.If): TypedStatement {
     val typedConditionExpr = statement.condition.accept(exprVisitor)
     if (typedConditionExpr.gustoType != PrimitiveType.Boolean) {
-      typeErrors.addTypeMissmatch(statement, PrimitiveType.Boolean, typedConditionExpr.gustoType)
+      typeErrors.addTypeMismatch(statement, PrimitiveType.Boolean, typedConditionExpr.gustoType)
     }
     val typedBody = statement.body.accept(this) as TypedStatement.CodeBlock
     return TypedStatement.If(statement, typedBody , typedConditionExpr)
@@ -146,7 +146,7 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, var 
     val typedCondition = statement.condition.accept(exprVisitor)
     val conditionType = typedCondition.gustoType
     if (conditionType != PrimitiveType.Boolean) {
-      typeErrors.addTypeMissmatch(statement, PrimitiveType.Boolean, conditionType)
+      typeErrors.addTypeMismatch(statement, PrimitiveType.Boolean, conditionType)
     }
     val typedIfBody = statement.ifBody.accept(this) as TypedStatement.CodeBlock
     val typedElseBody = statement.elseBody.accept(this) as TypedStatement.CodeBlock
@@ -165,7 +165,7 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, var 
   override fun visit(statement: Statement.While): TypedStatement {
     val typedConditionExpr = statement.condition.accept(exprVisitor)
     if (typedConditionExpr.gustoType != PrimitiveType.Boolean) {
-      typeErrors.addTypeMissmatch(statement, PrimitiveType.Boolean, typedConditionExpr.gustoType)
+      typeErrors.addTypeMismatch(statement, PrimitiveType.Boolean, typedConditionExpr.gustoType)
     }
     val bodyStatement = statement.body.accept(this)
     return TypedStatement.While(statement, bodyStatement, typedConditionExpr)

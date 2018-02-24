@@ -15,7 +15,7 @@ fun Errors.add(astNode: ASTNode, message: String){
   put(Pair(astNode.startToken, astNode.endToken), "Error at ${astNode.startToken.lineNumber}:${astNode.startToken.columnNumber} - $message")
 }
 
-fun Errors.addTypeMissmatch(astNode: ASTNode, expectedType: GustoType, actualType: GustoType){
+fun Errors.addTypeMismatch(astNode: ASTNode, expectedType: GustoType, actualType: GustoType){
   add(astNode, "Expected type $expectedType but found $actualType")
 }
 

@@ -24,9 +24,13 @@ object TypeComparator {
 
   private fun compareFunctionType(expectedType: GustoType.FunctionType, actualType: GustoType, genericTypes: HashMap<GustoType.GenericType, GustoType>): Boolean{
     if (actualType is GustoType.FunctionType){
-      expectedType.params.zip(actualType.params).forEach{(expected, actual) ->
-        if(!compareTypes(expected, actual, genericTypes)){
-          return false
+      if(expectedType.params.size != actualType.params.size){
+        return false
+      } else {
+        expectedType.params.zip(actualType.params).forEach{(expected, actual) ->
+          if(!compareTypes(expected, actual, genericTypes)){
+            return false
+          }
         }
       }
       return compareTypes(expectedType.returnType, actualType.returnType, genericTypes)

@@ -18,7 +18,7 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
     matchBranches.forEach {
       val branchReturnType = it.statement.returnType ?: PrimitiveType.Unit
       if(!TypeComparator.compareTypes(returnType, branchReturnType, HashMap())){
-        typeErrors.addTypeMissmatch(it.statement.stmt, returnType, branchReturnType)
+        typeErrors.addTypeMismatch(it.statement.stmt, returnType, branchReturnType)
       }
     }
     val elseBranch = if (match.elseBranch is ElseMatchBranch.ElseBranch){
@@ -48,12 +48,12 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
     return if (constructorCall.expr != null){
       val expr = constructorCall.expr.accept(this)
       if(!TypeComparator.compareTypes(type.type, expr.gustoType, HashMap())) {
-        typeErrors.addTypeMissmatch(expr.expression, type.type, expr.gustoType)
+        typeErrors.addTypeMismatch(expr.expression, type.type, expr.gustoType)
       }
       TypedExpression.ConstructorCall(constructorCall, expr, type)
     } else {
       if (type.type != PrimitiveType.Unit){
-        typeErrors.addTypeMissmatch(constructorCall, type.type, PrimitiveType.Unit)
+        typeErrors.addTypeMismatch(constructorCall, type.type, PrimitiveType.Unit)
       }
       TypedExpression.ConstructorCall(constructorCall, null, type)
     }
@@ -166,7 +166,7 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
         val typedExpr = paramExpr.accept(this)
         params.add(typedExpr)
         if (!TypeComparator.compareTypes(type, typedExpr.gustoType, genericTypes)){
-          typeErrors.addTypeMissmatch(functionCall, type, typedExpr.gustoType)
+          typeErrors.addTypeMismatch(functionCall, type, typedExpr.gustoType)
         }
       }
 
@@ -202,7 +202,7 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
         val expressionType = it.accept(this)
         typedExpressions.add(expressionType)
         if (expressionType.gustoType != typedExpression.gustoType){
-          typeErrors.addTypeMissmatch(listDeclaration, typedExpression.gustoType, expressionType.gustoType)
+          typeErrors.addTypeMismatch(listDeclaration, typedExpression.gustoType, expressionType.gustoType)
         }
       }
       TypedExpression.ListDeclaration(listDeclaration, ListType(typedExpression.gustoType), typedExpressions)

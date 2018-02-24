@@ -297,4 +297,21 @@ val ten := (10, 20).getFirst()""")
     assertEquals(GustoType.PrimitiveType.Integer, typeEnv.getValue("ten"))
   }
 
+  @Test
+  fun testIncorrectFunctionArgument(){
+    val program = Parser().parse("""
+function add(a : integer, b : integer, c : integer) : integer do
+    return a + b + c
+end
+
+function execute(fun : (integer, integer) -> c) do
+    fun(1, 2)
+end
+
+execute(add)""")
+    val typeChecker = TypeChecker()
+    typeChecker.checkStatementListTypes(program!!, TypeEnv())
+
+    assertEquals(1, typeChecker.typeMismatches.size)
+  }
 }
