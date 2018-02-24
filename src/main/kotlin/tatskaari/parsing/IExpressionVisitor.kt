@@ -1,18 +1,18 @@
 package tatskaari.parsing
 
-interface IExpressionVisitor<NewNodeType> {
-  fun visit(intLiteral: Expression.IntLiteral): NewNodeType
-  fun visit(numLiteral: Expression.NumLiteral): NewNodeType
-  fun visit(booleanLiteral: Expression.BooleanLiteral): NewNodeType
-  fun visit(textLiteral: Expression.TextLiteral): NewNodeType
-  fun visit(identifier: Expression.Identifier): NewNodeType
-  fun visit(binaryOperator: Expression.BinaryOperator): NewNodeType
-  fun visit(unaryOperator: Expression.UnaryOperator): NewNodeType
-  fun visit(functionCall: Expression.FunctionCall): NewNodeType
-  fun visit(listAccess: Expression.ListAccess): NewNodeType
-  fun visit(listDeclaration: Expression.ListDeclaration): NewNodeType
-  fun visit(function: Expression.Function): NewNodeType
-  fun visit(constructorCall: Expression.ConstructorCall): NewNodeType
-  fun visit(tuple: Expression.Tuple): NewNodeType
-  fun visit(match: Expression.Match): NewNodeType
+interface IExpressionVisitor<out NewNodeType> {
+  fun visitIntLiteral(intLiteral: Expression.IntLiteral): NewNodeType
+  fun visitNumLiteral(numLiteral: Expression.NumLiteral): NewNodeType
+  fun visitBoolLiteral(booleanLiteral: Expression.BooleanLiteral): NewNodeType
+  fun visitTextLiteral(textLiteral: Expression.TextLiteral): NewNodeType
+  fun visitIdentifier(identifier: Expression.Identifier): NewNodeType
+  fun visitBinaryOperation(binaryOperation: Expression.BinaryOperation): NewNodeType
+  fun visitUnaryOperator(unaryOperation: Expression.UnaryOperation): NewNodeType
+  fun visitFunctionCall(functionCall: Expression.FunctionCall): NewNodeType
+  fun visitListAccess(listAccess: Expression.ListAccess): NewNodeType
+  fun visitListDeclaration(listDeclaration: Expression.ListDeclaration): NewNodeType
+  fun visitFunction(function: Expression.Function): NewNodeType
+  fun visitConstructorCall(constructorCall: Expression.ConstructorCall): NewNodeType
+  fun visitTuple(tuple: Expression.Tuple): NewNodeType
+  fun visitMatch(match: Expression.Match): NewNodeType
 }

@@ -1,7 +1,8 @@
 package tatskaari.parsing.typechecking
 
-import tatskaari.GustoType.*
 import tatskaari.GustoType
+import tatskaari.GustoType.FunctionType
+import tatskaari.GustoType.PrimitiveType
 import tatskaari.parsing.Expression
 
 sealed class TypedExpression(val gustoType: GustoType, val expression : Expression) {
@@ -30,57 +31,57 @@ sealed class TypedExpression(val gustoType: GustoType, val expression : Expressi
       visitor.visit(this)
     }
   }
-  class NegateInt(val expr: Expression.UnaryOperator, val rhs: TypedExpression): TypedExpression(PrimitiveType.Integer, expr){
+  class NegateInt(val expr: Expression.UnaryOperation, val rhs: TypedExpression): TypedExpression(PrimitiveType.Integer, expr){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }
   }
-  class NegateNum(val expr: Expression.UnaryOperator, val rhs: TypedExpression): TypedExpression(PrimitiveType.Number, expr){
+  class NegateNum(val expr: Expression.UnaryOperation, val rhs: TypedExpression): TypedExpression(PrimitiveType.Number, expr){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }
   }
-  class Not(val expr: Expression.UnaryOperator, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean, expr){
+  class Not(val expr: Expression.UnaryOperation, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean, expr){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }
   }
-  class IntArithmeticOperation(val expr: Expression.BinaryOperator, val operator: ArithmeticOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Integer, expr){
+  class IntArithmeticOperation(val expr: Expression.BinaryOperation, val operator: ArithmeticOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Integer, expr){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }
   }
-  class NumArithmeticOperation(val expr: Expression.BinaryOperator, val operator: ArithmeticOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Number, expr){
+  class NumArithmeticOperation(val expr: Expression.BinaryOperation, val operator: ArithmeticOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Number, expr){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }
   }
-  class Concatenation(val expr: Expression.BinaryOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Text, expr){
+  class Concatenation(val expr: Expression.BinaryOperation, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Text, expr){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }
   }
-  class NumLogicalOperation(val expr: Expression.BinaryOperator, val operator: NumericLogicalOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean, expr){
+  class NumLogicalOperation(val expr: Expression.BinaryOperation, val operator: NumericLogicalOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean, expr){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }
   }
-  class IntLogicalOperation(val expr: Expression.BinaryOperator, val operator: NumericLogicalOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean, expr){
+  class IntLogicalOperation(val expr: Expression.BinaryOperation, val operator: NumericLogicalOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean, expr){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }
   }
-  class Equals(val expr: Expression.BinaryOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean, expr){
+  class Equals(val expr: Expression.BinaryOperation, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean, expr){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }
   }
-  class NotEquals(val expr: Expression.BinaryOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean, expr){
+  class NotEquals(val expr: Expression.BinaryOperation, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean, expr){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }
   }
-  class BooleanLogicalOperation(val expr: Expression.BinaryOperator, val operator: BooleanLogicalOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean, expr){
+  class BooleanLogicalOperation(val expr: Expression.BinaryOperation, val operator: BooleanLogicalOperator, val lhs: TypedExpression, val rhs: TypedExpression): TypedExpression(PrimitiveType.Boolean, expr){
     override fun accept(visitor: ITypedExpressionVisitor) {
       visitor.visit(this)
     }

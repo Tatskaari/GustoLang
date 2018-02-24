@@ -1,8 +1,9 @@
 package tatskaari
 
 import org.testng.annotations.Test
-import tatskaari.parsing.*
-import tatskaari.GustoType.*
+import tatskaari.GustoType.FunctionType
+import tatskaari.GustoType.PrimitiveType
+import tatskaari.parsing.Parser
 import tatskaari.parsing.typechecking.*
 import kotlin.test.assertEquals
 

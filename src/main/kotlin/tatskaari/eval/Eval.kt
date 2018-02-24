@@ -154,8 +154,8 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
       is Expression.NumLiteral -> Value.NumVal(expression.value)
       is Expression.BooleanLiteral -> Value.BoolVal(expression.value)
       is Expression.TextLiteral -> Value.TextVal(expression.value)
-      is Expression.BinaryOperator -> applyBinaryOperator(expression, env)
-      is Expression.UnaryOperator -> applyUnaryOperator(expression, env)
+      is Expression.BinaryOperation -> applyBinaryOperator(expression, env)
+      is Expression.UnaryOperation -> applyUnaryOperator(expression, env)
       is Expression.FunctionCall -> callFunction(expression, env)
       is Expression.ListDeclaration -> evalList(expression, env)
       is Expression.ListAccess -> evalListAccess(expression, env)
@@ -254,10 +254,10 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
     return Value.Unit
   }
 
-  private fun applyBinaryOperator(operatorExpression: Expression.BinaryOperator, env: EvalEnv): Value {
-    val operation = operatorExpression.operator
-    val lhsVal = eval(operatorExpression.lhs, env)
-    val rhsVal = eval(operatorExpression.rhs, env)
+  private fun applyBinaryOperator(operationExpression: Expression.BinaryOperation, env: EvalEnv): Value {
+    val operation = operationExpression.operator
+    val lhsVal = eval(operationExpression.lhs, env)
+    val rhsVal = eval(operationExpression.rhs, env)
     when (operation) {
       BinaryOperators.Add -> {
         if (lhsVal is Addable && rhsVal is Addable){
@@ -299,9 +299,9 @@ class Eval(private val inputProvider: InputProvider, private val outputProvider:
 
   }
 
-  private fun applyUnaryOperator(operatorExpr: Expression.UnaryOperator, env: EvalEnv): Value{
-    val result = eval(operatorExpr.expression, env)
-    val operator = operatorExpr.operator
+  private fun applyUnaryOperator(operationExpr: Expression.UnaryOperation, env: EvalEnv): Value{
+    val result = eval(operationExpr.expression, env)
+    val operator = operationExpr.operator
     return try {
       when(operator){
         UnaryOperators.Not -> Value.BoolVal(!result.boolVal())

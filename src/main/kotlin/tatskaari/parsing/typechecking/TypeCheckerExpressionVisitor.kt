@@ -5,7 +5,7 @@ import tatskaari.GustoType.*
 import tatskaari.parsing.*
 
 class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Errors) : IExpressionVisitor<TypedExpression> {
-  override fun visit(match: Expression.Match): TypedExpression {
+  override fun visitMatch(match: Expression.Match): TypedExpression {
     val expression = match.expression.accept(this)
     val matchBranches = match.matchBranches.map {
       val statementVisitor = TypeCheckerStatementVisitor(env, typeErrors, UnknownType)
@@ -32,12 +32,12 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
     return TypedExpression.Match(match, matchBranches, expression, elseBranch, returnType)
   }
 
-  override fun visit(tuple: Expression.Tuple): TypedExpression {
+  override fun visitTuple(tuple: Expression.Tuple): TypedExpression {
     val type = TupleType(tuple.params.map { it.accept(this).gustoType })
     return TypedExpression.Tuple(tuple, type)
   }
 
-  override fun visit(constructorCall: Expression.ConstructorCall): TypedExpression {
+  override fun visitConstructorCall(constructorCall: Expression.ConstructorCall): TypedExpression {
     if (!env.types.containsKey(constructorCall.name)) {
       typeErrors.add(constructorCall, "Constructor not defined.")
       return TypedExpression.ConstructorCall(constructorCall, null, VariantMember(constructorCall.name, UnknownType))
@@ -60,23 +60,23 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
 
   }
 
-  override fun visit(intLiteral: Expression.IntLiteral): TypedExpression {
+  override fun visitIntLiteral(intLiteral: Expression.IntLiteral): TypedExpression {
     return TypedExpression.IntLiteral(intLiteral)
   }
 
-  override fun visit(numLiteral: Expression.NumLiteral): TypedExpression {
+  override fun visitNumLiteral(numLiteral: Expression.NumLiteral): TypedExpression {
     return TypedExpression.NumLiteral(numLiteral)
   }
 
-  override fun visit(booleanLiteral: Expression.BooleanLiteral): TypedExpression {
+  override fun visitBoolLiteral(booleanLiteral: Expression.BooleanLiteral): TypedExpression {
     return TypedExpression.BooleanLiteral(booleanLiteral)
   }
 
-  override fun visit(textLiteral: Expression.TextLiteral): TypedExpression {
+  override fun visitTextLiteral(textLiteral: Expression.TextLiteral): TypedExpression {
     return TypedExpression.TextLiteral(textLiteral)
   }
 
-  override fun visit(identifier: Expression.Identifier): TypedExpression {
+  override fun visitIdentifier(identifier: Expression.Identifier): TypedExpression {
     return if (env.containsKey(identifier.name)){
       TypedExpression.Identifier(identifier, env.getValue(identifier.name))
     } else {
@@ -85,76 +85,76 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
     }
   }
 
-  override fun visit(binaryOperator: Expression.BinaryOperator): TypedExpression {
-    val lhs = binaryOperator.lhs.accept(this)
-    val rhs = binaryOperator.rhs.accept(this)
+  override fun visitBinaryOperation(binaryOperation: Expression.BinaryOperation): TypedExpression {
+    val lhs = binaryOperation.lhs.accept(this)
+    val rhs = binaryOperation.rhs.accept(this)
 
     val lhsType = lhs.gustoType
     val rhsType = rhs.gustoType
 
-    return when(binaryOperator.operator) {
+    return when(binaryOperation.operator) {
       BinaryOperators.Add, BinaryOperators.Mul, BinaryOperators.Sub, BinaryOperators.Div -> {
-        if ((lhsType == PrimitiveType.Text || rhsType == PrimitiveType.Text) && binaryOperator.operator == BinaryOperators.Add) {
-          TypedExpression.Concatenation(binaryOperator, lhs, rhs)
+        if ((lhsType == PrimitiveType.Text || rhsType == PrimitiveType.Text) && binaryOperation.operator == BinaryOperators.Add) {
+          TypedExpression.Concatenation(binaryOperation, lhs, rhs)
         } else if (lhsType == PrimitiveType.Integer && rhsType == PrimitiveType.Integer) {
-          TypedExpression.IntArithmeticOperation(binaryOperator, ArithmeticOperator.valueOf(binaryOperator.operator.name), lhs, rhs)
+          TypedExpression.IntArithmeticOperation(binaryOperation, ArithmeticOperator.valueOf(binaryOperation.operator.name), lhs, rhs)
         } else if ((lhsType == PrimitiveType.Number || lhsType == PrimitiveType.Integer) && (rhsType == PrimitiveType.Number || rhsType == PrimitiveType.Integer)) {
-          TypedExpression.NumArithmeticOperation(binaryOperator, ArithmeticOperator.valueOf(binaryOperator.operator.name), lhs, rhs)
+          TypedExpression.NumArithmeticOperation(binaryOperation, ArithmeticOperator.valueOf(binaryOperation.operator.name), lhs, rhs)
         } else {
-          typeErrors.addBinaryOperatorTypeError(binaryOperator, binaryOperator.operator, lhsType, rhsType)
-          TypedExpression.NumArithmeticOperation(binaryOperator, ArithmeticOperator.valueOf(binaryOperator.operator.name), lhs, rhs)
+          typeErrors.addBinaryOperatorTypeError(binaryOperation, binaryOperation.operator, lhsType, rhsType)
+          TypedExpression.NumArithmeticOperation(binaryOperation, ArithmeticOperator.valueOf(binaryOperation.operator.name), lhs, rhs)
         }
       }
       BinaryOperators.And, BinaryOperators.Or -> {
         if (lhsType == PrimitiveType.Boolean && rhsType == PrimitiveType.Boolean) {
-          TypedExpression.BooleanLogicalOperation(binaryOperator, BooleanLogicalOperator.valueOf(binaryOperator.operator.name), lhs, rhs)
+          TypedExpression.BooleanLogicalOperation(binaryOperation, BooleanLogicalOperator.valueOf(binaryOperation.operator.name), lhs, rhs)
         } else {
-          typeErrors.addBinaryOperatorTypeError(binaryOperator, binaryOperator.operator, lhsType, rhsType)
-          TypedExpression.BooleanLogicalOperation(binaryOperator, BooleanLogicalOperator.valueOf(binaryOperator.operator.name), lhs, rhs)
+          typeErrors.addBinaryOperatorTypeError(binaryOperation, binaryOperation.operator, lhsType, rhsType)
+          TypedExpression.BooleanLogicalOperation(binaryOperation, BooleanLogicalOperator.valueOf(binaryOperation.operator.name), lhs, rhs)
         }
       }
-      BinaryOperators.Equality -> TypedExpression.Equals(binaryOperator, lhs, rhs)
-      BinaryOperators.NotEquality -> TypedExpression.NotEquals(binaryOperator, lhs, rhs)
+      BinaryOperators.Equality -> TypedExpression.Equals(binaryOperation, lhs, rhs)
+      BinaryOperators.NotEquality -> TypedExpression.NotEquals(binaryOperation, lhs, rhs)
       BinaryOperators.GreaterThan, BinaryOperators.GreaterThanEq, BinaryOperators.LessThan, BinaryOperators.LessThanEq -> {
         if ((lhsType == PrimitiveType.Number || lhsType == PrimitiveType.Integer) && (rhsType == PrimitiveType.Number || rhsType == PrimitiveType.Integer)) {
           if (lhs.gustoType == PrimitiveType.Number || rhs.gustoType == PrimitiveType.Number){
-            TypedExpression.NumLogicalOperation(binaryOperator, NumericLogicalOperator.valueOf(binaryOperator.operator.name), lhs, rhs)
+            TypedExpression.NumLogicalOperation(binaryOperation, NumericLogicalOperator.valueOf(binaryOperation.operator.name), lhs, rhs)
           } else {
-            TypedExpression.IntLogicalOperation(binaryOperator, NumericLogicalOperator.valueOf(binaryOperator.operator.name), lhs, rhs)
+            TypedExpression.IntLogicalOperation(binaryOperation, NumericLogicalOperator.valueOf(binaryOperation.operator.name), lhs, rhs)
           }
         } else {
-          typeErrors.addBinaryOperatorTypeError(binaryOperator, binaryOperator.operator, lhsType, rhsType)
-          TypedExpression.NumLogicalOperation(binaryOperator, NumericLogicalOperator.valueOf(binaryOperator.operator.name), lhs, rhs)
+          typeErrors.addBinaryOperatorTypeError(binaryOperation, binaryOperation.operator, lhsType, rhsType)
+          TypedExpression.NumLogicalOperation(binaryOperation, NumericLogicalOperator.valueOf(binaryOperation.operator.name), lhs, rhs)
         }
       }
     }
   }
 
-  override fun visit(unaryOperator: Expression.UnaryOperator): TypedExpression {
-    val expressionType = unaryOperator.expression.accept(this)
+  override fun visitUnaryOperator(unaryOperation: Expression.UnaryOperation): TypedExpression {
+    val expressionType = unaryOperation.expression.accept(this)
 
-    when(unaryOperator.operator){
+    when(unaryOperation.operator){
       UnaryOperators.Negative -> {
         return when {
-          expressionType.gustoType == PrimitiveType.Integer -> TypedExpression.NegateInt(unaryOperator, expressionType)
-          expressionType.gustoType == PrimitiveType.Number -> TypedExpression.NegateNum(unaryOperator, expressionType)
+          expressionType.gustoType == PrimitiveType.Integer -> TypedExpression.NegateInt(unaryOperation, expressionType)
+          expressionType.gustoType == PrimitiveType.Number -> TypedExpression.NegateNum(unaryOperation, expressionType)
           else -> {
-            typeErrors.addUnaryOperatorTypeError(unaryOperator, unaryOperator.operator, expressionType.gustoType)
-            TypedExpression.NegateNum(unaryOperator, expressionType)
+            typeErrors.addUnaryOperatorTypeError(unaryOperation, unaryOperation.operator, expressionType.gustoType)
+            TypedExpression.NegateNum(unaryOperation, expressionType)
           }
         }
       }
       UnaryOperators.Not -> {
         if (expressionType.gustoType != PrimitiveType.Boolean) {
-          typeErrors.addUnaryOperatorTypeError(unaryOperator, unaryOperator.operator, expressionType.gustoType)
+          typeErrors.addUnaryOperatorTypeError(unaryOperation, unaryOperation.operator, expressionType.gustoType)
         }
-        return TypedExpression.Not(unaryOperator, expressionType)
+        return TypedExpression.Not(unaryOperation, expressionType)
       }
     }
   }
 
 
-  override fun visit(functionCall: Expression.FunctionCall): TypedExpression {
+  override fun visitFunctionCall(functionCall: Expression.FunctionCall): TypedExpression {
     val functionExpr = functionCall.functionExpression.accept(this)
     val functionType = functionExpr.gustoType
     val params = ArrayList<TypedExpression>()
@@ -177,7 +177,7 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
     }
   }
 
-  override fun visit(listAccess: Expression.ListAccess): TypedExpression {
+  override fun visitListAccess(listAccess: Expression.ListAccess): TypedExpression {
     val listExpr = listAccess.listExpression.accept(this)
     val indexExpr = listAccess.indexExpression.accept(this)
     val listType = listExpr.gustoType
@@ -192,7 +192,7 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
     }
   }
 
-  override fun visit(listDeclaration: Expression.ListDeclaration): TypedExpression {
+  override fun visitListDeclaration(listDeclaration: Expression.ListDeclaration): TypedExpression {
     return if (listDeclaration.items.isEmpty()){
       TypedExpression.ListDeclaration(listDeclaration, ListType(UnknownType), listOf())
     } else {
@@ -209,7 +209,7 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
     }
   }
 
-  override fun visit(function: Expression.Function): TypedExpression {
+  override fun visitFunction(function: Expression.Function): TypedExpression {
     val functionEnv = TypeEnv(env)
     val paramTypes = function.params.map {
       function.paramTypes.getValue(it)

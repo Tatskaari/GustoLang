@@ -1,10 +1,9 @@
 package tatskaari.parsing
 
-import tatskaari.compatibility.*
+import tatskaari.compatibility.TokenList
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
 import tatskaari.tokenising.TokenType
-import kotlin.collections.ArrayList
 
 class Parser(private var sourceTree: SourceTree) {
   constructor() : this(NoSourceTree)
@@ -358,7 +357,7 @@ class Parser(private var sourceTree: SourceTree) {
     while(tokens.matchAny(TokenType.Or, TokenType.And)){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = equality(tokens)
-      expr = Expression.BinaryOperator(operator, expr, rhs, expr.startToken, rhs.endToken)
+      expr = Expression.BinaryOperation(operator, expr, rhs, expr.startToken, rhs.endToken)
     }
     return expr
   }
@@ -369,7 +368,7 @@ class Parser(private var sourceTree: SourceTree) {
     while(tokens.matchAny(TokenType.Equality, TokenType.NotEquality)){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = comparison(tokens)
-      expr = Expression.BinaryOperator(operator, expr, rhs, expr.startToken, rhs.endToken)
+      expr = Expression.BinaryOperation(operator, expr, rhs, expr.startToken, rhs.endToken)
     }
     return expr
   }
@@ -380,7 +379,7 @@ class Parser(private var sourceTree: SourceTree) {
     while(tokens.matchAny(TokenType.GreaterThan, TokenType.GreaterThanEq, TokenType.LessThan, TokenType.LessThanEq)){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = addition(tokens)
-      expr = Expression.BinaryOperator(operator, expr, rhs, expr.startToken, rhs.endToken)
+      expr = Expression.BinaryOperation(operator, expr, rhs, expr.startToken, rhs.endToken)
     }
     return expr
   }
@@ -391,7 +390,7 @@ class Parser(private var sourceTree: SourceTree) {
     while(tokens.matchAny(TokenType.Add, TokenType.Sub)){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = multiplication(tokens)
-      expr = Expression.BinaryOperator(operator, expr, rhs, expr.startToken, rhs.endToken)
+      expr = Expression.BinaryOperation(operator, expr, rhs, expr.startToken, rhs.endToken)
     }
     return expr
   }
@@ -402,7 +401,7 @@ class Parser(private var sourceTree: SourceTree) {
     while(tokens.matchAny(TokenType.Mul, TokenType.Div)){
       val operator = BinaryOperators.getOperator(tokens.removeFirst())
       val rhs = unary(tokens)
-      expr = Expression.BinaryOperator(operator, expr, rhs, expr.startToken, rhs.endToken)
+      expr = Expression.BinaryOperation(operator, expr, rhs, expr.startToken, rhs.endToken)
     }
 
     return expr
@@ -413,7 +412,7 @@ class Parser(private var sourceTree: SourceTree) {
     if (tokens.matchAny(TokenType.Not, TokenType.Sub)) {
       val operator = tokens.removeFirst()
       val right = unary(tokens)
-      return Expression.UnaryOperator(UnaryOperators.getOperator(operator), right, operator, right.endToken)
+      return Expression.UnaryOperation(UnaryOperators.getOperator(operator), right, operator, right.endToken)
     }
 
     var expr = primary(tokens)
@@ -558,11 +557,15 @@ class Parser(private var sourceTree: SourceTree) {
     val params = ArrayList<Token.Identifier>()
     while (!tokens.match(TokenType.CloseParen)){
       val paramIdentifier = tokens.getNextToken(TokenType.Identifier) as Token.Identifier
-      tokens.getNextToken(TokenType.Colon)
-      val paramType: TypeNotation = typeNotation(tokens)
+      val paramType = if (tokens.match(TokenType.Colon)){
+        tokens.getNextToken(TokenType.Colon)
+        typeNotation(tokens)
+      } else {
+        TypeNotation.UnknownType
+      }
 
       params.add(paramIdentifier)
-      paramTypes.put(paramIdentifier, paramType)
+      paramTypes[paramIdentifier] = paramType
 
       if(tokens.match(TokenType.Comma)){
         tokens.consumeToken()
