@@ -1,9 +1,11 @@
 package tatskaari
 
-import tatskaari.eval.*
+import tatskaari.eval.Eval
+import tatskaari.eval.JSHookInputProvider
+import tatskaari.eval.JSHookOutputProvider
 import tatskaari.parsing.Parser
 import tatskaari.parsing.WebRootSourceTree
-import tatskaari.parsing.typechecking.TypeChecker
+import tatskaari.parsing.hindleymilner.HindleyMilnerVisitor
 
 external fun error(text: String)
 object BrowserHooks {
@@ -14,18 +16,18 @@ object BrowserHooks {
       val parser = Parser(WebRootSourceTree)
       val eval = Eval(JSHookInputProvider, JSHookOutputProvider)
       val ast = parser.parse(program)
-      val typeChecker = TypeChecker()
+      val typeChecker = HindleyMilnerVisitor()
 
-      val typeEnv = BuiltInFunction.getTypeEnv()
+      val typeEnv = BuiltInFunction.getHindleyMilnerEnv()
       val evalEnv = BuiltInFunction.getEvalEnv()
 
       if (ast != null){
-        typeChecker.checkStatementListTypes(ast, typeEnv)
-        if (typeChecker.typeMismatches.isEmpty()){
+        typeChecker.checkStatements(ast, typeEnv)
+        if (typeChecker.errors.isEmpty()){
           eval.eval(ast, evalEnv)
         } else {
-          typeChecker.typeMismatches.forEach{
-            error(it.value)
+          typeChecker.errors.forEach{
+            error(it.errorMessage())
           }
         }
       } else {

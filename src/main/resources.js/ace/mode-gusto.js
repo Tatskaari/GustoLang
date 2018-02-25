@@ -5,7 +5,7 @@ var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 
 var AdaHighlightRules = function() {
-var keywords = "else|return|end|do|of|type|for|" +
+var keywords = "else|return|end|do|of|type|for|while|include|" +
                "function|begin|val|then|if|type|match|with";
     var builtinConstants = (
         "true|false"

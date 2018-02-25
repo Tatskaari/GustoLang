@@ -7,33 +7,44 @@
     <h1>Try Gusto</h1>
 </div>
 <div class="content">
-    <div id="code">(* this is a demonstration of higher order functions *)
+    <div id="code">include "list"
 
-function add(a: integer, b: integer) : integer do
+(* map is included in list, this is that just without type annotations *)
+function map2(theList, transform) do
+    val index := 0
+    val newList := []
+
+    while index < theList.size() do
+        newList[index] := transform(theList[index])
+        index := index + 1
+    end
+
+    return newList
+end
+
+(* this is a demonstration of higher order functions *)
+function add(a: integer, b: integer) do
     return a + b
 end
 
-function concat(lhs : text, rhs : text) : text do
-    return lhs + rhs
-end
-
-function apply(fun: (a, b) -> c, first: a) : (b) -> c do
-    return function (second: b) : c do
+(* Fill the first argument of a function and return a function to take the second *)
+function apply(fun, first) do
+    return function (second) do
         return fun(first, second)
     end
 end
 
-val prependTheNumber := concat.apply("The number ")
+val printList := function(item) do
+    output item
+end
 
-val increment : (integer) -> integer := apply(add, 1)
-val decrement : (integer) -> integer := apply(add, -1)
+val increment := apply(add, 1)
+val decrement := apply(add, -1)
 
-val num : integer := 10
+[1,2,3].map2(increment).forEach(printList)
 
-output prependTheNumber(
-    num + " is one less than " + increment(num)
-    + " and one more than " + decrement(num)
-)
+(* This will fail as it has detected that you applying an integer function on a text list*)
+(* ["test", "ing", "text"].map2(increment).forEach(printList) *)
     </div>
     <div id="output"> </div>
 </div>

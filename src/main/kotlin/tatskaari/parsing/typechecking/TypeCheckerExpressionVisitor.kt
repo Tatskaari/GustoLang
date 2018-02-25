@@ -220,16 +220,22 @@ class TypeCheckerExpressionVisitor(val env: TypeEnv, private val typeErrors: Err
         Pair(key.name, value.toGustoType(HashMap()))
     }
     functionEnv.putAll(params)
-    val functionType = FunctionType(paramTypes.map { it.toGustoType(HashMap()) }, function.returnType.toGustoType(HashMap()))
-    val body = function.body.accept(TypeCheckerStatementVisitor(functionEnv, typeErrors, functionType.returnType)) as TypedStatement.CodeBlock
+    val declaredFunctionType = FunctionType(paramTypes.map { it.toGustoType(HashMap()) }, function.returnType.toGustoType(HashMap()))
+    val body = function.body.accept(TypeCheckerStatementVisitor(functionEnv, typeErrors, declaredFunctionType.returnType)) as TypedStatement.CodeBlock
 
-    if (body.body.isEmpty() && functionType.returnType != PrimitiveType.Unit){
+    val inferredFunctionType = if(declaredFunctionType.returnType == GustoType.UnknownType){
+      GustoType.FunctionType(declaredFunctionType.params, body.returnType ?: PrimitiveType.Unit)
+    } else {
+      declaredFunctionType
+    }
+
+    if (body.body.isEmpty() && inferredFunctionType.returnType != PrimitiveType.Unit){
       typeErrors.add(function, "Missing return")
     }
 
-    ReturnTypeChecker(typeErrors).codeblock(body, functionType.returnType != PrimitiveType.Unit)
+    ReturnTypeChecker(typeErrors).codeblock(body, inferredFunctionType.returnType != PrimitiveType.Unit)
 
-    return TypedExpression.Function(function, body, functionType)
+    return TypedExpression.Function(function, body, inferredFunctionType)
   }
 
 }

@@ -1,11 +1,11 @@
 package tatskaari.parsing.typechecking
 
-import tatskaari.*
-import tatskaari.parsing.IStatementVisitor
-import tatskaari.parsing.Statement
+import tatskaari.GustoType
 import tatskaari.GustoType.*
 import tatskaari.parsing.AssignmentPattern
 import tatskaari.parsing.Expression
+import tatskaari.parsing.IStatementVisitor
+import tatskaari.parsing.Statement
 
 class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, var expectedReturnType: GustoType?) : IStatementVisitor<TypedStatement> {
 
@@ -154,7 +154,7 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, var 
   }
 
   override fun visit(statement: Statement.Input): TypedStatement {
-    env.put(statement.identifier.name, PrimitiveType.Text)
+    env[statement.identifier.name] = PrimitiveType.Text
     return TypedStatement.Input(statement)
   }
 
@@ -176,25 +176,31 @@ class TypeCheckerStatementVisitor(val env: TypeEnv, val typeErrors: Errors, var 
     val functionEnv = TypeEnv(env)
     functionEnv.putAll(statement.function.paramTypes.mapKeys { it.key.name }.mapValues { it.value.toGustoType(functionEnv.types) })
 
-    val functionType = FunctionType(
+    val declaredFunctionType = FunctionType(
       statement.function.params.map {
         statement.function.paramTypes.getValue(it).toGustoType(functionEnv.types)
       },
       statement.function.returnType.toGustoType(functionEnv.types)
     )
 
-    functionEnv[statement.identifier.name] = functionType
-    val body = statement.function.body.accept(TypeCheckerStatementVisitor(functionEnv, typeErrors, functionType.returnType)) as TypedStatement.CodeBlock
+    functionEnv[statement.identifier.name] = declaredFunctionType
+    val body = statement.function.body.accept(TypeCheckerStatementVisitor(functionEnv, typeErrors, declaredFunctionType.returnType)) as TypedStatement.CodeBlock
 
-    env[statement.identifier.name] = functionType
+    val inferredFunctionType = if (declaredFunctionType.returnType == GustoType.UnknownType){
+      GustoType.FunctionType(declaredFunctionType.params, body.returnType ?: PrimitiveType.Unit)
+    } else {
+      declaredFunctionType
+    }
 
-    if (body.body.isEmpty() && functionType.returnType != PrimitiveType.Unit){
+    env[statement.identifier.name] = inferredFunctionType
+
+    if (body.body.isEmpty() && declaredFunctionType.returnType != PrimitiveType.Unit){
       typeErrors.add(statement, "Missing return")
     }
 
-    ReturnTypeChecker(typeErrors).codeblock(body, functionType.returnType != PrimitiveType.Unit)
+    ReturnTypeChecker(typeErrors).codeblock(body, inferredFunctionType.returnType != PrimitiveType.Unit)
 
-    return TypedStatement.FunctionDeclaration(statement, body, functionType)
+    return TypedStatement.FunctionDeclaration(statement, body, inferredFunctionType)
   }
 
   override fun visit(statement: Statement.Return): TypedStatement {

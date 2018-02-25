@@ -1,6 +1,6 @@
 package tatskaari.parsing
 
-import tatskaari.compatibility.TokenList
+import tatskaari.compatibility.*
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
 import tatskaari.tokenising.TokenType
@@ -76,10 +76,10 @@ class Parser(private var sourceTree: SourceTree) {
         else -> {
           val expressionToken = tokens.consumeToken()
           if (tokens.matchAny(TokenType.AssignOp, TokenType.ListStart)) {
-            tokens.addFirst(expressionToken)
+            tokens.add(0, expressionToken)
             assignment(tokens)
           } else {
-            tokens.addFirst(expressionToken)
+            tokens.add(0, expressionToken)
             expressionStatement(tokens)
           }
         }
@@ -582,7 +582,7 @@ class Parser(private var sourceTree: SourceTree) {
       tokens.consumeToken()
       typeNotation(tokens)
     } else {
-      TypeNotation.Unit
+      TypeNotation.UnknownType
     }
   }
 
