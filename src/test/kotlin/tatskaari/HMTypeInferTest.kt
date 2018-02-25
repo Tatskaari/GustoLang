@@ -365,4 +365,17 @@ val out := lists.map2(increment)
     val (_, _, env) = ti.accept(program!!, TypeEnv.empty(), Substitution.empty(), null)
     assertEquals(1, ti.errors.size)
   }
+
+  @Test
+  fun testReccurrsiveFunction(){
+    val program = Parser().parse("""
+      function fib(n) do
+        return fib(n-1) + fib(n-2)
+      end
+    """.trimIndent())
+    val ti = HindleyMilnerVisitor()
+    val (_, _, env) = ti.accept(program!!, TypeEnv.empty(), Substitution.empty(), null)
+    assertEquals(0, ti.errors.size)
+
+  }
 }

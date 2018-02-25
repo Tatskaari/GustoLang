@@ -24,6 +24,7 @@ class HindleyMilnerVisitor {
       lhs == Type.Int && rhs == Type.Int -> Substitution.empty()
       lhs == Type.Num && rhs == Type.Num -> Substitution.empty()
       lhs == Type.Num && rhs == Type.Int -> Substitution.empty()
+      lhs == Type.Int && rhs == Type.Num -> Substitution.empty()
       lhs == Type.Bool && rhs == Type.Bool -> Substitution.empty()
       lhs == Type.Text && rhs == Type.Text -> Substitution.empty()
       else -> {
@@ -229,9 +230,12 @@ class HindleyMilnerVisitor {
     return Pair(returnType.applySubstitution(sub), sub)
   }
 
-  private fun visitFunctionExpression(function : Expression.Function, env: TypeEnv): Pair<Type, Substitution> {
+  private fun visitFunctionExpression(function : Expression.Function, env: TypeEnv, name : String? = null): Pair<Type, Substitution> {
     var functionType = getFunctionType(function.params.map { function.paramTypes[it]!! }, function.returnType, env)
-    val functionEnv = getFunctionEnv(functionType, function.params, env)
+    var functionEnv = getFunctionEnv(functionType, function.params, env)
+    if (name != null){
+      functionEnv = functionEnv.withScheme(name, Type.Scheme(listOf(), functionType))
+    }
     val (type, bodySub, newEnv) = accept(function.body.statementList, functionEnv, Substitution.empty(), null)
     //TODO the body substitution needs to be applied multiple times for some reason
     functionType = functionType.applySubstitution(bodySub).applySubstitution(bodySub)
@@ -242,7 +246,7 @@ class HindleyMilnerVisitor {
   }
 
   private fun visitFunctionDeclaration(function : Statement.FunctionDeclaration, env: TypeEnv): Triple<Type?, Substitution, TypeEnv>  {
-    val (functionType, functionSub) =  visitFunctionExpression(function.function, env)
+    val (functionType, functionSub) =  visitFunctionExpression(function.function, env, function.identifier.name)
     return Triple(null, functionSub, env.withScheme(function.identifier.name, env.generalise(functionType)))
   }
 
