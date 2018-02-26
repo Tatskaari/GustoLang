@@ -9,8 +9,8 @@ class Substitution (map : Map<String, Type>) : Map<String, Type> by map {
 
   fun compose(other: Substitution) : Substitution {
     val map = toMutableMap()
-    map.putAll(other)
-    return Substitution(map)
+    map.putAll(other.mapValues { it.value.applySubstitution(this) })
+    return Substitution(map.mapValues { it.value.applySubstitution(Substitution(map)) })
   }
 
   companion object {
