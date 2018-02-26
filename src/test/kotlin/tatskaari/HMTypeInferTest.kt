@@ -364,6 +364,7 @@ val out := lists.map2(increment)
     val ti = HindleyMilnerVisitor()
     val (_, _, env) = ti.accept(program!!, TypeEnv.empty(), Substitution.empty(), null)
     assertEquals(1, ti.errors.size)
+    assertEquals(3, env.schemes["apply"]?.bindableVars?.size)
   }
 
   @Test

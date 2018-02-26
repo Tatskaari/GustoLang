@@ -48,8 +48,8 @@ class HindleyMilnerVisitor {
 
   private fun bindVariable(name: String, type: Type) : Substitution {
     return when{
-      type is Type.Var -> Substitution(mapOf(name to type))
-      type.freeTypeVariables().contains(name) -> throw RuntimeException("Cannot bind type to self")
+      type is Type.Var && type.name == name -> Substitution.empty()
+      type.freeTypeVariables().contains(name) -> throw RuntimeException("Occur check failed: Cannot bind variable to type of which it is a free variable")
       else -> Substitution(mapOf(name to type))
     }
   }
@@ -236,8 +236,8 @@ class HindleyMilnerVisitor {
     if (name != null){
       functionEnv = functionEnv.withScheme(name, Type.Scheme(listOf(), functionType))
     }
-    val (type, bodySub, newEnv) = accept(function.body.statementList, functionEnv, Substitution.empty(), null)
-    //TODO the body substitution needs to be applied multiple times for some reason
+    val (type, bodySub, _) = accept(function.body.statementList, functionEnv, Substitution.empty(), null)
+    //TODO look into the actual way lambda abstractions are done and implement that. This currently doesn't work properly.
     functionType = functionType.applySubstitution(bodySub).applySubstitution(bodySub)
     val returnTypeSub = unify(type ?: Type.Unit, getFunctionReturnType(functionType), function)
     functionType = functionType.applySubstitution(returnTypeSub)
