@@ -1,7 +1,6 @@
 package tatskaari.parsing.hindleymilner
 
 import tatskaari.parsing.*
-import tatskaari.tokenising.Token
 
 class HindleyMilnerVisitor {
   val errors = mutableListOf<TypeError>()
@@ -230,47 +229,36 @@ class HindleyMilnerVisitor {
     return Pair(returnType.applySubstitution(sub), sub)
   }
 
-  private fun visitFunctionExpression(function : Expression.Function, env: TypeEnv, name : String? = null): Pair<Type, Substitution> {
-    var functionType = getFunctionType(function.params.map { function.paramTypes[it]!! }, function.returnType, env)
-    var functionEnv = getFunctionEnv(functionType, function.params, env)
-    if (name != null){
-      functionEnv = functionEnv.withScheme(name, Type.Scheme(listOf(), functionType))
-    }
-    val (type, bodySub, _) = accept(function.body.statementList, functionEnv, Substitution.empty(), null)
-    //TODO look into the actual way lambda abstractions are done and implement that. This currently doesn't work properly.
-    functionType = functionType.applySubstitution(bodySub).applySubstitution(bodySub)
-    val returnTypeSub = unify(type ?: Type.Unit, getFunctionReturnType(functionType), function)
-    functionType = functionType.applySubstitution(returnTypeSub)
-    val functionSub = bodySub.compose(returnTypeSub)
-    return Pair(functionType.applySubstitution(functionSub), functionSub)
+  private fun visitFunctionExpression(function : Expression.Function, env: TypeEnv): Pair<Type, Substitution> {
+    val params = function.params.map { Pair(it.name, function.paramTypes[it]!!) }
+    return lambdaAbstraction(params, function.body.statementList, function.returnType, env)
   }
 
+  private fun lambdaAbstraction(params : List<Pair<String, TypeNotation>>, body: List<Statement>, returnTypeNotation: TypeNotation, env : TypeEnv) : Pair<Type, Substitution> {
+    return if (params.isEmpty()){
+      val (returnType, sub, newEnv) = accept(body, env, Substitution.empty(), null)
+      val nonNullReturnType = returnType?:Type.Unit
+      val expectedReturnType = typeFromTypeNotation(returnTypeNotation, newEnv.applySubstitution(sub))
+      val unifyReturnType = unify(nonNullReturnType, expectedReturnType, body.last())
+      Pair(nonNullReturnType.applySubstitution(unifyReturnType), sub.compose(unifyReturnType))
+    } else {
+      val (name, typeNotation) = params.first()
+      var newEnv = env.remove(name)
+      val paramType = typeFromTypeNotation(typeNotation, newEnv)
+      newEnv = env.withScheme(name, Type.Scheme(listOf(), paramType))
+      val (restType, restSub) = lambdaAbstraction(params.subList(1, params.size), body, returnTypeNotation, newEnv)
+      Pair(Type.Function(paramType.applySubstitution(restSub), restType), restSub)
+    }
+  }
+
+
+
   private fun visitFunctionDeclaration(function : Statement.FunctionDeclaration, env: TypeEnv): Triple<Type?, Substitution, TypeEnv>  {
-    val (functionType, functionSub) =  visitFunctionExpression(function.function, env, function.identifier.name)
+    val (functionType, functionSub) =  visitFunctionExpression(function.function, env.withScheme(function.identifier.name, Type.Scheme(listOf(), newTypeVariable("function"))))
     return Triple(null, functionSub, env.withScheme(function.identifier.name, env.generalise(functionType)))
   }
 
-  private fun getFunctionEnv(type: Type, params: List<Token.Identifier>, env: TypeEnv) : TypeEnv {
-    return if (params.isEmpty()){
-      env
-    } else {
-      return if (type is Type.Function){
-        val newEnv = env.withScheme(params.first().name, Type.Scheme(listOf(), type.lhs))
-        getFunctionEnv(type.rhs, params.subList(1, params.size), newEnv)
-      } else {
-        throw RuntimeException("Type of function didn't match the number of parameters in the AST")
-      }
-    }
-  }
-
-  private fun getFunctionReturnType(type: Type) : Type {
-    return if (type is Type.Function){
-      getFunctionReturnType(type.rhs)
-    } else {
-      type
-    }
-  }
-
+  // Wraps getFunctionTypeInternal to return unit -> a' when there are no params
   private fun getFunctionType(paramTypes: List<TypeNotation>, returnType : TypeNotation, env: TypeEnv) : Type {
     return if (paramTypes.isEmpty()){
       Type.Function(Type.Unit, typeFromTypeNotation(returnType, env))
