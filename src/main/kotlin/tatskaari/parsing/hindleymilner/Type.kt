@@ -28,8 +28,8 @@ sealed class Type : Substitutable {
     override fun applySubstitution(substitution: Substitution): Type {
       return if (substitution.containsKey(name)){
         substitution.getValue(name)
-          // TODO this seems risky as there might be loops in teh substitutions
-          .applySubstitution(substitution)
+          // TODO this seems like a hack, should investigate a proper solution
+          .applySubstitution(substitution.removeAll(listOf(name)))
       } else {
         this
       }
