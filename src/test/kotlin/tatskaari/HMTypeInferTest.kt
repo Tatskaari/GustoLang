@@ -368,7 +368,7 @@ val out := lists.map2(increment)
   }
 
   @Test
-  fun testReccurrsiveFunction(){
+  fun testRecursiveFunction(){
     val program = Parser().parse("""
       function fib(n) do
         return fib(n-1) + fib(n-2)
@@ -377,6 +377,22 @@ val out := lists.map2(increment)
     val ti = HindleyMilnerVisitor()
     val (_, _, env) = ti.accept(program!!, TypeEnv.empty(), Substitution.empty(), null)
     assertEquals(0, ti.errors.size)
+  }
 
+  @Test
+  fun testAnnotatedMap(){
+    val program = Parser().parse("""
+function map(theList : a list, transform : (a) -> b) : b list do
+  val index : integer := 0
+  val newList : b list := []
+  while index < theList.size() do
+    newList[index] := transform(theList[index])
+    index := index + 1
+  end
+  return newList
+end
+""")
+    val ti = HindleyMilnerVisitor()
+    val (_, _, env) = ti.accept(program!!, TypeEnv.empty(), Substitution.empty(), null)
   }
 }

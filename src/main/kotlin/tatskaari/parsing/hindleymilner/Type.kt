@@ -27,7 +27,9 @@ sealed class Type : Substitutable {
   data class Var(val name: String) : Type() {
     override fun applySubstitution(substitution: Substitution): Type {
       return if (substitution.containsKey(name)){
-        substitution.getValue(name).applySubstitution(substitution)
+        substitution.getValue(name)
+          // TODO this seems risky as there might be loops in teh substitutions
+          .applySubstitution(substitution)
       } else {
         this
       }

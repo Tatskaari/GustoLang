@@ -239,7 +239,7 @@ class HindleyMilnerVisitor {
       val (returnType, sub, newEnv) = accept(body, env, Substitution.empty(), null)
       val nonNullReturnType = returnType?:Type.Unit
       val expectedReturnType = typeFromTypeNotation(returnTypeNotation, newEnv.applySubstitution(sub))
-      val unifyReturnType = unify(nonNullReturnType, expectedReturnType, body.last())
+      val unifyReturnType = unify(expectedReturnType, nonNullReturnType, body.last())
       Pair(nonNullReturnType.applySubstitution(unifyReturnType), sub.compose(unifyReturnType))
     } else {
       val (name, typeNotation) = params.first()
@@ -250,8 +250,6 @@ class HindleyMilnerVisitor {
       Pair(Type.Function(paramType.applySubstitution(restSub), restType), restSub)
     }
   }
-
-
 
   private fun visitFunctionDeclaration(function : Statement.FunctionDeclaration, env: TypeEnv): Triple<Type?, Substitution, TypeEnv>  {
     val (functionType, functionSub) =  visitFunctionExpression(function.function, env.withScheme(function.identifier.name, Type.Scheme(listOf(), newTypeVariable("function"))))
