@@ -231,7 +231,12 @@ class HindleyMilnerVisitor {
 
   private fun visitFunctionExpression(function : Expression.Function, env: TypeEnv): Pair<Type, Substitution> {
     val params = function.params.map { Pair(it.name, function.paramTypes[it]!!) }
-    return lambdaAbstraction(params, function.body.statementList, function.returnType, env)
+    val (type, sub) = lambdaAbstraction(params, function.body.statementList, function.returnType, env)
+    return if (params.isEmpty()){
+       Pair(Type.Function(Type.Unit, type), sub)
+    } else {
+      Pair(type, sub)
+    }
   }
 
   private fun lambdaAbstraction(params : List<Pair<String, TypeNotation>>, body: List<Statement>, returnTypeNotation: TypeNotation, env : TypeEnv) : Pair<Type, Substitution> {
@@ -283,24 +288,7 @@ class HindleyMilnerVisitor {
     return if (functionCall.params.isEmpty() && functionType.lhs == Type.Unit){
       Pair(functionType.rhs, exprSub)
     } else {
-      functionApplication(functionType, functionCall.params, env.applySubstitution(sub))
-    }
-  }
-
-  private fun functionApplication(type : Type, params: List<Expression>, env: TypeEnv) : Pair<Type, Substitution> {
-    return if (params.isEmpty()){
-      Pair(type, Substitution.empty())
-    } else {
-      val rhsTypeVar = newTypeVariable("parameter")
-      val (exprType, exprSub) = accept(params.first(), env)
-      val sub = exprSub
-        .compose(unify(type.applySubstitution(exprSub), Type.Function(exprType, rhsTypeVar), params.first()))
-      val (returnType, rhsSub) = functionApplication(
-        rhsTypeVar.applySubstitution(sub),
-        params.subList(1, params.size),
-        env.applySubstitution(sub)
-      )
-      Pair(returnType, sub.compose(rhsSub))
+      unifyFunctionParamTypes(functionType, functionCall.params, sub, env.applySubstitution(sub))
     }
   }
 

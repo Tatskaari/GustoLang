@@ -359,7 +359,6 @@ val decrement := apply(add, -1)
 val lists := ["test", "ing", "text"]
 
 val out := lists.map2(increment)
-
 """)
     val ti = HindleyMilnerVisitor()
     val (_, _, env) = ti.accept(program!!, TypeEnv.empty(), Substitution.empty(), null)
