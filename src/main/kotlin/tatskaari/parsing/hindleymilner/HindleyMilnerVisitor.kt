@@ -13,7 +13,7 @@ class HindleyMilnerVisitor {
     return when{
       lhs is Type.Function && rhs is Type.Function -> {
         val lhsSub = unify(lhs.lhs, rhs.lhs, node)
-        val rhsSub = unify(lhs.rhs, rhs.rhs, node)
+        val rhsSub = unify(lhs.rhs.applySubstitution(lhsSub), rhs.rhs.applySubstitution(lhsSub), node)
         return lhsSub.compose(rhsSub)
       }
       lhs is Type.Var -> bindVariable(lhs.name, rhs)
@@ -278,12 +278,29 @@ class HindleyMilnerVisitor {
     val (exprType, exprSub) = accept(functionCall.functionExpression, env)
 
     val expectedType = Type.Function(newTypeVariable("callParam"), newTypeVariable("callParam"))
-    val sub = exprSub.compose(unify(exprType, expectedType, functionCall.functionExpression))
+    val sub = exprSub.compose(unify(expectedType, exprType, functionCall.functionExpression))
     val functionType = expectedType.applySubstitution(sub)
     return if (functionCall.params.isEmpty() && functionType.lhs == Type.Unit){
       Pair(functionType.rhs, exprSub)
     } else {
-      unifyFunctionParamTypes(exprType, functionCall.params, exprSub, env.applySubstitution(exprSub))
+      functionApplication(functionType, functionCall.params, env.applySubstitution(sub))
+    }
+  }
+
+  private fun functionApplication(type : Type, params: List<Expression>, env: TypeEnv) : Pair<Type, Substitution> {
+    return if (params.isEmpty()){
+      Pair(type, Substitution.empty())
+    } else {
+      val rhsTypeVar = newTypeVariable("parameter")
+      val (exprType, exprSub) = accept(params.first(), env)
+      val sub = exprSub
+        .compose(unify(type.applySubstitution(exprSub), Type.Function(exprType, rhsTypeVar), params.first()))
+      val (returnType, rhsSub) = functionApplication(
+        rhsTypeVar.applySubstitution(sub),
+        params.subList(1, params.size),
+        env.applySubstitution(sub)
+      )
+      Pair(returnType, sub.compose(rhsSub))
     }
   }
 
@@ -296,7 +313,7 @@ class HindleyMilnerVisitor {
         val expectedType = Type.Function(exprType, newTypeVariable("parameter"))
         val unifiedFunSub = substitution
           .compose(exprSub)
-          .compose(unify(type.applySubstitution(exprSub), expectedType, params.first()))
+          .compose(unify(expectedType, type.applySubstitution(exprSub), params.first()))
           .compose(exprSub)
         unifyFunctionParamTypes((type.applySubstitution(unifiedFunSub) as Type.Function).rhs, params.subList(1, params.size), unifiedFunSub, env.applySubstitution(unifiedFunSub))
       } else {

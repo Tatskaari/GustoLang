@@ -395,4 +395,18 @@ end
     val ti = HindleyMilnerVisitor()
     val (_, _, env) = ti.accept(program!!, TypeEnv.empty(), Substitution.empty(), null)
   }
+
+  @Test
+  fun testFunctionSpecialisation(){
+    val program = Parser().parse("""
+      function get(a) do
+        return a
+      end
+
+      val a := get("test")
+    """.trimIndent())
+    val ti = HindleyMilnerVisitor()
+    val (_,_, env) = ti.accept(program!!, TypeEnv.empty(), Substitution.empty(), null)
+    assertEquals(Type.Text, env.schemes["a"]?.type)
+  }
 }
