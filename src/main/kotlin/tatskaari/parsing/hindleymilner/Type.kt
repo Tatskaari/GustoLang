@@ -37,6 +37,18 @@ sealed class Type : Substitutable {
     override fun toString() = "var $name"
   }
 
+  data class ConstrainedType(val name: String, val types: Set<Type>) : Type() {
+    override fun applySubstitution(substitution: Substitution) =
+      ConstrainedType(name, types.map { it.applySubstitution(substitution) }.toSet())
+
+    override fun freeTypeVariables() : Set<String> = emptySet()
+    override fun toString() = "$name of $types"
+
+    companion object {
+      val numeric = ConstrainedType("numeric", setOf(Type.Int, Type.Num))
+    }
+  }
+
   object Int : Type() {
     override fun applySubstitution(substitution: Substitution) = this
     override fun freeTypeVariables() = setOf<String>()

@@ -5,9 +5,12 @@ import tatskaari.parsing.*
 class HindleyMilnerVisitor {
   val errors = mutableListOf<TypeError>()
   private var generatedTypeCount = 0
+  fun nextName(prefix: String) = "$prefix@${generatedTypeCount++}"
+
   fun newTypeVariable(prefix: String) : Type.Var {
-    return Type.Var("$prefix@${generatedTypeCount++}")
+    return Type.Var(nextName(prefix))
   }
+
 
   private fun unify(lhs : Type, rhs: Type, node: ASTNode) : Substitution {
     return when{
@@ -16,14 +19,14 @@ class HindleyMilnerVisitor {
         val rhsSub = unify(lhs.rhs.applySubstitution(lhsSub), rhs.rhs.applySubstitution(lhsSub), node)
         return lhsSub.compose(rhsSub)
       }
-      lhs is Type.Var -> bindVariable(lhs.name, rhs)
-      rhs is Type.Var -> bindVariable(rhs.name, lhs)
+      lhs is Type.Var -> bindVariable(lhs, rhs)
+      rhs is Type.Var -> bindVariable(rhs, lhs)
+      rhs is Type.ConstrainedType && lhs is Type.ConstrainedType && lhs == rhs -> Substitution.empty()
+      rhs is Type.ConstrainedType && rhs.types.contains(lhs) -> Substitution.empty()
       lhs is Type.ListType && rhs is Type.ListType -> unify(lhs.type, rhs.type, node)
       lhs is Type.Tuple && rhs is Type.Tuple -> unifyTuple(lhs, rhs, node)
       lhs == Type.Int && rhs == Type.Int -> Substitution.empty()
       lhs == Type.Num && rhs == Type.Num -> Substitution.empty()
-      lhs == Type.Num && rhs == Type.Int -> Substitution.empty()
-      lhs == Type.Int && rhs == Type.Num -> Substitution.empty()
       lhs == Type.Bool && rhs == Type.Bool -> Substitution.empty()
       lhs == Type.Text && rhs == Type.Text -> Substitution.empty()
       else -> {
@@ -45,11 +48,11 @@ class HindleyMilnerVisitor {
     }
   }
 
-  private fun bindVariable(name: String, type: Type) : Substitution {
+  private fun bindVariable(typeVar: Type.Var, type: Type) : Substitution {
     return when{
-      type is Type.Var && type.name == name -> Substitution.empty()
-      type.freeTypeVariables().contains(name) -> throw RuntimeException("Occur check failed: Cannot bind variable to type of which it is a free variable")
-      else -> Substitution(mapOf(name to type))
+      type is Type.Var && type.name == typeVar.name -> Substitution.empty()
+      type.freeTypeVariables().contains(typeVar.name) -> throw RuntimeException("Occur check failed: Cannot bind variable to type of which it is a free variable")
+      else -> Substitution(mapOf(typeVar.name to type))
     }
   }
 
@@ -135,7 +138,7 @@ class HindleyMilnerVisitor {
     return when (pattern) {
       is AssignmentPattern.Variable -> {
         val notationType = typeFromTypeNotation(pattern.typeNotation, env)
-        val unifySub = unify(notationType, exprType, statement)
+        val unifySub = unify(exprType, notationType, statement)
         val sub = exprSub.compose(unifySub)
         val updatedExpressionType = exprType.applySubstitution(sub)
         val scheme = if (updatedExpressionType is Type.Function){
@@ -189,24 +192,28 @@ class HindleyMilnerVisitor {
   private fun visitBinaryOperation(binaryOperation: Expression.BinaryOperation, env: TypeEnv): Pair<Type, Substitution> {
     val (lhsType, lhsSub) = accept(binaryOperation.lhs, env)
     val (rhsType, rhsSub) = accept(binaryOperation.rhs, env.applySubstitution(lhsSub))
-
-    val returnType = newTypeVariable("bin_op")
-
+    val returnType = newTypeVariable("binop")
+    val resultType = when {
+      lhsType == Type.Int && rhsType == Type.Int -> Type.Int
+      lhsType is Type.Var || rhsType is Type.Var -> Type.ConstrainedType.numeric
+      lhsType == Type.ConstrainedType.numeric || rhsType == Type.ConstrainedType.numeric -> Type.ConstrainedType.numeric
+      else -> Type.Num
+    }
     val operationType = when (binaryOperation.operator){
       BinaryOperators.Add, BinaryOperators.Sub, BinaryOperators.Mul, BinaryOperators.Div -> {
-        val resultType = if(lhsType == Type.Num || rhsType == Type.Num) Type.Num else Type.Int
-        Type.Function(Type.Num, Type.Function(Type.Num, resultType))
+        Type.Function(Type.ConstrainedType.numeric, Type.Function(Type.ConstrainedType.numeric, resultType))
       }
       BinaryOperators.LessThan, BinaryOperators.GreaterThan, BinaryOperators.LessThanEq, BinaryOperators.GreaterThanEq ->
-        Type.Function(Type.Num, Type.Function(Type.Num, Type.Bool))
+        Type.Function(Type.ConstrainedType.numeric, Type.Function(Type.ConstrainedType.numeric, Type.Bool))
       BinaryOperators.And, BinaryOperators.Or ->
         Type.Function(Type.Bool, Type.Function(Type.Bool, Type.Bool))
-      BinaryOperators.Equality, BinaryOperators.NotEquality -> TODO()
+      BinaryOperators.Equality, BinaryOperators.NotEquality ->
+        Type.Function(newTypeVariable("binop"), Type.Function(newTypeVariable("binop"), Type.Bool))
     }
 
     val expressionType = Type.Function(lhsType.applySubstitution(rhsSub), Type.Function(rhsType, returnType))
 
-    val substitution = unify(operationType, expressionType, binaryOperation)
+    val substitution = unify(expressionType, operationType, binaryOperation)
 
     return Pair(returnType.applySubstitution(substitution), lhsSub.compose(rhsSub).compose(substitution))
   }
@@ -288,11 +295,11 @@ class HindleyMilnerVisitor {
     return if (functionCall.params.isEmpty() && functionType.lhs == Type.Unit){
       Pair(functionType.rhs, exprSub)
     } else {
-      unifyFunctionParamTypes(functionType, functionCall.params, sub, env.applySubstitution(sub))
+      unifyFunctionTypeWithParams(functionType, functionCall.params, sub, env.applySubstitution(sub))
     }
   }
 
-  private fun unifyFunctionParamTypes(type: Type, params: List<Expression>, substitution: Substitution, env: TypeEnv) : Pair<Type, Substitution> {
+  private fun unifyFunctionTypeWithParams(type: Type, params: List<Expression>, substitution: Substitution, env: TypeEnv) : Pair<Type, Substitution> {
     return if (params.isEmpty()){
       return Pair(type.applySubstitution(substitution), substitution)
     } else {
@@ -303,7 +310,12 @@ class HindleyMilnerVisitor {
           .compose(exprSub)
           .compose(unify(expectedType, type.applySubstitution(exprSub), params.first()))
           .compose(exprSub)
-        unifyFunctionParamTypes((type.applySubstitution(unifiedFunSub) as Type.Function).rhs, params.subList(1, params.size), unifiedFunSub, env.applySubstitution(unifiedFunSub))
+        unifyFunctionTypeWithParams(
+          (type.applySubstitution(unifiedFunSub) as Type.Function).rhs,
+          params.subList(1, params.size),
+          unifiedFunSub,
+          env.applySubstitution(unifiedFunSub)
+        )
       } else {
         errors.add(TypeError(params.first(), "Wrong number of arguments to call the function"))
         return Pair(type, substitution)
@@ -410,8 +422,14 @@ class HindleyMilnerVisitor {
   private fun visitIfElse(ifStatement: Statement.IfElse, env: TypeEnv) : Triple<Type?, Substitution, TypeEnv>{
     val (conditionType, conditionSub) = accept(ifStatement.condition, env)
     val unifiedConditionSub = conditionSub.compose(unify(conditionType, Type.Bool, ifStatement.condition))
-    val (trueType, trueSub, trueEnv) = accept(ifStatement.ifBody.statementList, env.applySubstitution(unifiedConditionSub), unifiedConditionSub, null)
-    val (falseType, falseSub, falseEnv) = accept(ifStatement.elseBody.statementList, trueEnv.applySubstitution(trueSub), trueSub, null)
+    val (trueType, trueSub, _) = accept(
+      ifStatement.ifBody.statementList,
+      env.applySubstitution(unifiedConditionSub),
+      unifiedConditionSub,
+      null
+    )
+    val (falseType, falseSub, _) =
+      accept(ifStatement.elseBody.statementList, env.applySubstitution(unifiedConditionSub.compose(trueSub)), trueSub, null)
     val sub = if (trueType != null && falseType != null){
       falseSub.compose(unify(trueType, falseType, ifStatement))
     } else {

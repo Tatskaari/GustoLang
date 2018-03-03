@@ -58,7 +58,7 @@ object HMTypeInferTest {
     val (type, sub) = ti.accept(expression, typeEnv)
     assertEquals(Type.Bool, type)
     val newEnv = typeEnv.applySubstitution(sub)
-    assertEquals(Type.Num, newEnv.schemes["a"]?.type)
+    assertEquals(Type.ConstrainedType.numeric, newEnv.schemes["a"]?.type)
   }
 
   @Test
@@ -98,9 +98,9 @@ object HMTypeInferTest {
     val ti = HindleyMilnerVisitor()
     val (_,_,env) = ti.accept(program!!, typeEnv, Substitution.empty(),null)
 
-    assertEquals(Type.Int, env.schemes["b"]?.type)
+    assertEquals(Type.ConstrainedType.numeric, env.schemes["b"]?.type)
     assertEquals(Type.Int, (env.schemes["add"]?.type as Type.Function).lhs)
-    assertEquals(Type.Num, ((env.schemes["add"]?.type as Type.Function).rhs as Type.Function).lhs)
+    assertEquals(Type.ConstrainedType.numeric, ((env.schemes["add"]?.type as Type.Function).rhs as Type.Function).lhs)
     assertEquals(0, env.schemes["add"]?.bindableVars?.size)
   }
 
@@ -112,7 +112,7 @@ object HMTypeInferTest {
     val ti = HindleyMilnerVisitor()
     val (_,_,env) = ti.accept(program!!, TypeEnv.empty(),Substitution.empty(), null)
 
-    assertEquals(Type.Int, env.schemes["b"]?.type)
+    assertEquals(Type.ConstrainedType.numeric, env.schemes["b"]?.type)
   }
 
   @Test
@@ -246,7 +246,7 @@ output a""")
     val (_, sub, env) = ti.accept(program!!, TypeEnv.withScheme("b", Type.Scheme(listOf(), bType)), Substitution.empty(), null)
 
     assertEquals(1, ti.errors.size)
-    assertEquals(Type.Num, bType.applySubstitution(sub))
+    assertEquals(Type.ConstrainedType.numeric, bType.applySubstitution(sub))
   }
 
   @Test
@@ -269,7 +269,7 @@ val a := [1,2,3].map(function(item) do return item + 1 end)
     assertEquals(2, env.schemes["map"]?.bindableVars?.size)
     val type = env.schemes["map"]?.type!! as Type.Function
     assert(type.getReturnType() is Type.ListType)
-    assertEquals(Type.ListType(Type.Int), env.schemes["a"]!!.type)
+    assertEquals(Type.ListType(Type.ConstrainedType.numeric), env.schemes["a"]!!.type)
   }
 
   @Test
@@ -369,7 +369,7 @@ val out := lists.map2(increment)
   @Test
   fun testRecursiveFunction(){
     val program = Parser().parse("""
-      function fib(n) do
+      function fib(n : integer) : integer do
         return fib(n-1) + fib(n-2)
       end
     """.trimIndent())
@@ -407,5 +407,27 @@ end
     val ti = HindleyMilnerVisitor()
     val (_,_, env) = ti.accept(program!!, TypeEnv.empty(), Substitution.empty(), null)
     assertEquals(Type.Text, env.schemes["a"]?.type)
+  }
+
+  @Test
+  fun testNumericPassedAsInt(){
+    val program = Parser().parse("""
+      function get(a : integer) do
+        return a
+      end
+
+      val a := get(b)
+    """.trimIndent())
+    val ti = HindleyMilnerVisitor()
+    val (_,_, env) = ti.accept(program!!, TypeEnv.withScheme("b", Type.Scheme(emptyList(), Type.ConstrainedType.numeric)), Substitution.empty(), null)
+    assertEquals(1, ti.errors.size)
+  }
+
+  @Test
+  fun testEquals(){
+    val program = Parser().parse("val a := 1 = 2")
+    val ti = HindleyMilnerVisitor()
+    val (_,_, env) = ti.accept(program!!, TypeEnv.withScheme("b", Type.Scheme(emptyList(), Type.ConstrainedType.numeric)), Substitution.empty(), null)
+    assertEquals(Type.Bool, env.schemes["a"]?.type)
   }
 }
