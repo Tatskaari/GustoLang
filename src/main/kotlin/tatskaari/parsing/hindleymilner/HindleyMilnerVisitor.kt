@@ -119,8 +119,8 @@ class HindleyMilnerVisitor {
       TypeNotation.UnknownType -> newTypeVariable("unknown")
       TypeNotation.Unit -> Type.Unit
       is TypeNotation.Atomic ->
-        if (TypeEnv.builtInTypes.containsKey(typeNotation.name)) {
-          TypeEnv.builtInTypes.getValue(typeNotation.name)
+        if (env.definedTypes.containsKey(typeNotation.name)) {
+          env.definedTypes.getValue(typeNotation.name)
         } else {
           Type.Var(typeNotation.name)
         }
@@ -140,7 +140,7 @@ class HindleyMilnerVisitor {
         val notationType = typeFromTypeNotation(pattern.typeNotation, env)
         val unifySub = unify(exprType, notationType, statement)
         val sub = exprSub.compose(unifySub)
-        val updatedExpressionType = exprType.applySubstitution(sub)
+        val updatedExpressionType = notationType.applySubstitution(sub)
         val scheme = if (updatedExpressionType is Type.Function){
           env.generalise(updatedExpressionType)
         } else {

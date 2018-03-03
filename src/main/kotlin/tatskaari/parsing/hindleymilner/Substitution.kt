@@ -13,6 +13,7 @@ class Substitution (map : Map<String, Type>) : Map<String, Type> by map {
     return Substitution(map.mapValues { it.value.applySubstitution(Substitution(map)) })
   }
 
+
   companion object {
     fun empty() = Substitution(emptyMap())
   }

@@ -62,7 +62,7 @@ enum class BuiltInFunction(val funName: String, val params: List<String>, val ty
     fun getHindleyMilnerEnv() : TypeEnv {
       val typeEnv: HashMap<String, Type.Scheme> = HashMap()
       typeEnv.putAll(BuiltInFunction.values().map{Pair(it.funName, it.hmType)})
-      return TypeEnv(typeEnv)
+      return TypeEnv(typeEnv, TypeEnv.empty().definedTypes)
     }
 
     fun getEvalEnv(): EvalEnv {

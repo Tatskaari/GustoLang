@@ -22,7 +22,7 @@ object HMTypeInferTest {
   fun testIntAdd(){
     val expression = parseExpression("10 + 12", Expression.BinaryOperation::class.java)
     val ti = HindleyMilnerVisitor()
-    val (type, _) = ti.accept(expression, TypeEnv(mapOf()))
+    val (type, _) = ti.accept(expression, TypeEnv.empty())
     assertEquals(Type.Int, type)
   }
 
@@ -30,7 +30,7 @@ object HMTypeInferTest {
   fun testNumAdd(){
     val expression = parseExpression("10.0 + 12.0", Expression.BinaryOperation::class.java)
     val ti = HindleyMilnerVisitor()
-    val (type, _) = ti.accept(expression, TypeEnv(mapOf()))
+    val (type, _) = ti.accept(expression, TypeEnv.empty())
     assertEquals(Type.Num, type)
   }
 
@@ -38,7 +38,7 @@ object HMTypeInferTest {
   fun testMixExpression(){
     val expression = parseExpression("1 + 10.0 * 12.0", Expression.BinaryOperation::class.java)
     val ti = HindleyMilnerVisitor()
-    val (type, _) = ti.accept(expression, TypeEnv(mapOf()))
+    val (type, _) = ti.accept(expression, TypeEnv.empty())
     assertEquals(Type.Num, type)
   }
 
@@ -46,7 +46,7 @@ object HMTypeInferTest {
   fun testBoolExpression(){
     val expression = parseExpression("5 < 10 and true", Expression.BinaryOperation::class.java)
     val ti = HindleyMilnerVisitor()
-    val (type, _) = ti.accept(expression, TypeEnv(mapOf()))
+    val (type, _) = ti.accept(expression, TypeEnv.empty())
     assertEquals(Type.Bool, type)
   }
 
@@ -54,7 +54,7 @@ object HMTypeInferTest {
   fun testNumVarExpression(){
     val expression = parseExpression("5 < a and true", Expression.BinaryOperation::class.java)
     val ti = HindleyMilnerVisitor()
-    val typeEnv = TypeEnv(mapOf("a" to Type.Scheme(emptyList(), ti.newTypeVariable("a"))))
+    val typeEnv = TypeEnv.withScheme("a", Type.Scheme(emptyList(), ti.newTypeVariable("a")))
     val (type, sub) = ti.accept(expression, typeEnv)
     assertEquals(Type.Bool, type)
     val newEnv = typeEnv.applySubstitution(sub)
@@ -65,7 +65,7 @@ object HMTypeInferTest {
   fun testBoolVarExpression(){
     val expression = parseExpression("a and true", Expression.BinaryOperation::class.java)
     val ti = HindleyMilnerVisitor()
-    val typeEnv = TypeEnv(mapOf("a" to Type.Scheme(emptyList(), ti.newTypeVariable("a"))))
+    val typeEnv = TypeEnv.withScheme("a", Type.Scheme(emptyList(), ti.newTypeVariable("a")))
     val (type, sub) = ti.accept(expression, typeEnv)
     assertEquals(Type.Bool, type)
     val newEnv = typeEnv.applySubstitution(sub)
@@ -86,7 +86,7 @@ object HMTypeInferTest {
     val typeEnv = TypeEnv.empty()
     val ti = HindleyMilnerVisitor()
     ti.accept(program!!, typeEnv, Substitution.empty(),null)
-    assertEquals(1, ti.errors.size)
+    assertEquals(2, ti.errors.size)
   }
 
   @Test
@@ -98,7 +98,7 @@ object HMTypeInferTest {
     val ti = HindleyMilnerVisitor()
     val (_,_,env) = ti.accept(program!!, typeEnv, Substitution.empty(),null)
 
-    assertEquals(Type.ConstrainedType.numeric, env.schemes["b"]?.type)
+    assertEquals(Type.Int, env.schemes["b"]?.type)
     assertEquals(Type.Int, (env.schemes["add"]?.type as Type.Function).lhs)
     assertEquals(Type.ConstrainedType.numeric, ((env.schemes["add"]?.type as Type.Function).rhs as Type.Function).lhs)
     assertEquals(0, env.schemes["add"]?.bindableVars?.size)
@@ -430,4 +430,14 @@ end
     val (_,_, env) = ti.accept(program!!, TypeEnv.withScheme("b", Type.Scheme(emptyList(), Type.ConstrainedType.numeric)), Substitution.empty(), null)
     assertEquals(Type.Bool, env.schemes["a"]?.type)
   }
+
+  @Test
+  fun defineNumericType(){
+    val program = Parser().parse("val a : numeric := 1 a := 1.1")
+    val ti = HindleyMilnerVisitor()
+    val (_,_, env) = ti.accept(program!!, TypeEnv.withScheme("b", Type.Scheme(emptyList(), Type.ConstrainedType.numeric)), Substitution.empty(), null)
+    assertEquals(Type.ConstrainedType.numeric, env.schemes["a"]?.type)
+    assertEquals(0, ti.errors.size)
+  }
+  
 }
