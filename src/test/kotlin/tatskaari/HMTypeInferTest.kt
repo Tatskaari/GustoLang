@@ -4,10 +4,7 @@ import org.testng.annotations.Test
 import tatskaari.parsing.ASTNode
 import tatskaari.parsing.Expression
 import tatskaari.parsing.Parser
-import tatskaari.parsing.hindleymilner.HindleyMilnerVisitor
-import tatskaari.parsing.hindleymilner.Substitution
-import tatskaari.parsing.hindleymilner.Type
-import tatskaari.parsing.hindleymilner.TypeEnv
+import tatskaari.parsing.hindleymilner.*
 import tatskaari.tokenising.Lexer
 import tatskaari.tokenising.Token
 import tatskaari.tokenising.TokenType
@@ -464,7 +461,9 @@ val out := [1,2,3].map(tenPercentMore)
     val functionCalledAs = Type.Function(Type.Int, Type.ConstrainedType.numeric)
     val ti = HindleyMilnerVisitor()
     val sub = ti.merge(functionType, functionCalledAs, node)
-    val finalType = functionType.applySubstitution(sub.resolveConstraints())
+    val errors : MutableList<TypeError> = mutableListOf()
+    val finalType = functionType.applySubstitution(sub.resolveConstraints(node, errors))
     assertEquals(Type.Function(Type.ConstrainedType.numeric, Type.ConstrainedType.numeric), finalType)
+    assertEquals(0, errors.size)
   }
 }

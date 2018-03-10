@@ -359,7 +359,7 @@ class HindleyMilnerVisitor {
     val returnTypeSub = unify(returnTypeVar, functionCallReturnType, functionCall)
     val functionCallType = expectedFunctionType.applySubstitution(functionCallSub.compose(returnTypeSub))
     // Merge the function type expected based on params with the called functions type
-    val mergedSubstitution = merge(functionCallType, funExprType, functionCall).resolveConstraints()
+    val mergedSubstitution = merge(functionCallType, funExprType, functionCall).resolveConstraints(functionCall, errors)
 
     return Pair(funExprType.applySubstitution(mergedSubstitution).getReturnType(), functionCallSub.compose(returnTypeSub).compose(mergedSubstitution))
   }

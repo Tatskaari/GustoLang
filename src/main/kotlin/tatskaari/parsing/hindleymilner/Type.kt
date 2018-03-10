@@ -1,7 +1,9 @@
 package tatskaari.parsing.hindleymilner
 
+import tatskaari.parsing.ASTNode
+
 sealed class Type : Substitutable {
-  open fun resolveConstraints() = this
+  open fun resolveConstraints(node: ASTNode, errors : MutableList<TypeError>) = this
 
   data class Function(val lhs : Type, val rhs: Type) : Type() {
     override fun applySubstitution(substitution: Substitution): Function =
@@ -41,7 +43,7 @@ sealed class Type : Substitutable {
       }
     }
 
-    override fun resolveConstraints(): Type {
+    override fun resolveConstraints(node: ASTNode, errors : MutableList<TypeError>): Type {
       return constraints.fold(this as Type) { acc, next ->
         when {
           next is Type.ConstrainedType && next.types.contains(acc) -> next
@@ -49,7 +51,10 @@ sealed class Type : Substitutable {
           acc is Type.Var -> next
           next is Type.Var -> acc
           next == acc -> next
-          else -> throw RuntimeException("Types don't match $acc to $next")
+          else -> {
+            errors.add(TypeError(node, "Types don't match $acc to $next"))
+            acc
+          }
         }
       }
     }

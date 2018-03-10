@@ -1,5 +1,7 @@
 package tatskaari.parsing.hindleymilner
 
+import tatskaari.parsing.ASTNode
+
 class Substitution (map : Map<String, Type>) : Map<String, Type> by map {
   fun removeAll(keys : List<String>): Substitution {
     val map = this.toMutableMap()
@@ -13,8 +15,8 @@ class Substitution (map : Map<String, Type>) : Map<String, Type> by map {
     return Substitution(map.mapValues { it.value.applySubstitution(Substitution(map)) })
   }
 
-  fun resolveConstraints() : Substitution {
-    val sub = Substitution(mapValues { it.value.resolveConstraints() })
+  fun resolveConstraints(node: ASTNode, errors : MutableList<TypeError>) : Substitution {
+    val sub = Substitution(mapValues { it.value.resolveConstraints(node, errors) })
     return sub.compose(sub)
   }
 
