@@ -8,7 +8,7 @@ class HindleyMilnerVisitor {
   fun nextName(prefix: String) = "$prefix@${generatedTypeCount++}"
 
   fun newTypeVariable(prefix: String) : Type.Var {
-    return Type.Var(nextName(prefix))
+    return Type.Var(nextName(prefix), setOf())
   }
 
 
@@ -36,6 +36,30 @@ class HindleyMilnerVisitor {
     }
   }
 
+  fun merge(lhs : Type, rhs: Type, node: ASTNode) : Substitution {
+    return when{
+      lhs is Type.Function && rhs is Type.Function -> {
+        val lhsSub = merge(lhs.lhs, rhs.lhs, node)
+        val rhsSub = merge(lhs.rhs.applySubstitution(lhsSub), rhs.rhs.applySubstitution(lhsSub), node)
+        return lhsSub.compose(rhsSub)
+      }
+      lhs is Type.Var -> constrainVariable(lhs, rhs)
+      rhs is Type.Var -> constrainVariable(rhs, lhs)
+      rhs is Type.ConstrainedType && lhs is Type.ConstrainedType && lhs == rhs -> Substitution.empty()
+      rhs is Type.ConstrainedType && rhs.types.contains(lhs) -> Substitution.empty()
+      lhs is Type.ListType && rhs is Type.ListType -> merge(lhs.type, rhs.type, node)
+      lhs is Type.Tuple && rhs is Type.Tuple -> mergeTuple(lhs, rhs, node)
+      lhs == Type.Int && rhs == Type.Int -> Substitution.empty()
+      lhs == Type.Num && rhs == Type.Num -> Substitution.empty()
+      lhs == Type.Bool && rhs == Type.Bool -> Substitution.empty()
+      lhs == Type.Text && rhs == Type.Text -> Substitution.empty()
+      else -> {
+        errors.add(TypeError(node, "Failed to unify the type $lhs with the type $rhs"))
+        Substitution.empty()
+      }
+    }
+  }
+
   private fun unifyTuple(lhs : Type.Tuple, rhs: Type.Tuple, node: ASTNode) : Substitution{
     return if (lhs.types.size == rhs.types.size){
       lhs.types.zip(rhs.types)
@@ -48,17 +72,36 @@ class HindleyMilnerVisitor {
     }
   }
 
+  private fun mergeTuple(lhs : Type.Tuple, rhs: Type.Tuple, node: ASTNode) : Substitution{
+    return if (lhs.types.size == rhs.types.size){
+      lhs.types.zip(rhs.types)
+        .fold(Substitution.empty()) { sub, (lhs, rhs) ->
+          sub.compose(merge(lhs, rhs, node))
+        }
+    } else {
+      errors.add(TypeError(node, "Failed to unify the type $lhs with the type $rhs"))
+      Substitution.empty()
+    }
+  }
+
   private fun bindVariable(typeVar: Type.Var, type: Type) : Substitution {
     return when{
       type is Type.Var && type.name == typeVar.name -> Substitution.empty()
-      type.freeTypeVariables().contains(typeVar.name) -> throw RuntimeException("Occur check failed: Cannot bind variable to type of which it is a free variable")
+      type.freeTypeVariables().contains(typeVar.name) ->
+        throw RuntimeException("Occur check failed: Cannot bind variable to type of which it is a free variable")
       else -> Substitution(mapOf(typeVar.name to type))
     }
   }
 
-  fun checkStatements(statement: List<Statement>, env: TypeEnv){
-    accept(statement, env, Substitution.empty(), null)
+  private fun constrainVariable(typeVar: Type.Var, type: Type) : Substitution {
+    return when{
+      type is Type.Var && type.name == typeVar.name -> Substitution(mapOf(type.name to Type.Var(type.name, type.constraints.union(typeVar.constraints))))
+      type.freeTypeVariables().contains(typeVar.name) -> throw RuntimeException("Occur check failed: Cannot bind variable to type of which it is a free variable")
+      else -> Substitution(mapOf(typeVar.name to Type.Var(typeVar.name, typeVar.constraints.union(setOf(type)))))
+    }
   }
+
+  fun checkStatements(statement: List<Statement>, env: TypeEnv) = accept(statement, env, Substitution.empty(), null)
 
   fun accept(expression: Expression, env: TypeEnv) : Pair<Type, Substitution> {
     return when (expression) {
@@ -122,7 +165,7 @@ class HindleyMilnerVisitor {
         if (env.definedTypes.containsKey(typeNotation.name)) {
           env.definedTypes.getValue(typeNotation.name)
         } else {
-          Type.Var(typeNotation.name)
+          Type.Var(typeNotation.name, setOf())
         }
       is TypeNotation.Function -> getFunctionType(typeNotation.params, typeNotation.returnType, env)
       is TypeNotation.Tuple -> Type.Tuple(typeNotation.members.map { typeFromTypeNotation(it, env) })
@@ -289,13 +332,43 @@ class HindleyMilnerVisitor {
   private fun visitFunctionCall(functionCall: Expression.FunctionCall, env: TypeEnv): Pair<Type, Substitution> {
     val (exprType, exprSub) = accept(functionCall.functionExpression, env)
 
-    val expectedType = Type.Function(newTypeVariable("callParam"), newTypeVariable("callParam"))
-    val sub = exprSub.compose(unify(expectedType, exprType, functionCall.functionExpression))
-    val functionType = expectedType.applySubstitution(sub)
-    return if (functionCall.params.isEmpty() && functionType.lhs == Type.Unit){
-      Pair(functionType.rhs, exprSub)
+    // If the expression is a function type then specialise its params for this call
+    return if (exprType is Type.Function && functionCall.params.isNotEmpty()){
+      val (type, sub) = specialiseFunctionType(exprType, functionCall, env.applySubstitution(exprSub))
+      Pair(type, sub.compose(exprSub))
     } else {
-      unifyFunctionTypeWithParams(functionType, functionCall.params, sub, env.applySubstitution(sub))
+      // Otherwise create a new function of unknown type and attempt to infer that
+      val expectedType = Type.Function(newTypeVariable("callParam"), newTypeVariable("callParam"))
+      val sub = exprSub.compose(unify(expectedType, exprType, functionCall.functionExpression))
+      val functionType = expectedType.applySubstitution(sub)
+      if (functionCall.params.isEmpty() && functionType.lhs == Type.Unit){
+        Pair(functionType.rhs, exprSub)
+      } else {
+        unifyFunctionTypeWithParams(functionType, functionCall.params, sub, env.applySubstitution(sub))
+      }
+    }
+  }
+
+  private fun specialiseFunctionType(funExprType : Type.Function, functionCall : Expression.FunctionCall, env: TypeEnv): Pair<Type, Substitution> {
+    // Get a variable for the return type
+    val returnTypeVar = newTypeVariable("return")
+    // Build a function with the expected number of params and the return type of the return type var
+    val expectedFunctionType = functionTypeFromParamCount(functionCall.params.count(),returnTypeVar)
+    // Build a function based on what the param expressions were
+    val (functionCallReturnType, functionCallSub) = unifyFunctionTypeWithParams(expectedFunctionType, functionCall.params, Substitution.empty(), env)
+    val returnTypeSub = unify(returnTypeVar, functionCallReturnType, functionCall)
+    val functionCallType = expectedFunctionType.applySubstitution(functionCallSub.compose(returnTypeSub))
+    // Merge the function type expected based on params with the called functions type
+    val mergedSubstitution = merge(functionCallType, funExprType, functionCall).resolveConstraints()
+
+    return Pair(funExprType.applySubstitution(mergedSubstitution).getReturnType(), functionCallSub.compose(returnTypeSub).compose(mergedSubstitution))
+  }
+
+  fun functionTypeFromParamCount(count: Int, returnType: Type) : Type.Function {
+    return if (count == 1){
+      Type.Function(newTypeVariable("callParam"), returnType)
+    } else {
+      Type.Function(newTypeVariable("callParam"), functionTypeFromParamCount(count-1, returnType))
     }
   }
 
@@ -310,8 +383,9 @@ class HindleyMilnerVisitor {
           .compose(exprSub)
           .compose(unify(expectedType, type.applySubstitution(exprSub), params.first()))
           .compose(exprSub)
+        val newType = type.applySubstitution(unifiedFunSub) as Type.Function
         unifyFunctionTypeWithParams(
-          (type.applySubstitution(unifiedFunSub) as Type.Function).rhs,
+          newType.rhs,
           params.subList(1, params.size),
           unifiedFunSub,
           env.applySubstitution(unifiedFunSub)

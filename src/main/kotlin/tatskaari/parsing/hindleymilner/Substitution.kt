@@ -1,5 +1,7 @@
 package tatskaari.parsing.hindleymilner
 
+import javax.swing.text.html.HTML.Tag.P
+
 class Substitution (map : Map<String, Type>) : Map<String, Type> by map {
   fun removeAll(keys : List<String>): Substitution {
     val map = this.toMutableMap()
@@ -11,6 +13,11 @@ class Substitution (map : Map<String, Type>) : Map<String, Type> by map {
     val map = toMutableMap()
     map.putAll(other.mapValues { it.value.applySubstitution(this) })
     return Substitution(map.mapValues { it.value.applySubstitution(Substitution(map)) })
+  }
+
+  fun resolveConstraints() : Substitution {
+    val sub = Substitution(mapValues { it.value.resolveConstraints() })
+    return sub.compose(sub)
   }
 
 

@@ -1,6 +1,8 @@
 package tatskaari.parsing.hindleymilner
 
 sealed class Type : Substitutable {
+  open fun resolveConstraints() = this
+
   data class Function(val lhs : Type, val rhs: Type) : Type() {
     override fun applySubstitution(substitution: Substitution): Function =
       Function(lhs.applySubstitution(substitution), rhs.applySubstitution(substitution))
@@ -24,12 +26,31 @@ sealed class Type : Substitutable {
     }
   }
 
-  data class Var(val name: String) : Type() {
+  data class Var(val name: String, val constraints: Set<Type>) : Type() {
+    constructor(name: String) : this(name, setOf())
     override fun applySubstitution(substitution: Substitution): Type {
       return if (substitution.containsKey(name)){
-        substitution.getValue(name)
+        val type = substitution.getValue(name)
+        if (type is Type.Var && type.name == this.name){
+          Type.Var(name, type.constraints.union(constraints))
+        } else {
+          substitution.getValue(name)
+        }
       } else {
         this
+      }
+    }
+
+    override fun resolveConstraints(): Type {
+      return constraints.fold(this as Type) { acc, next ->
+        when {
+          next is Type.ConstrainedType && next.types.contains(acc) -> next
+          acc is Type.ConstrainedType && acc.types.contains(next) ->  acc
+          acc is Type.Var -> next
+          next is Type.Var -> acc
+          next == acc -> next
+          else -> throw RuntimeException("Types don't match $acc to $next")
+        }
       }
     }
 

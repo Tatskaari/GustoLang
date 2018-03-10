@@ -1,6 +1,7 @@
 package tatskaari
 
 import org.testng.annotations.Test
+import tatskaari.parsing.ASTNode
 import tatskaari.parsing.Expression
 import tatskaari.parsing.Parser
 import tatskaari.parsing.hindleymilner.HindleyMilnerVisitor
@@ -8,6 +9,8 @@ import tatskaari.parsing.hindleymilner.Substitution
 import tatskaari.parsing.hindleymilner.Type
 import tatskaari.parsing.hindleymilner.TypeEnv
 import tatskaari.tokenising.Lexer
+import tatskaari.tokenising.Token
+import tatskaari.tokenising.TokenType
 import kotlin.test.assertEquals
 
 object HMTypeInferTest {
@@ -412,14 +415,10 @@ end
   @Test
   fun testNumericPassedAsInt(){
     val program = Parser().parse("""
-      function get(a : integer) do
-        return a
-      end
-
       val a := get(b)
     """.trimIndent())
     val ti = HindleyMilnerVisitor()
-    val (_,_, env) = ti.accept(program!!, TypeEnv.withScheme("b", Type.Scheme(emptyList(), Type.ConstrainedType.numeric)), Substitution.empty(), null)
+    val (_,_, env) = ti.accept(program!!, TypeEnv.withScheme("b", Type.Scheme(emptyList(), Type.ConstrainedType.numeric)).withScheme("get", Type.Scheme(listOf(), Type.Function(Type.Int, Type.Int))), Substitution.empty(), null)
     assertEquals(1, ti.errors.size)
   }
 
@@ -439,5 +438,33 @@ end
     assertEquals(Type.ConstrainedType.numeric, env.schemes["a"]?.type)
     assertEquals(0, ti.errors.size)
   }
-  
+
+
+  @Test
+  fun testUnifyFunCallParams(){
+    val program = Parser().parse("""
+val out := [1,2,3].map(tenPercentMore)
+""")
+    val ti = HindleyMilnerVisitor()
+    val mapType = Type.Scheme(listOf("a", "b"), Type.Function(
+      Type.ListType(Type.Var("a")),
+      Type.Function(Type.Function(Type.Var("a"), Type.Var("b")), Type.ListType(Type.Var("b")))
+    ))
+    val tenPercentType = Type.Scheme(listOf(), Type.Function(Type.ConstrainedType.numeric, Type.ConstrainedType.numeric))
+    val(_, _, env) = ti.checkStatements(program!!, TypeEnv.withScheme("map", mapType).withScheme("tenPercentMore", tenPercentType))
+    assertEquals(0, ti.errors.size)
+    assertEquals(Type.ListType(Type.ConstrainedType.numeric), env.schemes["out"]?.type)
+  }
+
+  @Test
+  fun testMergeFunctions(){
+    val token = Token.IntLiteral(TokenType.IntLiteral, "12", 1, 1, false)
+    val node = Expression.IntLiteral(12, token, token)
+    val functionType = Type.Function(Type.Var("a"), Type.Var("a"))
+    val functionCalledAs = Type.Function(Type.Int, Type.ConstrainedType.numeric)
+    val ti = HindleyMilnerVisitor()
+    val sub = ti.merge(functionType, functionCalledAs, node)
+    val finalType = functionType.applySubstitution(sub.resolveConstraints())
+    assertEquals(Type.Function(Type.ConstrainedType.numeric, Type.ConstrainedType.numeric), finalType)
+  }
 }
