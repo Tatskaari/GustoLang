@@ -154,7 +154,7 @@ object HMTypeInferTest {
       val c := doSomething(true)
       """)
     val ti = HindleyMilnerVisitor()
-    val (_,_,env) = ti.accept(program!!, TypeEnv.empty(),Substitution.empty(), null)
+    val (_, _, _) = ti.accept(program!!, TypeEnv.empty(),Substitution.empty(), null)
 
     assertEquals(1, ti.errors.size)
   }
@@ -167,7 +167,7 @@ object HMTypeInferTest {
     """.trimIndent())
     val ti = HindleyMilnerVisitor()
     val bType = Type.Var("b")
-    val (_, sub, env) = ti.accept(program!!, TypeEnv.empty().withScheme("b", Type.Scheme(listOf(), bType)), Substitution.empty(), null)
+    val (_, sub, _) = ti.accept(program!!, TypeEnv.empty().withScheme("b", Type.Scheme(listOf(), bType)), Substitution.empty(), null)
 
     assertEquals(Type.Int, bType.applySubstitution(sub))
   }

@@ -7,6 +7,7 @@ import tatskaari.eval.EvalEnv
 import tatskaari.eval.values.Value
 import tatskaari.parsing.hindleymilner.Type
 import tatskaari.parsing.hindleymilner.TypeEnv
+import kotlin.math.pow
 
 enum class BuiltInFunction(val funName: String, val params: List<String>, val type: FunctionType, val hmType: Type.Scheme, val function: (EvalEnv) -> Value) {
   SizeOfList(
@@ -42,6 +43,18 @@ enum class BuiltInFunction(val funName: String, val params: List<String>, val ty
         "false" -> Value.BoolVal(false)
         else -> throw Eval.InvalidUserInput
       }
+    }
+  ),
+  Pow(
+    "pow",
+    listOf("base", "exponent"),
+    FunctionType(listOf(PrimitiveType.Number, PrimitiveType.Number), PrimitiveType.Number),
+    Type.Scheme(listOf(), Type.Function(Type.Num, Type.Function(Type.Num, Type.Num))),
+    {
+      Value.NumVal(
+        it["base"].numVal().toDouble()
+          .pow(it["exponent"].numVal().toDouble())
+      )
     }
   ),
   Random(

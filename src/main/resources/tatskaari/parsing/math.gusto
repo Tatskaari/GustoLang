@@ -1,0 +1,15 @@
+function diff(a, b) do
+    if a > b then
+        return a - b
+    else
+        return b - a
+    end
+end
+
+function abs(a) do
+    if a < 0 then
+        return -a
+    else
+        return a
+    end
+end
