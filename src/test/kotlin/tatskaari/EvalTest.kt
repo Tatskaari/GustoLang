@@ -9,6 +9,7 @@ import tatskaari.tokenising.Lexer
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 object EvalTest {
   @Test

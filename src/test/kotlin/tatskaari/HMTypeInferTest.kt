@@ -1,6 +1,9 @@
 package tatskaari
 
 import org.testng.annotations.Test
+import tatskaari.eval.Eval
+import tatskaari.eval.StdinInputProvider
+import tatskaari.eval.SystemOutputProvider
 import tatskaari.parsing.Expression
 import tatskaari.parsing.Parser
 import tatskaari.parsing.hindleymilner.HindleyMilnerVisitor
@@ -9,6 +12,7 @@ import tatskaari.parsing.hindleymilner.Type
 import tatskaari.parsing.hindleymilner.TypeEnv
 import tatskaari.tokenising.Lexer
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 object HMTypeInferTest {
 
@@ -407,5 +411,23 @@ end
     val ti = HindleyMilnerVisitor()
     val (_,_, env) = ti.accept(program!!, TypeEnv.empty(), Substitution.empty(), null)
     assertEquals(Type.Text, env.schemes["a"]?.type)
+  }
+
+  @Test
+  fun testEqualsInIf(){
+    val parser = Parser()
+    val program = parser.parse("""
+function foo(a) do
+  if a = 1 then
+    return 10
+  end
+
+  return 5
+end
+    """)
+
+    val ti = HindleyMilnerVisitor()
+    val (_, _, env) = ti.accept(program!!, TypeEnv.empty(), Substitution.empty(), null)
+    assertEquals(Type.Function(Type.Int, Type.Int), env.schemes["foo"]?.type)
   }
 }

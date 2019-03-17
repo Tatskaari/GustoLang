@@ -98,11 +98,16 @@ class HindleyMilnerVisitor {
     return when {
       statements.isEmpty() -> Triple(type, substitution, env)
       else -> {
-        val (newType, statementSub, newEnv) = accept(statements.first(), env.applySubstitution(substitution))
+        val statement = statements.first()
+        val (newType, statementSub, newEnv) = accept(statement, env.applySubstitution(substitution))
         when {
-          type == null -> accept(statements.subList(1, statements.size), newEnv, substitution.compose(statementSub), newType)
+          type == null -> {
+            val nextStatements = statements.subList(1, statements.size)
+            val nextSubstitution = substitution.compose(statementSub)
+            accept(nextStatements, newEnv, nextSubstitution, newType)
+          }
           newType != null -> {
-            val sub = statementSub.compose(unify(type, newType, statements.first()))
+            val sub = statementSub.compose(unify(type, newType, statements.first())).compose(substitution)
             accept(statements.subList(1, statements.size), newEnv.applySubstitution(sub), sub, newType.applySubstitution(sub))
           }
           else -> accept(statements.subList(1, statements.size), newEnv, substitution, type)
@@ -201,7 +206,10 @@ class HindleyMilnerVisitor {
         Type.Function(Type.Num, Type.Function(Type.Num, Type.Bool))
       BinaryOperators.And, BinaryOperators.Or ->
         Type.Function(Type.Bool, Type.Function(Type.Bool, Type.Bool))
-      BinaryOperators.Equality, BinaryOperators.NotEquality -> TODO()
+      BinaryOperators.Equality, BinaryOperators.NotEquality -> {
+        val exprType = newTypeVariable("equality")
+        Type.Function(exprType, Type.Function(exprType, Type.Bool))
+      }
     }
 
     val expressionType = Type.Function(lhsType.applySubstitution(rhsSub), Type.Function(rhsType, returnType))
@@ -230,7 +238,7 @@ class HindleyMilnerVisitor {
   }
 
   private fun visitFunctionExpression(function : Expression.Function, env: TypeEnv): Pair<Type, Substitution> {
-    val params = function.params.map { Pair(it.name, function.paramTypes[it]!!) }
+    val params = function.params.map { Pair(it.name, function.paramTypes.getValue(it)) }
     val (type, sub) = lambdaAbstraction(params, function.body.statementList, function.returnType, env)
     return if (params.isEmpty()){
        Pair(Type.Function(Type.Unit, type), sub)
